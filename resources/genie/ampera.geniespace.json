@@ -1,0 +1,1194 @@
+{
+  "version": 2,
+  "config": {
+    "sample_questions": [
+      {
+        "id": "00000000000000000000000000000001",
+        "question": [
+          "Quais as 10 usinas (CEG) que mais geraram no último ano?"
+        ]
+      },
+      {
+        "id": "00000000000000000000000000000002",
+        "question": [
+          "Como evoluiu a geração mensal dos 5 maiores conjuntos eólicos?"
+        ]
+      },
+      {
+        "id": "00000000000000000000000000000003",
+        "question": [
+          "Qual a geração por estado e fonte em 2025?"
+        ]
+      },
+      {
+        "id": "00000000000000000000000000000004",
+        "question": [
+          "Qual fonte captura o maior PLD? Compare PLD capturado e PLD médio."
+        ]
+      },
+      {
+        "id": "00000000000000000000000000000005",
+        "question": [
+          "Como a irradiância explica a geração solar ao longo do dia no Conj. Arinos 2 500 kV?"
+        ]
+      },
+      {
+        "id": "00000000000000000000000000000006",
+        "question": [
+          "Quanto da geração foi reconciliada diretamente pelo CEG?"
+        ]
+      }
+    ]
+  },
+  "data_sources": {
+    "tables": [
+      {
+        "identifier": "ampera_catalog.gold.fact_generation_hourly",
+        "column_configs": [
+          {
+            "column_name": "ceg",
+            "description": [
+              "Código CEG da ANEEL. NULL em usinas substitutas (plant_id SURR-…)."
+            ],
+            "synonyms": [
+              "código ANEEL",
+              "CEG"
+            ]
+          },
+          {
+            "column_name": "confidence",
+            "exclude": true
+          },
+          {
+            "column_name": "conjunto_key",
+            "description": [
+              "Chave única do conjunto ONS. Agrupe por ela (nomes de conjunto se repetem) e exiba nom_conjunto."
+            ]
+          },
+          {
+            "column_name": "dist_estacao_km",
+            "exclude": true
+          },
+          {
+            "column_name": "fonte",
+            "description": [
+              "Fonte: HID hidráulica, EOL eólica, SOL solar, THERM térmica, NUC nuclear, OTHER outras."
+            ],
+            "synonyms": [
+              "fonte",
+              "tipo de geração",
+              "combustível",
+              "tecnologia"
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "fonte_medicao",
+            "description": [
+              "Origem do clima medido: ONS (na usina) ou INMET (estação mais próxima ≤ 50 km)."
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "gen_date",
+            "description": [
+              "Data (horário de Brasília)."
+            ],
+            "synonyms": [
+              "dia",
+              "data"
+            ]
+          },
+          {
+            "column_name": "irradiancia_wm2_medida",
+            "description": [
+              "Irradiância medida (W/m²). Do ONS é no plano do painel; do INMET é horizontal."
+            ]
+          },
+          {
+            "column_name": "irradiancia_wm2_modelo",
+            "description": [
+              "Irradiância horizontal do modelo Open-Meteo (W/m²)."
+            ],
+            "synonyms": [
+              "radiação solar",
+              "irradiação"
+            ]
+          },
+          {
+            "column_name": "is_estimated",
+            "description": [
+              "true quando o MWh da hora é estimado (rateio do conjunto), não medido."
+            ]
+          },
+          {
+            "column_name": "match_method",
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "mwh",
+            "description": [
+              "Energia gerada na hora (MWh), grão usina × hora."
+            ],
+            "synonyms": [
+              "geração",
+              "energia",
+              "produção"
+            ]
+          },
+          {
+            "column_name": "nom_conjunto",
+            "description": [
+              "Nome do conjunto (complexo) ONS. NULL se a usina não pertence a um conjunto."
+            ],
+            "synonyms": [
+              "conjunto",
+              "complexo"
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "nome",
+            "description": [
+              "Nome da usina."
+            ],
+            "synonyms": [
+              "usina",
+              "planta"
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "pld_rs_mwh",
+            "description": [
+              "PLD horário da CCEE no submercado (R$/MWh)."
+            ],
+            "synonyms": [
+              "PLD",
+              "preço spot",
+              "preço"
+            ]
+          },
+          {
+            "column_name": "submercado",
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "ts",
+            "description": [
+              "Início da hora, horário de Brasília."
+            ],
+            "synonyms": [
+              "hora",
+              "horário"
+            ]
+          },
+          {
+            "column_name": "uf",
+            "description": [
+              "Estado (UF)."
+            ],
+            "synonyms": [
+              "estado"
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "valor_rs",
+            "description": [
+              "mwh × pld_rs_mwh (R$)."
+            ],
+            "synonyms": [
+              "valor",
+              "receita no PLD"
+            ]
+          },
+          {
+            "column_name": "vento_100m_ms_modelo",
+            "description": [
+              "Vento a 100 m do modelo Open-Meteo (m/s)."
+            ],
+            "synonyms": [
+              "vento",
+              "velocidade do vento"
+            ]
+          }
+        ]
+      },
+      {
+        "identifier": "ampera_catalog.gold.generation_daily",
+        "column_configs": [
+          {
+            "column_name": "ceg",
+            "description": [
+              "Código CEG da ANEEL. NULL em usinas substitutas (plant_id SURR-…)."
+            ],
+            "synonyms": [
+              "código ANEEL",
+              "CEG"
+            ]
+          },
+          {
+            "column_name": "conjunto_key",
+            "description": [
+              "Chave única do conjunto ONS. Agrupe por ela (nomes de conjunto se repetem) e exiba nom_conjunto."
+            ]
+          },
+          {
+            "column_name": "dia",
+            "description": [
+              "Data (horário de Brasília). Uma linha por usina por dia."
+            ],
+            "synonyms": [
+              "data"
+            ]
+          },
+          {
+            "column_name": "fonte",
+            "description": [
+              "Fonte: HID hidráulica, EOL eólica, SOL solar, THERM térmica, NUC nuclear, OTHER outras."
+            ],
+            "synonyms": [
+              "fonte",
+              "tipo de geração",
+              "combustível",
+              "tecnologia"
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "fonte_medicao",
+            "description": [
+              "Origem do clima medido: ONS (na usina) ou INMET (estação mais próxima ≤ 50 km)."
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "irradiancia_wm2_medida",
+            "description": [
+              "Irradiância medida, média do dia (W/m²). Do ONS é no plano do painel; do INMET é horizontal."
+            ]
+          },
+          {
+            "column_name": "irradiancia_wm2_modelo",
+            "description": [
+              "Irradiância horizontal do modelo Open-Meteo, média do dia (W/m²)."
+            ],
+            "synonyms": [
+              "radiação solar",
+              "irradiação"
+            ]
+          },
+          {
+            "column_name": "match_method",
+            "description": [
+              "Como a geração ONS foi ligada ao SIGA: ceg (CEG direto), member_measured / member_estimated (usina de conjunto, medida ou estimada), ons_conjunto (só no nível do conjunto), ons_aggregate (agregados ONS sem usina SIGA), fuzzy (nome aproximado), unmatched."
+            ],
+            "synonyms": [
+              "método de reconciliação",
+              "método de match"
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "mwh",
+            "description": [
+              "Energia gerada no dia (MWh), já inclui mwh_estimado."
+            ],
+            "synonyms": [
+              "geração",
+              "energia",
+              "produção"
+            ]
+          },
+          {
+            "column_name": "mwh_estimado",
+            "description": [
+              "Parte estimada de mwh (MWh). Já está contida em mwh — não somar as duas."
+            ],
+            "synonyms": [
+              "geração estimada"
+            ]
+          },
+          {
+            "column_name": "nom_conjunto",
+            "description": [
+              "Nome do conjunto (complexo) ONS. NULL se a usina não pertence a um conjunto."
+            ],
+            "synonyms": [
+              "conjunto",
+              "complexo"
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "nome",
+            "description": [
+              "Nome da usina."
+            ],
+            "synonyms": [
+              "usina",
+              "planta"
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "plant_id",
+            "description": [
+              "Id da usina: o CEG quando existe, senão SURR-… (substituta)."
+            ]
+          },
+          {
+            "column_name": "pld_capturado_rs_mwh",
+            "description": [
+              "PLD ponderado pela geração da usina no dia. Não tire média desta coluna; recalcule SUM(valor_rs)/SUM(mwh)."
+            ]
+          },
+          {
+            "column_name": "pld_medio_rs_mwh",
+            "description": [
+              "Média simples do PLD horário do submercado no dia (R$/MWh)."
+            ],
+            "synonyms": [
+              "PLD médio",
+              "preço médio"
+            ]
+          },
+          {
+            "column_name": "precip_mm_modelo",
+            "description": [
+              "Precipitação do dia, modelo Open-Meteo (mm)."
+            ],
+            "synonyms": [
+              "chuva"
+            ]
+          },
+          {
+            "column_name": "submercado",
+            "description": [
+              "Submercado / subsistema ONS: SE, S, NE, N."
+            ],
+            "synonyms": [
+              "subsistema",
+              "região"
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "temp_c_modelo",
+            "description": [
+              "Temperatura média do dia, modelo Open-Meteo (°C)."
+            ],
+            "synonyms": [
+              "temperatura"
+            ]
+          },
+          {
+            "column_name": "uf",
+            "description": [
+              "Estado (UF)."
+            ],
+            "synonyms": [
+              "estado"
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "valor_rs",
+            "description": [
+              "Valor da energia ao PLD horário (R$)."
+            ],
+            "synonyms": [
+              "valor",
+              "receita no PLD"
+            ]
+          },
+          {
+            "column_name": "vento_100m_ms_modelo",
+            "description": [
+              "Vento médio do dia a 100 m, modelo Open-Meteo (m/s)."
+            ],
+            "synonyms": [
+              "vento",
+              "velocidade do vento"
+            ]
+          },
+          {
+            "column_name": "vento_ms_medido",
+            "description": [
+              "Vento medido, média do dia (m/s). INMET mede a 10 m (proxy fraco)."
+            ]
+          }
+        ]
+      },
+      {
+        "identifier": "ampera_catalog.gold.plant_location",
+        "column_configs": [
+          {
+            "column_name": "capacidade_mw",
+            "description": [
+              "Potência instalada (MW), cadastro SIGA."
+            ],
+            "synonyms": [
+              "capacidade",
+              "potência"
+            ]
+          },
+          {
+            "column_name": "ceg",
+            "description": [
+              "Código CEG da ANEEL. NULL em usinas substitutas."
+            ],
+            "synonyms": [
+              "código ANEEL"
+            ]
+          },
+          {
+            "column_name": "fonte",
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "fonte_cadastro",
+            "exclude": true
+          },
+          {
+            "column_name": "municipio",
+            "synonyms": [
+              "cidade"
+            ]
+          },
+          {
+            "column_name": "mwh_30d",
+            "description": [
+              "Geração dos últimos 30 dias disponíveis (MWh)."
+            ]
+          },
+          {
+            "column_name": "mwh_estimado_total",
+            "description": [
+              "Parte estimada de mwh_total (MWh)."
+            ]
+          },
+          {
+            "column_name": "mwh_total",
+            "description": [
+              "Geração total do histórico (MWh)."
+            ]
+          },
+          {
+            "column_name": "nom_conjunto",
+            "synonyms": [
+              "conjunto",
+              "complexo"
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "nome",
+            "synonyms": [
+              "usina"
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "uf",
+            "synonyms": [
+              "estado"
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          }
+        ]
+      },
+      {
+        "identifier": "ampera_catalog.gold.reconciliation_monthly",
+        "column_configs": [
+          {
+            "column_name": "grao",
+            "description": [
+              "publicado = séries ONS como publicadas; usina = após dividir conjuntos em usinas. Sempre filtre um grão; nunca some os dois."
+            ],
+            "synonyms": [
+              "grão"
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "match_method",
+            "description": [
+              "Método de reconciliação ONS → SIGA (ver generation_daily.match_method)."
+            ],
+            "synonyms": [
+              "método de reconciliação"
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "mes",
+            "description": [
+              "Primeiro dia do mês."
+            ],
+            "synonyms": [
+              "mês"
+            ]
+          },
+          {
+            "column_name": "n_usinas",
+            "description": [
+              "Usinas distintas no mês. Não somar entre meses."
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "instructions": {
+    "example_question_sqls": [
+      {
+        "id": "10000000000000000000000000000001",
+        "question": [
+          "Quais as 10 usinas com maior geração por CEG em 2025?"
+        ],
+        "sql": [
+          "SELECT g.ceg, MAX(g.nome) AS usina, MAX(g.uf) AS uf, MAX(g.fonte) AS fonte, ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh\nFROM ampera_catalog.gold.generation_daily g\nWHERE g.ceg IS NOT NULL AND g.dia BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY g.ceg\nORDER BY geracao_twh DESC\nLIMIT 10"
+        ],
+        "usage_guidance": [
+          "Geração por CEG / por usina: some mwh por ceg em generation_daily; exclua ceg NULL."
+        ]
+      },
+      {
+        "id": "10000000000000000000000000000002",
+        "question": [
+          "Geração mensal do Conj. Santa Vitória do Palmar"
+        ],
+        "sql": [
+          "SELECT CAST(DATE_TRUNC('MONTH', g.dia) AS DATE) AS mes, ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh, COUNT(DISTINCT g.plant_id) AS n_usinas\nFROM ampera_catalog.gold.generation_daily g\nWHERE g.nom_conjunto = 'Conj. Santa Vitória do Palmar'\nGROUP BY 1\nORDER BY 1"
+        ],
+        "usage_guidance": [
+          "Série temporal de um conjunto. Para rankings de conjuntos agrupe por conjunto_key."
+        ]
+      },
+      {
+        "id": "10000000000000000000000000000003",
+        "question": [
+          "Geração por UF e fonte em 2025"
+        ],
+        "sql": [
+          "SELECT g.uf, g.fonte, ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh\nFROM ampera_catalog.gold.generation_daily g\nWHERE YEAR(g.dia) = 2025\nGROUP BY g.uf, g.fonte\nORDER BY g.uf, geracao_twh DESC"
+        ]
+      },
+      {
+        "id": "10000000000000000000000000000004",
+        "question": [
+          "PLD capturado vs PLD médio por fonte"
+        ],
+        "sql": [
+          "SELECT g.fonte,\n       ROUND(SUM(g.mwh) / 1e6, 1) AS geracao_twh,\n       ROUND(AVG(g.pld_medio_rs_mwh), 2) AS pld_medio_rs_mwh,\n       ROUND(TRY_DIVIDE(SUM(g.valor_rs), SUM(g.mwh)), 2) AS pld_capturado_rs_mwh,\n       ROUND(100 * (TRY_DIVIDE(SUM(g.valor_rs), SUM(g.mwh)) / AVG(g.pld_medio_rs_mwh) - 1), 1) AS desvio_pct\nFROM ampera_catalog.gold.generation_daily g\nGROUP BY g.fonte\nORDER BY pld_capturado_rs_mwh DESC"
+        ],
+        "usage_guidance": [
+          "PLD capturado = SUM(valor_rs) / SUM(mwh) (ponderado pela geração); PLD médio = média simples."
+        ]
+      },
+      {
+        "id": "10000000000000000000000000000005",
+        "question": [
+          "Perfil horário de geração vs irradiância do Conj. Janaúba em 2026"
+        ],
+        "sql": [
+          "SELECT HOUR(f.ts) AS hora,\n       ROUND(SUM(f.mwh) / COUNT(DISTINCT f.gen_date), 1) AS mwh_medio_hora,\n       ROUND(AVG(f.irradiancia_wm2_modelo)) AS irradiancia_modelo_wm2,\n       ROUND(AVG(f.irradiancia_wm2_medida)) AS irradiancia_medida_wm2\nFROM ampera_catalog.gold.fact_generation_hourly f\nWHERE f.nom_conjunto = 'Conj. Janaúba' AND f.gen_date >= '2026-01-01'\nGROUP BY 1\nORDER BY 1"
+        ],
+        "usage_guidance": [
+          "Use fact_generation_hourly só para perfis por hora do dia; sempre filtre conjunto/usina e período."
+        ]
+      },
+      {
+        "id": "10000000000000000000000000000006",
+        "question": [
+          "Quanto da geração vem de cada método de reconciliação?"
+        ],
+        "sql": [
+          "SELECT r.match_method, ROUND(SUM(r.mwh) / 1e6, 2) AS geracao_twh,\n       ROUND(100 * SUM(r.mwh) / SUM(SUM(r.mwh)) OVER (), 1) AS pct\nFROM ampera_catalog.gold.reconciliation_monthly r\nWHERE r.grao = 'usina'\nGROUP BY r.match_method\nORDER BY geracao_twh DESC"
+        ],
+        "usage_guidance": [
+          "reconciliation_monthly: filtre sempre um único grao."
+        ]
+      }
+    ],
+    "text_instructions": [
+      {
+        "id": "20000000000000000000000000000001",
+        "content": [
+          "## PURPOSE\n- Geração elétrica brasileira reconciliada (ONS + ANEEL SIGA), out/2024 a set/2026, com PLD da CCEE e clima. Usuários: analistas e executivos da Ampera.\n\n## DISAMBIGUATION\n- \"Usina\" = plant_id; \"CEG\" = coluna ceg; \"conjunto\" = complexo ONS (agrupe por conjunto_key, exiba nom_conjunto).\n- Perguntas por dia, mês ou ano usam generation_daily; fact_generation_hourly só para perfis por hora.\n- Sem período informado, use todo o histórico e diga isso.\n\n## DATA QUALITY NOTES\n- ceg é NULL em usinas substitutas (plant_id SURR-…); \"geração por CEG\" exclui essas linhas.\n- mwh_estimado já está contido em mwh.\n- Cada tabela está em um único grão (usina × dia, usina × hora): some mwh diretamente, sem deduplicar séries ONS.\n- reconciliation_monthly: nunca some grao publicado com grao usina; para totais use usina.\n- Clima *_modelo vem do Open-Meteo; *_medido/*_medida do ONS ou INMET (fonte_medicao).\n\n## Instructions you must follow when providing summaries\n- Responda em português do Brasil.\n- Energia em MWh, GWh ou TWh com 1–2 casas; preços em R$/MWh com 2 casas.\n- Informe o período usado."
+        ]
+      }
+    ],
+    "join_specs": [
+      {
+        "id": "40000000000000000000000000000001",
+        "left": {
+          "identifier": "ampera_catalog.gold.generation_daily",
+          "alias": "generation_daily"
+        },
+        "right": {
+          "identifier": "ampera_catalog.gold.plant_location",
+          "alias": "plant_location"
+        },
+        "sql": [
+          "`generation_daily`.`plant_id` = `plant_location`.`plant_id`",
+          "--rt=FROM_RELATIONSHIP_TYPE_MANY_TO_ONE--"
+        ]
+      },
+      {
+        "id": "40000000000000000000000000000002",
+        "left": {
+          "identifier": "ampera_catalog.gold.fact_generation_hourly",
+          "alias": "fact_generation_hourly"
+        },
+        "right": {
+          "identifier": "ampera_catalog.gold.plant_location",
+          "alias": "plant_location"
+        },
+        "sql": [
+          "`fact_generation_hourly`.`plant_id` = `plant_location`.`plant_id`",
+          "--rt=FROM_RELATIONSHIP_TYPE_MANY_TO_ONE--"
+        ]
+      }
+    ],
+    "sql_snippets": {
+      "measures": [
+        {
+          "id": "30000000000000000000000000000001",
+          "alias": "geracao_twh",
+          "display_name": "Geração (TWh)",
+          "sql": [
+            "SUM(generation_daily.mwh) / 1e6"
+          ],
+          "synonyms": [
+            "geração em TWh",
+            "energia gerada"
+          ]
+        },
+        {
+          "id": "30000000000000000000000000000002",
+          "alias": "pld_capturado_rs_mwh",
+          "display_name": "PLD capturado (R$/MWh)",
+          "sql": [
+            "TRY_DIVIDE(SUM(generation_daily.valor_rs), SUM(generation_daily.mwh))"
+          ],
+          "synonyms": [
+            "preço capturado",
+            "PLD ponderado",
+            "preço médio ponderado"
+          ]
+        },
+        {
+          "id": "30000000000000000000000000000003",
+          "alias": "pct_estimado",
+          "display_name": "% estimado",
+          "sql": [
+            "100 * TRY_DIVIDE(SUM(generation_daily.mwh_estimado), SUM(generation_daily.mwh))"
+          ],
+          "synonyms": [
+            "parcela estimada",
+            "geração estimada %"
+          ]
+        }
+      ],
+      "filters": [
+        {
+          "id": "31000000000000000000000000000001",
+          "display_name": "Usinas com CEG",
+          "sql": [
+            "generation_daily.ceg IS NOT NULL"
+          ],
+          "synonyms": [
+            "por CEG",
+            "usinas cadastradas"
+          ]
+        },
+        {
+          "id": "31000000000000000000000000000002",
+          "display_name": "Últimos 12 meses",
+          "sql": [
+            "generation_daily.dia > ADD_MONTHS((SELECT MAX(generation_daily.dia) FROM ampera_catalog.gold.generation_daily), -12)"
+          ],
+          "synonyms": [
+            "último ano",
+            "últimos doze meses"
+          ]
+        }
+      ]
+    }
+  },
+  "benchmarks": {
+    "questions": [
+      {
+        "id": "50000000000000000000000000000001",
+        "question": [
+          "Quanto a usina Belo Monte gerou em 2025?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.gold.generation_daily g WHERE g.ceg = 'UHE.PH.PA.030354-2.1' AND YEAR(g.dia) = 2025"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "50000000000000000000000000000002",
+        "question": [
+          "Qual a geração em 2025 do CEG UHE.PH.PA.030354-2.1?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.gold.generation_daily g WHERE g.ceg = 'UHE.PH.PA.030354-2.1' AND YEAR(g.dia) = 2025"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "50000000000000000000000000000003",
+        "question": [
+          "Quais os 5 conjuntos com maior geração em 2025?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT g.conjunto_key, MAX(g.nom_conjunto) AS conjunto, ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh FROM ampera_catalog.gold.generation_daily g WHERE g.conjunto_key IS NOT NULL AND YEAR(g.dia) = 2025 GROUP BY g.conjunto_key ORDER BY geracao_gwh DESC LIMIT 5"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "50000000000000000000000000000004",
+        "question": [
+          "Ranking dos 5 maiores conjuntos por geração em 2025"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT g.conjunto_key, MAX(g.nom_conjunto) AS conjunto, ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh FROM ampera_catalog.gold.generation_daily g WHERE g.conjunto_key IS NOT NULL AND YEAR(g.dia) = 2025 GROUP BY g.conjunto_key ORDER BY geracao_gwh DESC LIMIT 5"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "50000000000000000000000000000005",
+        "question": [
+          "Quantos TWh a Bahia gerou em 2025?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.gold.generation_daily g WHERE g.uf = 'BA' AND YEAR(g.dia) = 2025"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "50000000000000000000000000000006",
+        "question": [
+          "Qual a geração total do estado BA em 2025?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.gold.generation_daily g WHERE g.uf = 'BA' AND YEAR(g.dia) = 2025"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "50000000000000000000000000000007",
+        "question": [
+          "Qual a geração solar mensal em 2025?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT CAST(DATE_TRUNC('MONTH', g.dia) AS DATE) AS mes, ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh FROM ampera_catalog.gold.generation_daily g WHERE g.fonte = 'SOL' AND YEAR(g.dia) = 2025 GROUP BY 1 ORDER BY 1"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "50000000000000000000000000000008",
+        "question": [
+          "Mostre a evolução mês a mês da geração fotovoltaica em 2025"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT CAST(DATE_TRUNC('MONTH', g.dia) AS DATE) AS mes, ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh FROM ampera_catalog.gold.generation_daily g WHERE g.fonte = 'SOL' AND YEAR(g.dia) = 2025 GROUP BY 1 ORDER BY 1"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "50000000000000000000000000000009",
+        "question": [
+          "Qual o PLD capturado pelas eólicas em 2025?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT ROUND(TRY_DIVIDE(SUM(g.valor_rs), SUM(g.mwh)), 2) AS pld_capturado_rs_mwh FROM ampera_catalog.gold.generation_daily g WHERE g.fonte = 'EOL' AND YEAR(g.dia) = 2025"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "5000000000000000000000000000000a",
+        "question": [
+          "Qual o preço médio ponderado pela geração da fonte eólica em 2025?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT ROUND(TRY_DIVIDE(SUM(g.valor_rs), SUM(g.mwh)), 2) AS pld_capturado_rs_mwh FROM ampera_catalog.gold.generation_daily g WHERE g.fonte = 'EOL' AND YEAR(g.dia) = 2025"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "5000000000000000000000000000000b",
+        "question": [
+          "Qual a velocidade média do vento (modelo) e a geração eólica total no RS em julho de 2026?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh, ROUND(AVG(g.vento_100m_ms_modelo), 2) AS vento_medio_ms FROM ampera_catalog.gold.generation_daily g WHERE g.fonte = 'EOL' AND g.uf = 'RS' AND g.dia BETWEEN '2026-07-01' AND '2026-07-31'"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "5000000000000000000000000000000c",
+        "question": [
+          "Em julho de 2026, quanto geraram as eólicas do Rio Grande do Sul e qual foi o vento médio do modelo?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh, ROUND(AVG(g.vento_100m_ms_modelo), 2) AS vento_medio_ms FROM ampera_catalog.gold.generation_daily g WHERE g.fonte = 'EOL' AND g.uf = 'RS' AND g.dia BETWEEN '2026-07-01' AND '2026-07-31'"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "5000000000000000000000000000000d",
+        "question": [
+          "Qual a geração total de todo o histórico?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.gold.generation_daily g"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "5000000000000000000000000000000e",
+        "question": [
+          "Quanto foi gerado no total, em TWh, no período disponível?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.gold.generation_daily g"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "5000000000000000000000000000000f",
+        "question": [
+          "Qual submercado gerou mais energia em 2025?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT g.submercado, ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.gold.generation_daily g WHERE YEAR(g.dia) = 2025 GROUP BY g.submercado ORDER BY geracao_twh DESC LIMIT 1"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "50000000000000000000000000000010",
+        "question": [
+          "Mostre a geração por submercado em 2025"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT g.submercado, ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.gold.generation_daily g WHERE YEAR(g.dia) = 2025 GROUP BY g.submercado ORDER BY geracao_twh DESC"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "50000000000000000000000000000011",
+        "question": [
+          "Qual a participação de cada fonte na geração de todo o histórico?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT g.fonte, ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh, ROUND(100 * SUM(g.mwh) / SUM(SUM(g.mwh)) OVER (), 1) AS pct FROM ampera_catalog.gold.generation_daily g GROUP BY g.fonte ORDER BY geracao_twh DESC"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "50000000000000000000000000000012",
+        "question": [
+          "Qual a capacidade instalada total das usinas solares?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT ROUND(SUM(l.capacidade_mw), 1) AS capacidade_mw FROM ampera_catalog.gold.plant_location l WHERE l.fonte = 'SOL'"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "50000000000000000000000000000013",
+        "question": [
+          "Quais os 5 estados com maior geração eólica em todo o histórico?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT g.uf, ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.gold.generation_daily g WHERE g.fonte = 'EOL' GROUP BY g.uf ORDER BY geracao_twh DESC LIMIT 5"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "50000000000000000000000000000014",
+        "question": [
+          "Que percentual da geração total é estimado?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT ROUND(100 * SUM(g.mwh_estimado) / SUM(g.mwh), 2) AS pct_estimado FROM ampera_catalog.gold.generation_daily g"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "50000000000000000000000000000015",
+        "question": [
+          "Quanto valeu a geração de Itaipu no PLD em 2025?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT ROUND(SUM(g.valor_rs) / 1e9, 2) AS valor_rs_bilhoes FROM ampera_catalog.gold.generation_daily g WHERE g.ceg = 'UHE.PH.PR.001161-4.1' AND YEAR(g.dia) = 2025"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "50000000000000000000000000000016",
+        "question": [
+          "Em que mês a geração solar foi a maior?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT CAST(DATE_TRUNC('MONTH', g.dia) AS DATE) AS mes, ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh FROM ampera_catalog.gold.generation_daily g WHERE g.fonte = 'SOL' GROUP BY 1 ORDER BY geracao_gwh DESC LIMIT 1"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "50000000000000000000000000000017",
+        "question": [
+          "Quantas usinas eólicas existem na Bahia?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT COUNT(*) AS n_usinas FROM ampera_catalog.gold.plant_location l WHERE l.fonte = 'EOL' AND l.uf = 'BA'"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "50000000000000000000000000000018",
+        "question": [
+          "Compare a geração do primeiro semestre de 2025 com o de 2026"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT YEAR(g.dia) AS ano, ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.gold.generation_daily g WHERE MONTH(g.dia) <= 6 AND YEAR(g.dia) IN (2025, 2026) GROUP BY 1 ORDER BY 1"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "50000000000000000000000000000019",
+        "question": [
+          "Qual o PLD capturado em cada submercado em 2025?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT g.submercado, ROUND(TRY_DIVIDE(SUM(g.valor_rs), SUM(g.mwh)), 2) AS pld_capturado_rs_mwh FROM ampera_catalog.gold.generation_daily g WHERE YEAR(g.dia) = 2025 GROUP BY g.submercado ORDER BY g.submercado"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "5000000000000000000000000000001a",
+        "question": [
+          "Qual a geração média por hora do dia do Conj. Futura em 2026?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT HOUR(f.ts) AS hora, ROUND(SUM(f.mwh) / COUNT(DISTINCT f.gen_date), 1) AS mwh_medio_hora FROM ampera_catalog.gold.fact_generation_hourly f WHERE f.nom_conjunto = 'Conj. Futura' AND f.gen_date >= '2026-01-01' GROUP BY 1 ORDER BY 1"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "5000000000000000000000000000001b",
+        "question": [
+          "Quanto da geração de 2025 foi reconciliada diretamente pelo CEG?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT ROUND(SUM(CASE WHEN r.match_method = 'ceg' THEN r.mwh END) / 1e6, 2) AS ceg_twh, ROUND(100 * SUM(CASE WHEN r.match_method = 'ceg' THEN r.mwh END) / SUM(r.mwh), 1) AS pct FROM ampera_catalog.gold.reconciliation_monthly r WHERE r.grao = 'usina' AND YEAR(r.mes) = 2025"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "5000000000000000000000000000001c",
+        "question": [
+          "Quantas usinas não têm CEG?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT COUNT(*) AS n_usinas FROM ampera_catalog.gold.plant_location l WHERE l.ceg IS NULL"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "5000000000000000000000000000001d",
+        "question": [
+          "Qual a temperatura média do modelo nas usinas solares de MG em janeiro de 2026?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT ROUND(AVG(g.temp_c_modelo), 1) AS temp_media_c FROM ampera_catalog.gold.generation_daily g WHERE g.fonte = 'SOL' AND g.uf = 'MG' AND g.dia BETWEEN '2026-01-01' AND '2026-01-31'"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "5000000000000000000000000000001e",
+        "question": [
+          "Quais as 3 usinas com maior valor de energia no PLD em 2025?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT g.plant_id, MAX(g.nome) AS usina, ROUND(SUM(g.valor_rs) / 1e9, 2) AS valor_rs_bilhoes FROM ampera_catalog.gold.generation_daily g WHERE YEAR(g.dia) = 2025 GROUP BY g.plant_id ORDER BY valor_rs_bilhoes DESC LIMIT 3"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "5000000000000000000000000000001f",
+        "question": [
+          "Mostre a geração nuclear mês a mês em 2025"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT CAST(DATE_TRUNC('MONTH', g.dia) AS DATE) AS mes, ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh FROM ampera_catalog.gold.generation_daily g WHERE g.fonte = 'NUC' AND YEAR(g.dia) = 2025 GROUP BY 1 ORDER BY 1"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "50000000000000000000000000000020",
+        "question": [
+          "Qual a geração eólica média por dia no Rio Grande do Norte em agosto de 2026?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT ROUND(SUM(g.mwh) / COUNT(DISTINCT g.dia), 1) AS mwh_por_dia FROM ampera_catalog.gold.generation_daily g WHERE g.fonte = 'EOL' AND g.uf = 'RN' AND g.dia BETWEEN '2026-08-01' AND '2026-08-31'"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

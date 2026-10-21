@@ -1,0 +1,13 @@
+resources:
+  pipelines:
+    ampera_medallion:
+      name: ampera_medallion
+      catalog: ${var.catalog}
+      schema: bronze          # default publish schema; silver/gold use schema-qualified names
+      configuration:
+        catalog: ${var.catalog}   # ${catalog} in the bronze volume paths
+      serverless: true
+      continuous: false
+      libraries:
+        - glob:
+            include: ../src/transformations/**

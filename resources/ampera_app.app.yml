@@ -1,0 +1,14 @@
+# Ampera app (FastAPI + React) reading Lakebase gold_lb. Spec: specs/06-app.md
+# Build the frontend first: (cd app/frontend && npm ci && npm run build)
+resources:
+  apps:
+    ampera_app:
+      name: ampera-app
+      description: Geração reconciliada ONS + ANEEL SIGA
+      source_code_path: ../app
+      resources:
+        - name: postgres
+          postgres:
+            branch: projects/${var.lakebase_project}/branches/production
+            database: projects/${var.lakebase_project}/branches/production/databases/databricks-postgres
+            permission: CAN_CONNECT_AND_CREATE

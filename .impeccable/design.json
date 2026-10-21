@@ -1,0 +1,650 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-07T00:00:00+00:00",
+  "title": "Design System: Ampera · Geração reconciliada",
+  "extensions": {
+    "colorMeta": {
+      "survey-purple": {
+        "role": "primary",
+        "displayName": "Survey Purple",
+        "canonical": "#541790",
+        "tonalRamp": [
+          "#100321",
+          "#2f1051",
+          "#512287",
+          "#733fb5",
+          "#9563dc",
+          "#b886ff",
+          "#d9b1ff",
+          "#f9dfff"
+        ]
+      },
+      "survey-purple-lift": {
+        "role": "primary",
+        "displayName": "Lifted Purple",
+        "canonical": "#6a24b0",
+        "tonalRamp": [
+          "#110224",
+          "#310957",
+          "#541690",
+          "#7735bf",
+          "#995be6",
+          "#bc80ff",
+          "#dcacff",
+          "#fcdcff"
+        ]
+      },
+      "signal-blue": {
+        "role": "secondary",
+        "displayName": "Signal Blue",
+        "canonical": "#0089f7",
+        "tonalRamp": [
+          "#000a26",
+          "#00225b",
+          "#003d97",
+          "#005ec8",
+          "#0082ef",
+          "#37a7ff",
+          "#76ceff",
+          "#b8f4ff"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#0a0a0a",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "ink-secondary": {
+        "role": "neutral",
+        "displayName": "Ink Secondary",
+        "canonical": "#626262",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "ink-tertiary": {
+        "role": "neutral",
+        "displayName": "Ink Tertiary",
+        "canonical": "#8a8794",
+        "tonalRamp": [
+          "#0b0b0e",
+          "#25242a",
+          "#43404a",
+          "#625f6b",
+          "#83808d",
+          "#a6a3b0",
+          "#cac7d3",
+          "#efedf5"
+        ]
+      },
+      "sheet-white": {
+        "role": "neutral",
+        "displayName": "Sheet White",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "table-grey": {
+        "role": "neutral",
+        "displayName": "Table Grey",
+        "canonical": "#f8f8f8",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "lavender-tint": {
+        "role": "neutral",
+        "displayName": "Lavender Tint",
+        "canonical": "#eae9f6",
+        "tonalRamp": [
+          "#0b0b0e",
+          "#25242a",
+          "#42414a",
+          "#61606b",
+          "#82818c",
+          "#a4a3b0",
+          "#c9c8d2",
+          "#eeedf5"
+        ]
+      },
+      "hover-wash": {
+        "role": "neutral",
+        "displayName": "Hover Wash",
+        "canonical": "#f7f6fb",
+        "tonalRamp": [
+          "#0b0b0c",
+          "#252527",
+          "#424145",
+          "#616065",
+          "#828286",
+          "#a5a4a9",
+          "#c9c8cc",
+          "#eeeef1"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Rule",
+        "canonical": "#e4e2ec",
+        "tonalRamp": [
+          "#0b0b0d",
+          "#252429",
+          "#424148",
+          "#626068",
+          "#83818a",
+          "#a5a3ad",
+          "#c9c8d0",
+          "#efedf3"
+        ]
+      },
+      "rule-faint": {
+        "role": "neutral",
+        "displayName": "Rule Faint",
+        "canonical": "#f0eff5",
+        "tonalRamp": [
+          "#0b0b0c",
+          "#252527",
+          "#424145",
+          "#616065",
+          "#828187",
+          "#a5a4aa",
+          "#c9c8cd",
+          "#eeeef1"
+        ]
+      },
+      "plot-grid": {
+        "role": "neutral",
+        "displayName": "Plot Grid",
+        "canonical": "#ecebf2",
+        "tonalRamp": [
+          "#0b0b0c",
+          "#252528",
+          "#424146",
+          "#616066",
+          "#828188",
+          "#a5a4ab",
+          "#c9c8ce",
+          "#eeeef2"
+        ]
+      },
+      "axis-line": {
+        "role": "neutral",
+        "displayName": "Axis Line",
+        "canonical": "#d9d7e3",
+        "tonalRamp": [
+          "#0b0b0d",
+          "#25242a",
+          "#424149",
+          "#61606a",
+          "#82818c",
+          "#a5a3af",
+          "#c9c8d2",
+          "#eeedf4"
+        ]
+      },
+      "control-stroke": {
+        "role": "neutral",
+        "displayName": "Control Stroke",
+        "canonical": "#d6d3e1",
+        "tonalRamp": [
+          "#0b0b0e",
+          "#25242a",
+          "#43404a",
+          "#625f6b",
+          "#83808d",
+          "#a6a3b0",
+          "#cac7d3",
+          "#efedf5"
+        ]
+      },
+      "ghost-stroke": {
+        "role": "neutral",
+        "displayName": "Ghost Stroke",
+        "canonical": "#cfc6e3",
+        "tonalRamp": [
+          "#0c0a10",
+          "#272230",
+          "#453e53",
+          "#645c76",
+          "#867d98",
+          "#a8a0bc",
+          "#ccc5dd",
+          "#f1ebfd"
+        ]
+      },
+      "fonte-hid": {
+        "role": "data",
+        "displayName": "Hidráulica",
+        "canonical": "#0089f7",
+        "tonalRamp": [
+          "#000a26",
+          "#00225b",
+          "#003d97",
+          "#005ec8",
+          "#0082ef",
+          "#37a7ff",
+          "#76ceff",
+          "#b8f4ff"
+        ]
+      },
+      "fonte-eol": {
+        "role": "data",
+        "displayName": "Eólica",
+        "canonical": "#8047c6",
+        "tonalRamp": [
+          "#100322",
+          "#300e53",
+          "#531d8b",
+          "#753bb9",
+          "#975fe0",
+          "#ba84ff",
+          "#dbafff",
+          "#fadeff"
+        ]
+      },
+      "fonte-sol": {
+        "role": "data",
+        "displayName": "Solar",
+        "canonical": "#f26200",
+        "tonalRamp": [
+          "#200000",
+          "#4f0000",
+          "#840000",
+          "#b32200",
+          "#db4d00",
+          "#ff7325",
+          "#ffa26a",
+          "#ffd6b0"
+        ]
+      },
+      "fonte-therm": {
+        "role": "data",
+        "displayName": "Térmica",
+        "canonical": "#b0175a",
+        "tonalRamp": [
+          "#1f0009",
+          "#4d0021",
+          "#80003b",
+          "#ae1459",
+          "#d74379",
+          "#ff699c",
+          "#ff9ac1",
+          "#ffd0e9"
+        ]
+      },
+      "fonte-nuc": {
+        "role": "data",
+        "displayName": "Nuclear",
+        "canonical": "#00a39b",
+        "tonalRamp": [
+          "#00100e",
+          "#002f2c",
+          "#00514c",
+          "#00746e",
+          "#00978f",
+          "#37bbb3",
+          "#79ddd5",
+          "#bcfdf7"
+        ]
+      },
+      "fonte-other": {
+        "role": "data",
+        "displayName": "Outras",
+        "canonical": "#8f8a2a",
+        "tonalRamp": [
+          "#0d0c00",
+          "#2a2600",
+          "#494400",
+          "#6a6400",
+          "#8b8625",
+          "#aeaa4d",
+          "#d1ce81",
+          "#f4f2be"
+        ]
+      },
+      "method-ceg": {
+        "role": "data",
+        "displayName": "CEG exato",
+        "canonical": "#541790",
+        "tonalRamp": [
+          "#100321",
+          "#2f1051",
+          "#512287",
+          "#733fb5",
+          "#9563dc",
+          "#b886ff",
+          "#d9b1ff",
+          "#f9dfff"
+        ]
+      },
+      "method-member": {
+        "role": "data",
+        "displayName": "Membro medido / estimado",
+        "canonical": "#b08ae8",
+        "tonalRamp": [
+          "#0f051c",
+          "#2d1847",
+          "#4f2d77",
+          "#704aa2",
+          "#926cc7",
+          "#b58fed",
+          "#d7b7ff",
+          "#f8e2ff"
+        ]
+      },
+      "method-fuzzy": {
+        "role": "data",
+        "displayName": "Nome aproximado",
+        "canonical": "#e3d8f6",
+        "tonalRamp": [
+          "#0c0a10",
+          "#272230",
+          "#463d53",
+          "#665c76",
+          "#877d98",
+          "#aa9fbc",
+          "#cdc4dd",
+          "#f1ebfd"
+        ]
+      },
+      "method-conjunto": {
+        "role": "data",
+        "displayName": "Conjunto ONS",
+        "canonical": "#6e6478",
+        "tonalRamp": [
+          "#0c0a0f",
+          "#28222d",
+          "#463e4e",
+          "#665c70",
+          "#887d92",
+          "#aba0b6",
+          "#cec5d8",
+          "#f2ebf9"
+        ]
+      },
+      "method-aggregate": {
+        "role": "data",
+        "displayName": "Agregado estadual",
+        "canonical": "#b5b5b5",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "method-unmatched": {
+        "role": "data",
+        "displayName": "Não reconciliado",
+        "canonical": "#0a0a0a",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Period total figure in the margin."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Sheet title, one per page."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Board and panel headings below the frame."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Scope lines, ledes, prose."
+      },
+      "ui": {
+        "displayName": "UI",
+        "purpose": "Buttons, segmented control, legend rows, index names."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Filter labels, notes, sources, tooltips."
+      },
+      "corner": {
+        "displayName": "Corner",
+        "purpose": "Neat-line corner labels: real period or coordinates."
+      }
+    },
+    "shadows": [
+      {
+        "name": "sheet-lift",
+        "value": "6px 6px 18px rgba(40, 16, 80, 0.1), 0 1px 2px rgba(10, 10, 10, 0.06)",
+        "purpose": "The sheet on the table, and floating readouts (tooltips, map popups, map controls). The only shadow."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "House ease for every transition and the draw-in."
+      },
+      {
+        "name": "neat-line-draw",
+        "value": "1100ms",
+        "purpose": "Neat line strokes itself in on sheet change."
+      },
+      {
+        "name": "plot-draw",
+        "value": "700ms",
+        "purpose": "Chart entry animation; off under reduced motion."
+      },
+      {
+        "name": "map-glide",
+        "value": "900ms, ease-out expo",
+        "purpose": "Map camera to a filter's plants (or back to Brazil); jumps under reduced motion and on resize."
+      },
+      {
+        "name": "state",
+        "value": "0.15s-0.25s",
+        "purpose": "Hover, press and dim transitions."
+      },
+      {
+        "name": "dim",
+        "value": "opacity 0.32 over 0.2s",
+        "purpose": "Non-selected series, rows and legend items when one is focused."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "stack-margin",
+        "value": "1180px"
+      },
+      {
+        "name": "reading-order",
+        "value": "900px"
+      },
+      {
+        "name": "phone",
+        "value": "520px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The action: open a plant sheet, retry a failed read.",
+      "html": "<button class=\"ds-btn\">Abrir ficha da usina</button>",
+      "css": ".ds-btn { display:inline-flex; align-items:center; gap:10px; padding:10px 20px; border:1px solid var(--primary, #541790); border-radius:4px; background:var(--primary, #541790); color:#fff; font-family: \"Nunito\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif; font-weight:600; font-size:0.9375rem; cursor:pointer; transition:background-color .25s cubic-bezier(0.16, 1, 0.3, 1), border-color .25s cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn:hover { background:var(--primary-hover, #6a24b0); border-color:var(--primary-hover, #6a24b0); } .ds-btn:focus-visible { outline: 2px solid var(--secondary, #0089f7); outline-offset: 2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary actions: clear filters, clear selection, back to map.",
+      "html": "<button class=\"ds-btn-ghost\">Limpar filtros</button>",
+      "css": ".ds-btn-ghost { display:inline-flex; align-items:center; gap:10px; padding:10px 20px; border:1px solid #cfc6e3; border-radius:4px; background:transparent; color:var(--primary, #541790); font-family: \"Nunito\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif; font-weight:600; font-size:0.9375rem; cursor:pointer; transition:background-color .25s cubic-bezier(0.16, 1, 0.3, 1), border-color .25s cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn-ghost:hover { background:var(--tint, #eae9f6); border-color:var(--primary, #541790); } .ds-btn-ghost:focus-visible { outline: 2px solid var(--secondary, #0089f7); outline-offset: 2px; }"
+    },
+    {
+      "name": "Filter Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Labelled filter select or search above the sheet.",
+      "html": "<label class=\"ds-field\">Usina (nome ou CEG)<input placeholder=\"Buscar usina…\"></label>",
+      "css": ".ds-field { display:flex; flex-direction:column; gap:4px; font-family: \"Nunito\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif; font-size:0.8125rem; font-weight:700; color:#626262; width:16rem; } .ds-field input { height:40px; padding:0 12px; font-family: \"Nunito\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif; font-weight:500; font-size:0.9375rem; color:#0a0a0a; background:#fff; border:1px solid #d6d3e1; border-radius:4px; transition:border-color .2s cubic-bezier(0.16, 1, 0.3, 1); } .ds-field input::placeholder { color:#626262; } .ds-field input:hover { border-color:#b7aed0; } .ds-field input:focus-visible { outline: 2px solid var(--secondary, #0089f7); outline-offset: 2px; }"
+    },
+    {
+      "name": "Sheet Index",
+      "kind": "nav",
+      "refersTo": "sheet-index-cell",
+      "description": "Four joined cells naming the sheets; current sheet in lavender with a purple border.",
+      "html": "<nav class=\"ds-index\"><a class=\"ds-cell\" aria-current=\"page\" href=\"#\"><b>Visão geral</b><span>geração por fonte, CEG e conjunto</span></a><a class=\"ds-cell\" href=\"#\"><b>Reconciliação</b><span>como o ONS liga à ANEEL</span></a><a class=\"ds-cell\" href=\"#\"><b>Mapa</b><span>usinas por coordenada</span></a><span class=\"ds-cell is-off\"><b>Usina</b><span>escolha no mapa</span></span></nav>",
+      "css": ".ds-index { display:grid; grid-template-columns:repeat(4, minmax(0, 11.5rem)); font-family: \"Nunito\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif; } .ds-cell { display:flex; flex-direction:column; padding:8px 14px; margin-left:-1px; border:1px solid #dcd9e6; text-decoration:none; color:#0a0a0a; transition:background-color .2s cubic-bezier(0.16, 1, 0.3, 1), border-color .2s cubic-bezier(0.16, 1, 0.3, 1); } .ds-cell:first-child { border-radius:4px 0 0 4px; margin-left:0; } .ds-cell:last-child { border-radius:0 4px 4px 0; } .ds-cell b { font-weight:700; font-size:0.9375rem; } .ds-cell span { font-size:0.75rem; color:#626262; line-height:1.3; } a.ds-cell:hover { background:#f7f6fb; } .ds-cell[aria-current=\"page\"] { background:#eae9f6; border-color:#541790; position:relative; z-index:1; } .ds-cell[aria-current=\"page\"] b { color:#541790; } .ds-cell.is-off, .ds-cell.is-off span { color:#8a8794; } .ds-cell:focus-visible { outline: 2px solid var(--secondary, #0089f7); outline-offset: 2px; }"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "chip",
+      "refersTo": "segmented-on",
+      "description": "Radiogroup for a grain or view toggle.",
+      "html": "<div class=\"ds-seg\" role=\"radiogroup\"><button role=\"radio\" aria-checked=\"true\">Usina</button><button role=\"radio\" aria-checked=\"false\">Publicado</button></div>",
+      "css": ".ds-seg { display:inline-flex; border:1px solid #cfc6e3; border-radius:4px; overflow:hidden; } .ds-seg button { padding:9px 16px; border:0; background:#fff; color:#541790; font-family: \"Nunito\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif; font-weight:600; font-size:0.9375rem; cursor:pointer; transition:background-color .2s cubic-bezier(0.16, 1, 0.3, 1); } .ds-seg button + button { border-left:1px solid #cfc6e3; } .ds-seg button:hover { background:#eae9f6; } .ds-seg button[aria-checked=\"true\"] { background:#541790; color:#fff; } .ds-seg button:focus-visible { outline: 2px solid var(--secondary, #0089f7); outline-offset: 2px; }"
+    },
+    {
+      "name": "Estimado Tag",
+      "kind": "chip",
+      "refersTo": null,
+      "description": "Marks an estimated quantity with the blue hatch.",
+      "html": "<span class=\"ds-tag\">estimado</span>",
+      "css": ".ds-tag { font-family: \"Nunito\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif; font-size:0.71875rem; font-weight:700; padding:1px 6px; border-radius:3px; color:#0a0a0a; background:repeating-linear-gradient(45deg, rgba(0,137,247,.2) 0 3px, rgba(0,137,247,.06) 3px 6px); }"
+    },
+    {
+      "name": "Neat-line Sheet",
+      "kind": "card",
+      "refersTo": "sheet",
+      "description": "The sheet with its single plot frame, purple neat line and period corners.",
+      "html": "<section class=\"ds-sheet\"><h1>Geração reconciliada</h1><p class=\"ds-scope\">Brasil · todas as fontes</p><div class=\"ds-neat\"><svg aria-hidden=\"true\"><rect pathLength=\"1\"/></svg><span class=\"ds-corner ds-tl\">01/10/2024</span><span class=\"ds-corner ds-tr\">30/09/2026</span><div class=\"ds-plot\"></div></div></section>",
+      "css": ".ds-sheet { font-family: \"Nunito\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif; background:#fff; border-radius:5px; box-shadow:6px 6px 18px rgba(40,16,80,.1), 0 1px 2px rgba(10,10,10,.06); padding:28px 32px 32px; color:#0a0a0a; } .ds-sheet h1 { margin:0; font-size:2.25rem; font-weight:800; line-height:1.1; letter-spacing:-0.015em; } .ds-scope { margin:6px 0 26px; color:#626262; } .ds-neat { position:relative; padding:30px 26px 26px; } .ds-neat svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; } .ds-neat rect { x:.75px; y:.75px; width:calc(100% - 1.5px); height:calc(100% - 1.5px); fill:none; stroke:#541790; stroke-width:1.5; stroke-dasharray:1; stroke-dashoffset:1; animation:ds-draw 1100ms cubic-bezier(0.16, 1, 0.3, 1) forwards; } @keyframes ds-draw { to { stroke-dashoffset:0; } } @media (prefers-reduced-motion: reduce) { .ds-neat rect { animation:none; stroke-dashoffset:0; } } .ds-corner { position:absolute; top:-9px; padding:0 8px; background:#fff; font-size:0.75rem; font-weight:700; line-height:18px; color:#541790; font-variant-numeric:tabular-nums; } .ds-tl { left:18px; } .ds-tr { right:18px; } .ds-plot { height:120px; background:repeating-linear-gradient(to top, #ecebf2 0 1px, transparent 1px 30px); }"
+    },
+    {
+      "name": "Margin Total + Whole Bar",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "The margin's period total with a whole bar that visibly fills 100%.",
+      "html": "<div class=\"ds-total\"><h2>Total do período</h2><p class=\"ds-fig\"><span>1.404,2</span> TWh</p><div class=\"ds-whole\"><i style=\"--c:#0089f7;flex-grow:58.2\"></i><i style=\"--c:#8047c6;flex-grow:15.9\"></i><i style=\"--c:#f26200;flex-grow:13.5\"></i><i style=\"--c:#b0175a;flex-grow:8.1\"></i><i style=\"--c:#00a39b;flex-grow:2.1\"></i><i style=\"--c:#8f8a2a;flex-grow:2.2\"></i></div></div>",
+      "css": ".ds-total { font-family: \"Nunito\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif; width:19rem; color:#0a0a0a; } .ds-total h2 { margin:0 0 10px; font-size:1rem; font-weight:800; } .ds-fig { margin:0 0 14px; font-size:1.5rem; font-weight:700; line-height:1.1; } .ds-fig span { font-size:3rem; font-weight:800; letter-spacing:-0.02em; color:#541790; font-variant-numeric:tabular-nums; } .ds-whole { display:flex; gap:2px; height:14px; } .ds-whole i { background:var(--c); min-width:2px; } .ds-whole i:first-child { border-radius:3px 0 0 3px; } .ds-whole i:last-child { border-radius:0 3px 3px 0; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Surveyed Sheet",
+    "overview": "Every page is a carta topográfica: a white sheet laid on a pale grey table, a title block at the head, one plot enclosed by a purple neat line, and a margin column carrying the legend, totals, notes and sources the way a printed survey sheet carries its key. Boards and tables sit on the sheet below the frame. The page reads like a document that was measured, not a dashboard that was assembled.\n\nDensity is moderate and projector-legible: 16px Nunito body, an 800-weight title block, tabular numerals everywhere a number appears. Chrome is quiet and purple; colour of meaning (fonte, match method) lives only in marks. The neat line's corners carry real coordinates or the real period of the plot, never decoration. The one motion is an ink-draw: the neat line strokes itself in and the plot animates in on sheet change. The map camera's glide to a filter is the only other motion.\n\nThe world refuses the KPI-card grid with a left sidebar. Navigation is a sheet index (four cells across the top strip), not a sidebar; the total sits in the margin, not in a stat card.",
+    "keyCharacteristics": [
+      "One plot per neat-line frame; the margin column is the key.",
+      "Purple survey chrome, colour quarantined to plot marks and swatches.",
+      "Corner labels and graticule ticks carry real dates and degrees.",
+      "Breakdowns visibly fill 100% (whole bars, shares summing to 100%).",
+      "Selection lifts one series and dims the rest across plot, legend and board.",
+      "Fixed-column boards whose values update in place."
+    ],
+    "rules": [
+      {
+        "name": "The Quarantine Rule",
+        "body": "Fonte and method hues appear only as marks: bars, areas, lines, map circles, swatches and dots. Text beside a swatch stays in ink; chrome stays purple and grey.",
+        "section": "colors"
+      },
+      {
+        "name": "The Separate Ramps Rule",
+        "body": "A method colour is never a fonte hue. Any new categorical ramp must clear the existing ones, not borrow from them.",
+        "section": "colors"
+      },
+      {
+        "name": "The Hatch Means Estimated Rule",
+        "body": "A 45° hatch of a hue (2px colour, 3px at 28% tint) marks an estimated quantity, in plots, whole bars and the \"estimado\" tag alike. It means nothing else.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Rule",
+        "body": "Every numeric cell, axis tick, corner and total uses tabular numerals and right alignment in columns. Numbers format pt-BR (comma decimal, dot thousands), with the unit chosen to stay readable (MWh, GWh, TWh; R$ mi, R$ bi) and an em dash for missing values.",
+        "section": "typography"
+      },
+      {
+        "name": "The Weight Not Size Rule",
+        "body": "Hierarchy inside the margin and boards comes from weight (700/800 over 400), not from new sizes. Do not add sizes between the steps above.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Plot Rule",
+        "body": "A neat-line frame owns exactly one plot. Supporting tables and comparisons go below the frame on the sheet, never inside a second frame.",
+        "section": "layout"
+      },
+      {
+        "name": "The Margin Is The Key Rule",
+        "body": "Legend, total, notes and sources live in the margin column. They are not floated over the plot or put in cards. The one exception is the map sheet (user decision, 2026-10-05): the map fills the sheet and its key floats over it as readouts.",
+        "section": "layout"
+      },
+      {
+        "name": "The One Shadow Rule",
+        "body": "One shadow value in the whole system. Nothing on the sheet surface (boards, legend, margin blocks) gets elevation.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do give every page the sheet grammar: title block, one neat-line frame with one plot, boards below, margin column with legend, notes and sources.",
+      "Do put only real values on the neat-line corners and graticule: the plot's actual period, the plant's actual coordinates, actual 5° degree lines.",
+      "Do draw categorical colour from the fonte or method ramp in its fixed order, and label every hue in the margin legend.",
+      "Do hatch estimated quantities and keep measured and modeled series visibly distinct (solid fonte hue for measured or primary, 1.5px dashed ink tertiary for modeled or average).",
+      "Do make breakdowns sum visibly to 100% and let totals tie across sheets.",
+      "Do use the single sheet shadow and the house ease (cubic-bezier(0.16, 1, 0.3, 1)) at 0.15–0.25s for state changes. Reduced motion removes the draw-in and all transitions.",
+      "Do keep the UI copy PT-BR and number formatting pt-BR."
+    ],
+    "donts": [
+      "Don't build KPI-card grids or a left-sidebar BI dashboard. The total belongs in the margin and navigation belongs in the sheet index.",
+      "Don't put a second plot inside a neat-line frame or wrap boards in their own frames.",
+      "Don't use fonte or method hues for text, chrome, buttons or backgrounds.",
+      "Don't add decorative fixed-pitch ticks, rulers or fake coordinates to frames.",
+      "Don't add shadows beyond the single sheet shadow, or elevate anything that sits on the sheet.",
+      "Don't add motion beyond the ink-draw, the map camera's glide to a filter, the dimming fade and hover transitions.",
+      "Don't show a Databricks mark or a fabricated logo. The brand slot is the text wordmark (Ampera in ink 700, Energia in Survey Purple 800)."
+    ]
+  }
+}

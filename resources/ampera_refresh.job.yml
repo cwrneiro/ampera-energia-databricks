@@ -1,0 +1,27 @@
+# Refresh the whole demo: medallion pipeline (bronze -> silver -> gold), then re-snapshot the three
+# Lakebase synced tables the app reads. Spec: specs/04-pipeline.md, specs/05-lakebase-sync.md
+resources:
+  jobs:
+    ampera_refresh:
+      name: ampera_refresh
+      schedule:                       # batch only (decision #7); paused until the demo needs it
+        quartz_cron_expression: "0 0 6 * * ?"
+        timezone_id: America/Sao_Paulo
+        pause_status: PAUSED
+      max_concurrent_runs: 1
+      tasks:
+        - task_key: medallion
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.ampera_medallion.id}
+        - task_key: sync_generation_daily
+          depends_on: [{task_key: medallion}]
+          pipeline_task:
+            pipeline_id: ${var.sync_pipeline_generation_daily}
+        - task_key: sync_plant_location
+          depends_on: [{task_key: medallion}]
+          pipeline_task:
+            pipeline_id: ${var.sync_pipeline_plant_location}
+        - task_key: sync_reconciliation_monthly
+          depends_on: [{task_key: medallion}]
+          pipeline_task:
+            pipeline_id: ${var.sync_pipeline_reconciliation_monthly}

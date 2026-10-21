@@ -1,0 +1,12 @@
+# Genie Agent over the gold marts (lakehouse, not Lakebase). Spec: specs/07-genie-agent.md
+# The space body (tables, column configs, examples, benchmarks) lives in the JSON file.
+resources:
+  genie_spaces:
+    ampera_genie:
+      title: Ampera · Geração Elétrica
+      description: >-
+        Perguntas em linguagem natural sobre a geração elétrica brasileira reconciliada
+        (ONS + ANEEL SIGA), out/2024 a set/2026: por usina (CEG), conjunto, UF, fonte e
+        submercado, com PLD da CCEE e clima (Open-Meteo, ONS, INMET).
+      warehouse_id: ${var.warehouse_id}
+      file_path: genie/ampera.geniespace.json

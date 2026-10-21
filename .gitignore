@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Node / React (app frontend)
+node_modules/
+dist/
+build/
+.vite/
+*.local
+
+# Databricks
+.databricks/
+.databricks-login.json
+
+# Data (never commit raw/working data pulls)
+data/
+*.csv
+*.parquet
+*.xlsx
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Claude Code runtime state
+.claude/*.lock
+
+# Impeccable transient artifacts (screenshots, decision-page logs)
+.impeccable/review/
+.impeccable/questions/
+.impeccable/mocks/
+
+# Per-customer setup state and runbook (written by /setup)
+handoff/
+.isaac/

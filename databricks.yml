@@ -1,0 +1,35 @@
+bundle:
+  name: ampera
+
+include:
+  - resources/*.yml
+  - targets/*.yml        # per-environment overlays (SETUP.md); the dev target below is the demo
+
+sync:
+  include:
+    - app/frontend/dist/**   # gitignored build output the app serves (spec 06)
+
+variables:
+  catalog:
+    description: UC catalog for the medallion (schemas bronze / silver / gold / gold_lb)
+    default: ampera_catalog
+  lakebase_project:
+    description: Lakebase project the app reads (branch production, database databricks_postgres)
+    default: ampera-demo
+  # Lakebase synced-table pipelines (SNAPSHOT). Created by `databricks postgres create-synced-table`
+  # (DAB support for synced tables isn't available yet), so referenced by id. Spec: specs/05
+  sync_pipeline_generation_daily:
+    default: TBD-after-first-run
+  sync_pipeline_plant_location:
+    default: TBD-after-first-run
+  sync_pipeline_reconciliation_monthly:
+    default: TBD-after-first-run
+  warehouse_id:
+    description: SQL warehouse the Genie space queries (spec 07)
+    default: <warehouse-id>
+
+targets:
+  dev:
+    default: true
+    workspace:
+      host: https://<workspace-host>

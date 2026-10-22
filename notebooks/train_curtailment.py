@@ -93,13 +93,16 @@ for fonte in ["EOL", "SOL"]:
 
 test = {}
 for fonte in ["EOL", "SOL"]:
-    te = df.filter((F.col("fonte") == fonte) & (F.col("gen_date") >= SPLIT)).toPandas()
+    te_all = df.filter((F.col("fonte") == fonte) & (F.col("gen_date") >= SPLIT))
+    nt = te_all.count()
+    te = te_all.sample(fraction=min(1.0, SAMPLE_ROWS / max(nt, 1)), seed=11).toPandas()  # driver memory cap
+    te["restrito_ons"] = te["restrito_ons"].astype(bool)
     te["cf_esperado"] = np.clip(models[fonte].predict(features(te, fonte, plant_cfs[fonte], UFS)), 0, 1.2)
     te["cf_ons"] = te["mwh_estimado_ons"] / te["capacity_mw"]
     test[fonte] = te
     un = te[~te["restrito_ons"]]
     ons = un.dropna(subset=["cf_ons"])
-    report.append({"fonte": fonte, "test_plant_hours": len(te), "unconstrained": len(un),
+    report.append({"fonte": fonte, "test_plant_hours": nt, "test_sample": len(te), "unconstrained": len(un),
                    "mae_cf_model": round(mean_absolute_error(un["fator_capacidade"].clip(0, 1.2), un["cf_esperado"]), 4),
                    "mae_cf_ons_estimate": round(mean_absolute_error(ons["fator_capacidade"].clip(0, 1.2), ons["cf_ons"].clip(0, 1.2)), 4),
                    "mean_cf_actual": round(un["fator_capacidade"].mean(), 4)})
@@ -149,7 +152,7 @@ class ExpectedCF(mlflow.pyfunc.PythonModel):
 
 
 cols = ["fonte", "plant_id", "uf", "hora", "mes", "vento_100m_ms", "irradiancia_wm2", "temp_c", "lat", "lon"]
-example = test["EOL"][cols].head(5)
+example = pd.concat([test["EOL"][cols].head(3), test["SOL"][cols].head(3)], ignore_index=True)
 model = ExpectedCF(models, plant_cfs, UFS)
 with mlflow.start_run(run_name="curtailment_expected_cf") as run:
     mlflow.log_params({"split": SPLIT, "min_expected_cf": MIN_EXPECTED_CF, "sample_rows": SAMPLE_ROWS,

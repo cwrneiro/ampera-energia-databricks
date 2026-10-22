@@ -48,6 +48,10 @@ resources:
           depends_on: [{task_key: medallion}]
           pipeline_task:
             pipeline_id: ${var.sync_pipeline_reconciliation_monthly}
+        - task_key: sync_reconciliation_ai_review
+          depends_on: [{task_key: medallion}]
+          pipeline_task:
+            pipeline_id: ${var.sync_pipeline_reconciliation_ai_review}
         - task_key: sync_curtailment_daily
           depends_on: [{task_key: score_curtailment}]
           pipeline_task:

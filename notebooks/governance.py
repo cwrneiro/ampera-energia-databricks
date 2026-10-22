@@ -67,7 +67,10 @@ for t in tables:
     if t.table_name in AI:
         tags["ai"] = AI[t.table_name]
     body = ", ".join(f"'{k}' = '{v}'" for k, v in tags.items())
-    sql(f"ALTER {kind(fqn)} {fqn} SET TAGS ({body})")
+    try:
+        sql(f"ALTER {kind(fqn)} {fqn} SET TAGS ({body})")
+    except Exception as e:  # report, don't fail the refresh
+        print(f"skip tags on {fqn}: {str(e).splitlines()[0][:160]}")
 print(f"tagged {len(tables)} tables")
 
 for t in ["plant_location", "curtailment_features_hourly"]:
@@ -95,9 +98,12 @@ print("\n-- column tags")
 show(f"""SELECT schema_name, table_name, column_name, tag_name FROM {CAT}.information_schema.column_tags
          WHERE schema_name LIKE 'ampera_%' ORDER BY ALL""")
 print("\n-- lineage (system.access.table_lineage): source -> target across the medallion, ML and GenAI")
-show(f"""SELECT DISTINCT replace(source_table_full_name, '{CAT}.', '') AS source,
+try:
+    show(f"""SELECT DISTINCT replace(source_table_full_name, '{CAT}.', '') AS source,
                 replace(target_table_full_name, '{CAT}.', '') AS target, entity_type
          FROM system.access.table_lineage
          WHERE target_table_full_name LIKE '{CAT}.ampera_%' AND source_table_full_name IS NOT NULL
            AND event_date >= current_date() - INTERVAL 30 DAYS
          ORDER BY target, source""")
+except Exception as e:
+    print(f"lineage unavailable: {str(e).splitlines()[0][:200]}")

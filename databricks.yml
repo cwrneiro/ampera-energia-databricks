@@ -24,6 +24,8 @@ variables:
     default: TBD-after-first-run
   sync_pipeline_reconciliation_monthly:
     default: TBD-after-first-run
+  sync_pipeline_reconciliation_ai_review:
+    default: TBD-after-first-run
   sync_pipeline_curtailment_daily:
     default: TBD-after-first-run
   warehouse_id:

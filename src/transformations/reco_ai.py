@@ -5,16 +5,23 @@ from pyspark.sql.window import Window
 import reco_lib as R
 import reco_sql as S
 
+# ai_decide's model follows evidence better than rules: the state spells out, per candidate, the facts a
+# reconciler would check (name similarity, same CEG registry number, same plant type). First pass with
+# only rules in the prompt answered "nenhum" for every plant, even exact re-registrations (spec 12).
 QUESTIONS = """{"match": {"type": "choice",
-  "instructions": "The ONS record and candidates A, B, C (ANEEL SIGA registry) describe Brazilian power plants. Which candidate is the same physical plant as the ONS record? Names may differ in accents, abbreviations, prefixes (UHE, EOL, UFV, UTE) and word order, but numerals (e.g. I vs II, 2 vs 3) identify different plants. Answer nenhum if none is clearly the same plant.",
-  "criteria": {"A": "Candidate A is the same plant", "B": "Candidate B is the same plant",
-               "C": "Candidate C is the same plant", "nenhum": "None of the candidates is the same plant"}}}"""
+  "instructions": "Match a Brazilian power plant from the ONS operator (state.ons) to the ANEEL SIGA registry. Candidates A, B and C come with evidence: similaridade_nome (1.0 = same normalized name), mesmo_numero_ceg (the registry number inside the CEG code is the same, strong evidence of the same plant) and mesmo_tipo (same plant type: UTE thermal, EOL wind, UFV solar, UHE/PCH/CGH hydro; a different type means a different plant). Different numerals in the name (I vs II) mean different plants. Pick the candidate that is the same plant, or nenhum.",
+  "criteria": {"A": "Candidate A is the same plant as state.ons", "B": "Candidate B is the same plant as state.ons",
+               "C": "Candidate C is the same plant as state.ons", "nenhum": "None of the candidates is the same plant as state.ons"}}}"""
+CEG_NUM = r"([0-9]{6}-[0-9])"  # CEG = TYPE.FUEL.UF.NNNNNN-D.SS; NNNNNN-D survives re-registration
 
 
 def _cand(prefix):
-    return F.struct(F.col(f"{prefix}_nome").alias("nome"), F.col(f"{prefix}_uf").alias("uf"),
-                    F.col(f"{prefix}_tipo").alias("tipo"), F.col(f"{prefix}_municipio").alias("municipio"),
-                    F.col(f"{prefix}_capacidade_mw").alias("capacidade_mw"), F.col(f"{prefix}_id").alias("ceg"))
+    num = F.regexp_extract(F.col(f"{prefix}_id"), CEG_NUM, 1)
+    return F.struct(F.col(f"{prefix}_nome").alias("nome"), F.col(f"{prefix}_tipo").alias("tipo"),
+                    F.col(f"{prefix}_municipio").alias("municipio"), F.col(f"{prefix}_capacidade_mw").alias("capacidade_mw"),
+                    F.round(f"{prefix}_sim", 2).alias("similaridade_nome"),
+                    (num == F.col("_ons_num")).alias("mesmo_numero_ceg"),
+                    (F.col(f"{prefix}_tipo") == F.col("_ons_tipo")).alias("mesmo_tipo"))
 
 
 def candidates(ons, siga, k=3):
@@ -38,9 +45,11 @@ def candidates(ons, siga, k=3):
 
 def decide(df):
     """Adds ai_choice / ai_confidence / ai_prob_* / ai_plant_id / ai_accepted via ai_decide."""
+    df = (df.withColumn("_ons_num", F.nullif(F.regexp_extract("ceg_raw", CEG_NUM, 1), F.lit("")))
+            .withColumn("_ons_tipo", F.upper(F.split("ceg_raw", "[.]")[0])))
     state = F.to_json(F.struct(
-        F.struct(F.col("nom_usina").alias("nome"), F.col("uf"), F.col("fuel_raw").alias("tipo"),
-                 F.col("ceg_raw").alias("ceg_informado")).alias("ons"),
+        F.struct(F.col("nom_usina").alias("nome"), F.col("uf"), F.col("fuel_raw").alias("combustivel"),
+                 F.col("_ons_tipo").alias("tipo")).alias("ons"),
         _cand("a").alias("A"), _cand("b").alias("B"), _cand("c").alias("C")))
     r = df.withColumn("_r", F.call_function("ai_decide", state, F.lit(QUESTIONS),
                                             F.create_map(F.lit("version"), F.lit("1.0"))))
@@ -59,6 +68,6 @@ def decide(df):
                                       .when(F.col("ai_choice") == "C", F.col("c_id")))
           .withColumn("ai_accepted", F.coalesce(F.col("ai_plant_id").isNotNull()
                                                 & (F.col("ai_confidence") >= R.AI_CUTOFF), F.lit(False)))
-          .drop("_r"))
+          .drop("_r", "_ons_num", "_ons_tipo"))
     return r
 

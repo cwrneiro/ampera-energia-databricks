@@ -4,7 +4,8 @@
 # MAGIC
 # MAGIC The pipeline asks `ai_decide` to place ONS plants whose CEG doesn't link to SIGA. To measure how far
 # MAGIC to trust it, we replay the same question on plants whose answer we **know**: ONS plants that *do* match
-# MAGIC SIGA by CEG. The CEG is hidden from the model; it sees only names, UF, type, municipality and capacity,
+# MAGIC SIGA by CEG. The CEG registry number is hidden (so `mesmo_numero_ceg` is unknown); the model sees names, name
+# MAGIC similarity, UF, plant type, municipality and capacity,
 # MAGIC with the same top-3 candidate builder as the pipeline (`reco_ai.candidates`). The true plant may be
 # MAGIC A, B, C, or absent (then the right answer is `nenhum`).
 # MAGIC
@@ -32,7 +33,8 @@ siga = spark.table(f"{CAT}.ampera_silver.siga_plant")  # noqa: F821
 known = (ons.join(siga.select(F.col("plant_id").alias("ceg_norm")), "ceg_norm", "left_semi")
             .withColumn("truth_id", F.col("ceg_norm"))
             .orderBy(F.xxhash64("ons_key")).limit(N)
-            .withColumn("ceg_raw", F.lit(None).cast("string")))       # blind: hide the CEG
+            # blind: keep only the CEG's type prefix (UTE, EOL...), hide the registry number that gives the answer away
+            .withColumn("ceg_raw", F.split("ceg_raw", "[.]")[0]))
 c = reco_ai.candidates(known, siga).join(known.select("ons_key", "truth_id"), "ons_key")
 truth = (F.when(F.col("a_id") == F.col("truth_id"), "A").when(F.col("b_id") == F.col("truth_id"), "B")
           .when(F.col("c_id") == F.col("truth_id"), "C").otherwise("nenhum"))

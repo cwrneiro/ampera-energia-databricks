@@ -30,4 +30,9 @@ Decisions #31–#33.
 
 ## Results
 
-_Filled after the first eval run._
+- First pipeline run (2026-10-22): 33 ONS plant series reach ai_decide (5.4 TWh, mostly retired
+  thermal plants). With rules only in the prompt it answered `nenhum` for all 33 (confidence ~0.65),
+  even for plants re-registered under the same CEG registry number with a new fuel code or unit
+  suffix (Prosperidade II, CGVE Innova, Do Atlântico). Passing the evidence per candidate instead
+  (`similaridade_nome`, `mesmo_numero_ceg`, `mesmo_tipo`) moved those three to 0.95–0.97 and left the
+  rest ≤ 0.52: the 0.9 cutoff separates them. Blind eval: see `evidence/`.

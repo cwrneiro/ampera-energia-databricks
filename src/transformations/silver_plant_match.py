@@ -1,5 +1,6 @@
 # Silver (CORE): resolve each ONS plant to one plant_id via the matching ladder.
-# override -> CEG(normalized) -> fuzzy(name sim within UF+fuel >= THRESHOLD) -> surrogate hash.
+# override -> CEG(normalized) -> fuzzy(name sim within UF+fuel >= THRESHOLD) -> ai_decide
+# (confidence >= AI_CUTOFF, silver_plant_match_ai) -> surrogate hash.
 # Spec: specs/02-reconciliation-silver.md
 from pyspark import pipelines as dp
 from pyspark.sql import functions as F
@@ -9,18 +10,18 @@ import reco_sql as S
 
 
 @dp.materialized_view(
-    name="silver.plant_match",
-    comment="Silver: id_ons -> plant_id with match_method (override/ceg/fuzzy/unmatched) + confidence.",
+    name="ampera_silver.plant_match",
+    comment="Silver: id_ons -> plant_id with match_method (override/ceg/fuzzy/ai_decide/unmatched) + confidence.",
 )
 @dp.expect_or_fail("has_plant_id", "plant_id IS NOT NULL")
 def plant_match():
-    ons = spark.read.table("silver.ons_plant")  # noqa: F821
-    siga = spark.read.table("silver.siga_plant")  # noqa: F821
+    ons = spark.read.table("ampera_silver.ons_plant")  # noqa: F821
+    siga = spark.read.table("ampera_silver.siga_plant")  # noqa: F821
 
     # Manual overrides win over the automatic result; newest row per ons_id wins (duplicates would
     # fan out plant_match and double-count generation). Required input — DDL in specs/02.
     ow = Window.partitionBy("ons_id").orderBy(F.col("updated_at").desc_nulls_last())
-    ov = (spark.read.table("silver.plant_match_override")  # noqa: F821
+    ov = (spark.read.table("ampera_silver.plant_match_override")  # noqa: F821
           .withColumn("_rn", F.row_number().over(ow)).filter("_rn = 1")
           .select(F.col("ons_id").alias("ov_id"), F.col("plant_id").alias("ov_plant_id")))
 
@@ -43,7 +44,11 @@ def plant_match():
             .select("ons_key", F.col("f_plant_id").alias("fuzzy_plant_id"),
                     F.col("sim").alias("fuzzy_sim")))
 
-    m = ceg.join(best, "ons_key", "left")
+    # Step 3 — GenAI: ai_decide verdict for plants the rules couldn't place (spec 12).
+    ai = (spark.read.table("ampera_silver.plant_match_ai")  # noqa: F821
+          .filter("ai_accepted").select("ons_key", "ai_plant_id", "ai_confidence"))
+
+    m = ceg.join(best, "ons_key", "left").join(ai, "ons_key", "left")
     m = m.join(ov, m.ons_key == ov.ov_id, "left")
 
     th = R.THRESHOLD
@@ -54,6 +59,7 @@ def plant_match():
     plant_id = (F.when(F.col("ov_plant_id").isNotNull(), F.col("ov_plant_id"))
                 .when(F.col("ceg_match"), F.col("ceg_norm"))
                 .when(F.col("fuzzy_sim") >= th, F.col("fuzzy_plant_id"))
+                .when(F.col("ai_plant_id").isNotNull(), F.col("ai_plant_id"))
                 .otherwise(surrogate))
     # Aggregate/conjunto grains have no 1:1 SIGA plant by design -> their own labels, not "unmatched".
     no_auto_match = (F.when(F.col("ons_grain") == "aggregate", F.lit("ons_aggregate"))
@@ -62,10 +68,12 @@ def plant_match():
     method = (F.when(F.col("ov_plant_id").isNotNull(), F.lit("override"))
               .when(F.col("ceg_match"), F.lit("ceg"))
               .when(F.col("fuzzy_sim") >= th, F.lit("fuzzy"))
+              .when(F.col("ai_plant_id").isNotNull(), F.lit("ai_decide"))
               .otherwise(no_auto_match))
     confidence = (F.when(F.col("ov_plant_id").isNotNull(), F.lit(1.0))
                   .when(F.col("ceg_match"), F.lit(1.0))
                   .when(F.col("fuzzy_sim") >= th, F.col("fuzzy_sim"))
+                  .when(F.col("ai_plant_id").isNotNull(), F.col("ai_confidence"))
                   .otherwise(F.lit(0.0)))
 
     return (m.withColumn("plant_id", plant_id)

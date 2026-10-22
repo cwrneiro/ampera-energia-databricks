@@ -39,13 +39,13 @@ per-plant data exists, use an estimate that is clearly labeled as one. Decision 
 - `member_estimated` ≤ ~3% of complex MWh (actual 2.7%); `member_measured` ≥ 95% (actual 96.9%).
 - 0 null `plant_id`; member CEGs link to SIGA for ≥ 98% of member MWh.
 
-## Results (24 months, `silver.generation_plant`, 1,404.2 TWh)
+## Results (24 months, `ampera_silver.generation_plant`, 1,404.2 TWh)
 
 - Monthly balance vs published: ratio **0.9917–0.9997** (within ±2%, all 24 months).
 - Complex MWh: **member_measured 96.9%** · **member_estimated 2.7%** · left at complex level 0.41%.
 - **Double count found & removed:** ONS publishes 24 wind plants both standalone and inside their
   complex (12 complexes, 1.9 TWh). The member copy is dropped where a standalone series exists;
-  `silver.generation_plant_key_check` fails the update if any (plant_id, ons_key, hour) repeats.
+  `ampera_silver.generation_plant_key_check` fails the update if any (plant_id, ons_key, hour) repeats.
   Plants with several ONS series (Itaipu 50/60 Hz, Belo Monte + Pimental, Henry Borden ext/sub…)
   are legitimate and summed per plant.
 - Member MWh linked to SIGA: 99.0%. 0 null `plant_id`. `dim_plant` 2,292 rows.

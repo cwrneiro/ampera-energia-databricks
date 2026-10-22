@@ -47,7 +47,7 @@ Read-only data app (Databricks App, workspace auth) over Lakebase; daily grain. 
 
 ## Evidence on Hand
 
-Real data only: Lakebase `gold_lb` (generation_daily, plant_location, reconciliation_monthly).
+Real data only: Lakebase `ampera_gold_lb` (generation_daily, plant_location, reconciliation_monthly).
 No testimonials, customer quotes, or claims beyond what the data shows.
 
 ## Product Principles

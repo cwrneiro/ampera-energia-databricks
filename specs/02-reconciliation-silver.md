@@ -5,12 +5,12 @@
 Give every ONS generation record one reliable `plant_id` that links to the SIGA registry wherever
 possible — Ampera's stated pain — and make the matching method visible.
 
-## Matching ladder (decision #10) — `silver.plant_match`, one row per ONS series (`ons_key`)
+## Matching ladder (decision #10) — `ampera_silver.plant_match`, one row per ONS series (`ons_key`)
 
-1. **Override** — `silver.plant_match_override(ons_id, plant_id, note, updated_at)` wins over
+1. **Override** — `ampera_silver.plant_match_override(ons_id, plant_id, note, updated_at)` wins over
    everything; with several rows per `ons_id` the newest `updated_at` wins. A required input,
    created outside the pipeline:
-   `CREATE TABLE ampera_catalog.silver.plant_match_override (ons_id STRING, plant_id STRING, note STRING, updated_at TIMESTAMP)`.
+   `CREATE TABLE ampera_catalog.ampera_silver.plant_match_override (ons_id STRING, plant_id STRING, note STRING, updated_at TIMESTAMP)`.
 2. **CEG (normalized)** — ONS `ceg` and SIGA `CodCEG` with the last segment normalized
    (`.01` → `.1`); method `ceg`, confidence 1.0.
 3. **Fuzzy** — normalized names (upper, accent-stripped, generic words removed, tokens sorted),
@@ -36,7 +36,7 @@ spec 09). Matching runs as native Spark expressions (`reco_sql.py`) mirroring th
 - ✓ Break-down by method in count and MWh; plant-level unmatched < 5% (SUCCESS #1).
 - Runnable check (`tests/test_reconciliation.py`): ✓ CEG normalization, ✓ name normalization, ✓
   fuzzy variant clears the bar, ✓ numbered plants never match.
-- In-pipeline check `silver.plant_match_check` (fails the update): one row per `ons_key`, and the
+- In-pipeline check `ampera_silver.plant_match_check` (fails the update): one row per `ons_key`, and the
   newest override per `ons_id` is the applied `plant_id` with method `override`. ✓ Verified
   2026-10-09 (update `2c99372c`): two test rows for `BAGUA` → the newer won, 967 rows / 967 series.
 

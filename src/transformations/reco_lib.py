@@ -8,6 +8,7 @@ import re
 import unicodedata
 
 THRESHOLD = 0.82  # fuzzy accept bar; tune on real unmatched-MWh (spec 02)
+AI_CUTOFF = 0.9  # ai_decide accept bar (confidence); calibrated by notebooks/eval_ai_decide (spec 12)
 
 # Portuguese accent map (uppercase) — mirrored by reco_sql for the Spark `translate` expression.
 ACCENTED = "ÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇÑ"

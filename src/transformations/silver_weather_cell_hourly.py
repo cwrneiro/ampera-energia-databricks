@@ -8,13 +8,13 @@ from pyspark.sql.window import Window
 
 
 @dp.materialized_view(
-    name="silver.weather_cell_hourly",
+    name="ampera_silver.weather_cell_hourly",
     comment="Silver: hourly Open-Meteo (ERA5) weather per 0.25° plant cell, local time; radiation aligned to ONS hours.",
     cluster_by=["cell_lat", "cell_lon"],
 )
 @dp.expect("has_values", "temp_c IS NOT NULL")
 def weather_cell_hourly():
-    b = spark.read.table("bronze.open_meteo_weather")  # noqa: F821
+    b = spark.read.table("ampera_bronze.open_meteo_weather")  # noqa: F821
     h = (b.withColumn("cell_lat", F.regexp_extract("_source_file", r"cell_(-?[0-9.]+)_", 1).cast("double"))
           .withColumn("cell_lon", F.regexp_extract("_source_file", r"_(-?[0-9.]+)\.json$", 1).cast("double"))
           .withColumn("r", F.explode(F.arrays_zip(

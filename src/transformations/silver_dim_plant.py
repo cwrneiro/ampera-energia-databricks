@@ -5,12 +5,12 @@ from pyspark.sql import functions as F
 
 
 @dp.materialized_view(
-    name="silver.dim_plant",
+    name="ampera_silver.dim_plant",
     comment="Silver: one row per plant_id (SIGA registry attrs where linked, else ONS-sourced).",
 )
 def dim_plant():
-    gp = spark.read.table("silver.generation_plant")  # noqa: F821
-    siga = spark.read.table("silver.siga_plant")  # noqa: F821
+    gp = spark.read.table("ampera_silver.generation_plant")  # noqa: F821
+    siga = spark.read.table("ampera_silver.siga_plant")  # noqa: F821
 
     ids = gp.groupBy("plant_id").agg(F.max("nome").alias("nome_ons"), F.max("uf").alias("uf_ons"),
                                      F.max("fuel_cls").alias("fuel_ons"),

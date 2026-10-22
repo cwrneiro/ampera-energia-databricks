@@ -11,7 +11,7 @@ sync:
 
 variables:
   catalog:
-    description: UC catalog for the medallion (schemas bronze / silver / gold / gold_lb)
+    description: UC catalog for the medallion (schemas ampera_bronze / ampera_silver / ampera_gold / ampera_gold_lb)
     default: ampera_catalog
   lakebase_project:
     description: Lakebase project the app reads (branch production, database databricks_postgres)
@@ -23,6 +23,8 @@ variables:
   sync_pipeline_plant_location:
     default: TBD-after-first-run
   sync_pipeline_reconciliation_monthly:
+    default: TBD-after-first-run
+  sync_pipeline_curtailment_daily:
     default: TBD-after-first-run
   warehouse_id:
     description: SQL warehouse the Genie space queries (spec 07)

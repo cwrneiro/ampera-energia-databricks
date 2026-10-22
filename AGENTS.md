@@ -31,8 +31,8 @@ unprompted.
 ## Non-negotiable conventions
 
 - **Reconciliation invariants:** every ONS series gets exactly one `plant_id`. Overrides in
-  `silver.plant_match_override` win, and the newest `updated_at` per `ons_id` wins. Never sum
-  `silver.generation` (as published) with `silver.generation_plant` (plant grain). Keep
+  `ampera_silver.plant_match_override` win, and the newest `updated_at` per `ons_id` wins. Never sum
+  `ampera_silver.generation` (as published) with `ampera_silver.generation_plant` (plant grain). Keep
   `src/transformations/reco_lib.py` (tested reference) and `reco_sql.py` (the Spark expressions
   the pipeline runs) in sync. Serverless pipelines can't use Python UDFs that import local modules.
 - **Catalog:** transforms use `schema.table` names. They resolve against the pipeline catalog

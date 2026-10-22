@@ -2,7 +2,7 @@
 
 ## Goal
 
-Land raw data from every source into `ampera_catalog.bronze`, as ingested (minimal
+Land raw data from every source into `ampera_catalog.ampera_bronze`, as ingested (minimal
 transformation), with `_source`, `_ingested_at`, `_source_file` metadata. Batch only (decision #7);
 24-month window (decision #14).
 
@@ -18,7 +18,7 @@ transformation), with `_source`, `_ingested_at`, `_source_file` metadata. Batch 
 | `open_meteo_weather` | Open-Meteo archive (ERA5), JSON per cell × month | `scripts/fetch_open_meteo.py` → volume | 469 cells × month |
 | `inmet_weather` | INMET yearly station archives (CSV) | HTTP (browser user-agent) → volume, explicit 20-col schema | ~14M lines |
 
-Raw files live in `/Volumes/ampera_catalog/bronze/raw/<source>/` (and locally in `data/`,
+Raw files live in `/Volumes/ampera_catalog/ampera_bronze/raw/<source>/` (and locally in `data/`,
 gitignored). Resource URLs come from each portal's CKAN `package_show` API (ONS, ANEEL).
 
 ## Confirmed columns & quirks

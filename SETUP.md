@@ -50,13 +50,13 @@ Replace `<catalog>`:
 
 ```sql
 CREATE CATALOG IF NOT EXISTS <catalog>;
-CREATE SCHEMA IF NOT EXISTS <catalog>.bronze;
-CREATE SCHEMA IF NOT EXISTS <catalog>.silver;
-CREATE SCHEMA IF NOT EXISTS <catalog>.gold;
-CREATE SCHEMA IF NOT EXISTS <catalog>.gold_lb;     -- synced tables land here
-CREATE VOLUME IF NOT EXISTS <catalog>.bronze.raw;  -- raw source files
+CREATE SCHEMA IF NOT EXISTS <catalog>.ampera_bronze;
+CREATE SCHEMA IF NOT EXISTS <catalog>.ampera_silver;
+CREATE SCHEMA IF NOT EXISTS <catalog>.ampera_gold;
+CREATE SCHEMA IF NOT EXISTS <catalog>.ampera_gold_lb;     -- synced tables land here
+CREATE VOLUME IF NOT EXISTS <catalog>.ampera_bronze.raw;  -- raw source files
 -- Manual reconciliation fixes (spec 02); the pipeline requires it, empty is fine.
-CREATE TABLE IF NOT EXISTS <catalog>.silver.plant_match_override
+CREATE TABLE IF NOT EXISTS <catalog>.ampera_silver.plant_match_override
   (ons_id STRING, plant_id STRING, note STRING, updated_at TIMESTAMP);
 ```
 
@@ -92,7 +92,7 @@ Window: 24 months, **2024-10 … 2026-09** (decision #14). To move it, change `M
 the first pipeline run: a streaming table can't infer a schema from an empty folder.
 
 ```bash
-V=dbfs:/Volumes/$CAT/bronze/raw
+V=dbfs:/Volumes/$CAT/ampera_bronze/raw
 S3=https://ons-aws-prod-opendata.s3.amazonaws.com/dataset
 MONTHS="print(' '.join(f'{y}_{m:02d}' for y in range(2024, 2027) for m in range(1, 13) if (2024, 10) <= (y, m) <= (2026, 9)))"
 mkdir -p data/raw/land && cd data/raw/land
@@ -125,7 +125,7 @@ databricks fs cp -r inmet $V/inmet --profile $P
 - **CCEE PLD (manual):** CCEE blocks scripted clients, so don't automate it. In a browser, download
   "PLD horário" for each year from the CCEE open-data portal (`pld_horario_<year>.csv`), then
   `databricks fs cp pld_horario_<year>.csv $V/ccee_pld/ --profile $P`.
-- **Open-Meteo (bootstrap):** the full cell list comes from `silver.dim_plant`, which only exists
+- **Open-Meteo (bootstrap):** the full cell list comes from `ampera_silver.dim_plant`, which only exists
   after the first run. Start with one cell, which is enough for schema inference:
   ```bash
   cd ../../.. && mkdir -p data/raw/open_meteo
@@ -150,12 +150,12 @@ databricks fs cp -r inmet $V/inmet --profile $P
 2. **Create the three synced tables** (SNAPSHOT, read by the app):
    ```bash
    sync() {  # <table> <primary key as a JSON array>
-     databricks postgres create-synced-table $CAT.gold_lb.$1 --profile $P --json "{\"spec\": {
-       \"source_table_full_name\": \"$CAT.gold.$1\", \"primary_key_columns\": $2,
+     databricks postgres create-synced-table $CAT.ampera_gold_lb.$1 --profile $P --json "{\"spec\": {
+       \"source_table_full_name\": \"$CAT.ampera_gold.$1\", \"primary_key_columns\": $2,
        \"scheduling_policy\": \"SNAPSHOT\", \"branch\": \"projects/$LB/branches/production\",
        \"postgres_database\": \"databricks_postgres\", \"create_database_objects_if_missing\": true,
        \"new_pipeline_spec\": {\"storage_catalog\": \"$CAT\", \"storage_schema\": \"default\"}}}"
-     databricks postgres get-synced-table synced_tables/$CAT.gold_lb.$1 --profile $P -o json | jq -r "\"$1: \" + .status.pipeline_id"
+     databricks postgres get-synced-table synced_tables/$CAT.ampera_gold_lb.$1 --profile $P -o json | jq -r "\"$1: \" + .status.pipeline_id"
    }
    sync generation_daily       '["dia", "plant_id"]'
    sync plant_location         '["plant_id"]'
@@ -176,19 +176,19 @@ databricks fs cp -r inmet $V/inmet --profile $P
    ```bash
    SP=$(databricks apps get ampera-app --profile $P -o json | jq -r .service_principal_client_id)
    databricks psql --project $LB --profile $P -- -d databricks_postgres -c \
-     "GRANT USAGE ON SCHEMA gold_lb TO \"$SP\"; GRANT SELECT ON ALL TABLES IN SCHEMA gold_lb TO \"$SP\";"
+     "GRANT USAGE ON SCHEMA ampera_gold_lb TO \"$SP\"; GRANT SELECT ON ALL TABLES IN SCHEMA ampera_gold_lb TO \"$SP\";"
    ```
 7. **Grant Genie users read access in UC** (SQL), and give the group `CAN_USE` on the warehouse:
    ```sql
    GRANT USE CATALOG ON CATALOG <catalog> TO `<users-group>`;
-   GRANT USE SCHEMA, SELECT ON SCHEMA <catalog>.gold TO `<users-group>`;
+   GRANT USE SCHEMA, SELECT ON SCHEMA <catalog>.ampera_gold TO `<users-group>`;
    ```
 
 ## 7. Full weather history (after the first green run)
 
 ```bash
 databricks experimental aitools tools query "SELECT round(lat*4)/4 AS lat, round(lon*4)/4 AS lon, count(*) plants
-  FROM $CAT.silver.dim_plant WHERE lat IS NOT NULL GROUP BY 1,2" --profile $P --output json > data/raw/open_meteo/cells.json
+  FROM $CAT.ampera_silver.dim_plant WHERE lat IS NOT NULL GROUP BY 1,2" --profile $P --output json > data/raw/open_meteo/cells.json
 python3 scripts/fetch_open_meteo.py          # resumable; ~3 daily runs on the free tier
 databricks fs cp -r data/raw/open_meteo/raw $V/open_meteo --overwrite --profile $P
 databricks bundle run ampera_refresh -t $T --profile $P   # medallion, then the Lakebase syncs
@@ -210,7 +210,7 @@ Go-live checklist:
 - [ ] Pipeline update green. The reconciliation expectations (`has_plant_id`, `plant_match_check`,
       `generation_plant_key_check`) pass.
 - [ ] App opens for a member of the users group. "Visão geral" totals match
-      `SELECT sum(mwh) FROM <catalog>.gold.generation_daily`.
+      `SELECT sum(mwh) FROM <catalog>.ampera_gold.generation_daily`.
 - [ ] Genie answers a "geração por CEG" question.
 - [ ] Refresh cadence decided. ONS/SIGA/INMET landing is manual today. Automate it (a job running
       §5) before setting `pause_status: UNPAUSED`. CCEE stays a manual drop.
@@ -220,7 +220,7 @@ Go-live checklist:
 | Component | Owner | Notes |
 |---|---|---|
 | Medallion pipeline + refresh job | | failure e-mails in `targets/<target>.yml` |
-| Reconciliation overrides (`silver.plant_match_override`) | | domain owner; newest row per `ons_id` wins |
+| Reconciliation overrides (`ampera_silver.plant_match_override`) | | domain owner; newest row per `ons_id` wins |
 | Lakebase project | | scale-to-zero and sizes in §4 |
 | App + Genie space | | permissions in `targets/<target>.yml` |
 | Raw data landing (§5, CCEE manual) | | |

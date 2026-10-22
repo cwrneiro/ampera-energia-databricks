@@ -8,7 +8,7 @@ the brand tokens in `specs/08-branding.md`. **Deployed** 2026-10-02 (`ampera-app
 
 ## In scope
 
-- **Backend:** FastAPI reading the Lakebase tables in schema `gold_lb` (spec 05):
+- **Backend:** FastAPI reading the Lakebase tables in schema `ampera_gold_lb` (spec 05):
   `generation_daily`, `plant_location`, `reconciliation_monthly`.
 - **Frontend:** React built with the **Impeccable** skill; UI text in PT-BR.
   - **Overview:** generation KPIs + time series, filters for CEG, conjunto, UF, fonte, period.
@@ -65,5 +65,5 @@ the brand tokens in `specs/08-branding.md`. **Deployed** 2026-10-02 (`ampera-app
 - Unmatched on Reconciliação = SUCCESS #1 definition: unmatched ÷ (ceg + fuzzy + unmatched) at the
   published grain (0.59%).
 - Deploy: `(cd app/frontend && npm ci && npm run build) && databricks bundle deploy && databricks
-  bundle run ampera_app`, then grant the app SP `USAGE` on `gold_lb` and `SELECT` on its tables.
+  bundle run ampera_app`, then grant the app SP `USAGE` on `ampera_gold_lb` and `SELECT` on its tables.
 - Brand mark: text wordmark (`main.jsx`), no image logo.

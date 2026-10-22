@@ -5,15 +5,15 @@ from pyspark.sql import functions as F
 
 
 @dp.materialized_view(
-    name="silver.generation",
+    name="ampera_silver.generation",
     comment="Silver: cleaned ONS hourly generation (MWh) with resolved plant_id + match method.",
     cluster_by=["gen_date", "uf"],
 )
 @dp.expect_or_fail("has_plant_id", "plant_id IS NOT NULL")
 @dp.expect("non_negative_mwh", "mwh >= 0 OR mwh IS NULL")
 def generation():
-    g = spark.read.table("bronze.ons_generation")  # noqa: F821
-    pm = (spark.read.table("silver.plant_match")  # noqa: F821
+    g = spark.read.table("ampera_bronze.ons_generation")  # noqa: F821
+    pm = (spark.read.table("ampera_silver.plant_match")  # noqa: F821
           .select("ons_key", "plant_id", "match_method", "confidence"))
     return (
         g.withColumn("ons_key", F.coalesce(F.expr("nullif(trim(id_ons), '')"), F.col("nom_usina")))

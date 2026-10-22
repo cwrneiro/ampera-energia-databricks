@@ -1,7 +1,7 @@
--- Gold: hourly generation per plant (plant grain, from silver.generation_plant — no double counting).
+-- Gold: hourly generation per plant (plant grain, from ampera_silver.generation_plant — no double counting).
 -- Lakehouse only (Genie, price correlation); not synced to Lakebase. Weather: modeled (Open-Meteo) +
 -- measured (ONS at plant, else INMET <= 50 km). Price: CCEE PLD by submarket + hour. Spec: specs/03-gold-marts.md (decision #17)
-CREATE OR REFRESH MATERIALIZED VIEW gold.fact_generation_hourly
+CREATE OR REFRESH MATERIALIZED VIEW ampera_gold.fact_generation_hourly
   COMMENT 'Gold: hourly MWh per plant (complexes split into member plants; is_estimated marks the capacity-weighted estimate).'
   CLUSTER BY (gen_date, plant_id)
 AS SELECT
@@ -37,18 +37,18 @@ AS SELECT
        WHEN s.station IS NOT NULL THEN 'INMET' END AS fonte_medicao,
   s.station                                AS estacao_inmet,
   round(s.dist_km, 1)                      AS dist_estacao_km
-FROM silver.generation_plant g
-JOIN silver.dim_plant d USING (plant_id)
+FROM ampera_silver.generation_plant g
+JOIN ampera_silver.dim_plant d USING (plant_id)
 LEFT JOIN (SELECT conjunto_key, max(nom_conjunto) AS nom_conjunto
-           FROM silver.conjunto_member GROUP BY conjunto_key) c
+           FROM ampera_silver.conjunto_member GROUP BY conjunto_key) c
   ON g.conjunto_key = c.conjunto_key
-LEFT JOIN silver.price_pld_hourly pr
+LEFT JOIN ampera_silver.price_pld_hourly pr
   ON pr.submercado = g.submercado AND pr.ts = g.ts
-LEFT JOIN silver.weather_cell_hourly w
+LEFT JOIN ampera_silver.weather_cell_hourly w
   ON w.cell_lat = round(d.lat * 4) / 4 AND w.cell_lon = round(d.lon * 4) / 4 AND w.ts = g.ts
-LEFT JOIN silver.weather_plant_measured m
+LEFT JOIN ampera_silver.weather_plant_measured m
   ON m.plant_id = g.plant_id AND m.ts = g.ts
-LEFT JOIN silver.plant_inmet_station s
+LEFT JOIN ampera_silver.plant_inmet_station s
   ON s.plant_id = g.plant_id
-LEFT JOIN silver.weather_inmet_hourly i
+LEFT JOIN ampera_silver.weather_inmet_hourly i
   ON i.station = s.station AND i.ts = g.ts;

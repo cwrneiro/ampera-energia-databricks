@@ -16,14 +16,14 @@ def _hourly(table, value_col, flag_col, out_col):
 
 
 @dp.materialized_view(
-    name="silver.weather_plant_measured",
+    name="ampera_silver.weather_plant_measured",
     comment="Silver: hourly wind speed / irradiance measured at the plant by ONS (complex members), invalid readings dropped.",
     cluster_by=["plant_id"],
 )
 def weather_plant_measured():
-    wind = _hourly("bronze.ons_member_generation_wind",
+    wind = _hourly("ampera_bronze.ons_member_generation_wind",
                    "val_ventoverificado", "flg_dadoventoinvalido", "vento_ms")
-    solar = _hourly("bronze.ons_member_generation_solar",
+    solar = _hourly("ampera_bronze.ons_member_generation_solar",
                     "val_irradianciaverificado", "flg_dadoirradianciainvalido", "irradiancia_wm2")
     return (wind.join(solar, ["plant_id", "ts"], "full")
                 .withColumn("fonte_medicao", F.lit("ONS")))

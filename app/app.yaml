@@ -1,7 +1,9 @@
-# Databricks App runtime config. Spec: specs/06-app.md
+# Databricks App runtime config. Spec: specs/06-app.md, specs/14-app-intelligence.md
 # PGHOST / PGUSER / PGDATABASE are injected by the `postgres` app resource; the endpoint path (used
-# to mint OAuth DB tokens) is not, so it is set here.
+# to mint OAuth DB tokens) is not, so it is set here. GENIE_SPACE_ID comes from the `genie` resource.
 command: ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
 env:
   - name: LAKEBASE_ENDPOINT
     value: projects/ampera-demo/branches/production/endpoints/primary
+  - name: GENIE_SPACE_ID
+    valueFrom: genie

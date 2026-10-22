@@ -10,16 +10,16 @@ def _sum_if(method):
 
 
 @dp.materialized_view(
-    name="silver.generation_balance",
+    name="ampera_silver.generation_balance",
     comment="Silver check: monthly published vs plant-grain MWh, and measured/estimated member MWh.",
 )
 @dp.expect("balance_within_2pct", "abs(plant_mwh / published_mwh - 1) <= 0.02")
 @dp.expect("published_mwh_present", "published_mwh > 0")  # a NULL ratio would slip past the check above
 def generation_balance():
     month = F.date_trunc("month", "gen_date").cast("date").alias("month")
-    pub = (spark.read.table("silver.generation")  # noqa: F821
+    pub = (spark.read.table("ampera_silver.generation")  # noqa: F821
            .groupBy(month).agg(F.sum("mwh").alias("published_mwh")))
-    pl = (spark.read.table("silver.generation_plant")  # noqa: F821
+    pl = (spark.read.table("ampera_silver.generation_plant")  # noqa: F821
           .groupBy(month).agg(F.sum("mwh").alias("plant_mwh"),
                               _sum_if("member_measured").alias("member_measured_mwh"),
                               _sum_if("member_estimated").alias("member_estimated_mwh"),

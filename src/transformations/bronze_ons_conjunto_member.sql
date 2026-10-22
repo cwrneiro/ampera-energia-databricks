@@ -7,4 +7,4 @@ AS SELECT
   'ONS usina_conjunto'  AS _source,
   current_timestamp()   AS _ingested_at,
   _metadata.file_path   AS _source_file
-FROM STREAM read_files('/Volumes/${catalog}/bronze/raw/ons_conjunto_member', format => 'parquet');
+FROM STREAM read_files('/Volumes/${catalog}/ampera_bronze/raw/ons_conjunto_member', format => 'parquet');

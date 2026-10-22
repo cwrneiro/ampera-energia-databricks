@@ -1,6 +1,6 @@
 -- Gold: daily generation per plant — the app's default grain, synced to Lakebase. By CEG / UF /
 -- fonte / conjunto are GROUP BYs on this table. Spec: specs/03-gold-marts.md (decision #17)
-CREATE OR REFRESH MATERIALIZED VIEW gold.generation_daily
+CREATE OR REFRESH MATERIALIZED VIEW ampera_gold.generation_daily
   COMMENT 'Gold: daily MWh per plant with CEG, UF, submercado, fonte, conjunto; mwh_estimado = estimated part.'
   CLUSTER BY (dia, plant_id)
 AS SELECT
@@ -26,5 +26,5 @@ AS SELECT
   avg(vento_ms_medido)                             AS vento_ms_medido,
   avg(irradiancia_wm2_medida)                      AS irradiancia_wm2_medida,
   max(fonte_medicao)                               AS fonte_medicao
-FROM gold.fact_generation_hourly
+FROM ampera_gold.fact_generation_hourly
 GROUP BY gen_date, plant_id;

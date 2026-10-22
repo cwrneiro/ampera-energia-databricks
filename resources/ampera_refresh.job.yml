@@ -1,5 +1,6 @@
-# Refresh the whole demo: medallion pipeline (bronze -> silver -> gold), then re-snapshot the three
-# Lakebase synced tables the app reads. Spec: specs/04-pipeline.md, specs/05-lakebase-sync.md
+# Refresh the whole demo: medallion pipeline (bronze -> silver -> gold, incl. ai_decide), then the ML
+# step (optional retrain + ai_decide blind eval, always score), then re-snapshot the Lakebase synced
+# tables the app reads, then re-apply UC governance. Spec: specs/04, 05, 11, 12, 13
 resources:
   jobs:
     ampera_refresh:
@@ -9,10 +10,32 @@ resources:
         timezone_id: America/Sao_Paulo
         pause_status: PAUSED
       max_concurrent_runs: 1
+      parameters:
+        - name: train                 # "true" = retrain the curtailment model + rerun the ai_decide eval
+          default: "false"
       tasks:
         - task_key: medallion
           pipeline_task:
             pipeline_id: ${resources.pipelines.ampera_medallion.id}
+        - task_key: train_gate
+          depends_on: [{task_key: medallion}]
+          condition_task: {op: EQUAL_TO, left: "{{job.parameters.train}}", right: "true"}
+        - task_key: train_curtailment
+          depends_on: [{task_key: train_gate, outcome: "true"}]
+          notebook_task:
+            notebook_path: ../notebooks/train_curtailment.py
+            base_parameters: {catalog: "${var.catalog}"}
+        - task_key: eval_ai_decide
+          depends_on: [{task_key: train_gate, outcome: "true"}]
+          notebook_task:
+            notebook_path: ../notebooks/eval_ai_decide.py
+            base_parameters: {catalog: "${var.catalog}"}
+        - task_key: score_curtailment
+          depends_on: [{task_key: medallion}, {task_key: train_curtailment}]
+          run_if: NONE_FAILED         # runs whether or not train was skipped
+          notebook_task:
+            notebook_path: ../notebooks/score_curtailment.py
+            base_parameters: {catalog: "${var.catalog}"}
         - task_key: sync_generation_daily
           depends_on: [{task_key: medallion}]
           pipeline_task:
@@ -25,3 +48,13 @@ resources:
           depends_on: [{task_key: medallion}]
           pipeline_task:
             pipeline_id: ${var.sync_pipeline_reconciliation_monthly}
+        - task_key: sync_curtailment_daily
+          depends_on: [{task_key: score_curtailment}]
+          pipeline_task:
+            pipeline_id: ${var.sync_pipeline_curtailment_daily}
+        - task_key: governance
+          depends_on: [{task_key: score_curtailment}, {task_key: eval_ai_decide}]
+          run_if: NONE_FAILED
+          notebook_task:
+            notebook_path: ../notebooks/governance.py
+            base_parameters: {catalog: "${var.catalog}"}

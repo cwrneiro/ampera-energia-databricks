@@ -16,7 +16,7 @@ targets:
       # Workspace URL. Discover: databricks auth profiles   (host column of your profile)
       host: https://<your-workspace>.cloud.databricks.com
     variables:
-      # UC catalog for the medallion; must exist with schemas bronze/silver/gold/gold_lb (SETUP §2).
+      # UC catalog for the medallion; must exist with schemas ampera_bronze/silver/gold/gold_lb (SETUP §2).
       # Discover: databricks catalogs list --profile <profile>
       catalog: ampera_catalog
       # Lakebase Autoscaling project the app reads (SETUP §4).
@@ -26,7 +26,7 @@ targets:
       # Discover: databricks warehouses list --profile <profile>
       warehouse_id: <warehouse-id>
       # Synced-table pipeline ids — only known after SETUP §6 creates the synced tables.
-      # Discover: databricks postgres get-synced-table synced_tables/<catalog>.gold_lb.<table> -o json | jq -r .status.pipeline_id
+      # Discover: databricks postgres get-synced-table synced_tables/<catalog>.ampera_gold_lb.<table> -o json | jq -r .status.pipeline_id
       sync_pipeline_generation_daily: <pipeline-id>
       sync_pipeline_plant_location: <pipeline-id>
       sync_pipeline_reconciliation_monthly: <pipeline-id>

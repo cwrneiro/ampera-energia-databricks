@@ -11,14 +11,14 @@ tables**, so the app gets low-latency reads without querying the lakehouse.
   endpoint `primary` autoscaling 0.5–4 CU, scale-to-zero after 1,200 s (20 min; was 300 s — raised
   2026-10-05 so a live demo rarely hits a cold compute). The app shows "Acordando o banco de dados…"
   and retries on its own when it does (spec 06).
-- Synced tables in the standard-catalog schema `ampera_catalog.gold_lb` → Postgres schema
-  `gold_lb` (no Lakebase UC catalog needed). Pipeline metadata in `ampera_catalog.default`.
+- Synced tables in the standard-catalog schema `ampera_catalog.ampera_gold_lb` → Postgres schema
+  `ampera_gold_lb` (no Lakebase UC catalog needed). Pipeline metadata in `ampera_catalog.default`.
 
 | Synced table | Source | Primary key | Rows |
 |---|---|---|---|
-| `gold_lb.generation_daily` | `gold.generation_daily` | (dia, plant_id) | 1,458,248 |
-| `gold_lb.plant_location` | `gold.plant_location` | (plant_id) | 2,292 |
-| `gold_lb.reconciliation_monthly` | `gold.reconciliation_monthly` | (grao, mes, match_method) | 283 |
+| `ampera_gold_lb.generation_daily` | `ampera_gold.generation_daily` | (dia, plant_id) | 1,458,248 |
+| `ampera_gold_lb.plant_location` | `ampera_gold.plant_location` | (plant_id) | 2,292 |
+| `ampera_gold_lb.reconciliation_monthly` | `ampera_gold.reconciliation_monthly` | (grao, mes, match_method) | 283 |
 
 - **SNAPSHOT** mode (gold is fully recomputed each run; no Change Data Feed needed). Refreshed by
   the job `ampera_refresh` (spec 04). Synced tables are created by CLI
@@ -30,12 +30,12 @@ tables**, so the app gets low-latency reads without querying the lakehouse.
 - ✓ Synced tables ONLINE; rows and TWh match gold exactly; PK indexes present; a one-plant month
   query runs in 3.6 ms.
 - ✓ A gold change reaches Lakebase: after the 2026-10-05 Open-Meteo backfill + refresh job, 2024–25
-  modeled weather in `gold_lb.generation_daily` went from 0 to 92% of rows; totals still 1,404.19 TWh.
+  modeled weather in `ampera_gold_lb.generation_daily` went from 0 to 92% of rows; totals still 1,404.19 TWh.
   The app SP kept USAGE/SELECT through the SNAPSHOT re-sync (no re-grant needed).
 - ✓ The app reads Lakebase as its service principal (deployed 2026-10-02; totals tie to gold).
 
 ## Operating notes
 
 - Synced tables are read-only in Postgres (SELECT, CREATE INDEX, DROP only).
-- The app's service principal needs `USAGE` on schema `gold_lb` and `SELECT` on its tables
+- The app's service principal needs `USAGE` on schema `ampera_gold_lb` and `SELECT` on its tables
   (grant after the app is deployed and the syncs are ONLINE).

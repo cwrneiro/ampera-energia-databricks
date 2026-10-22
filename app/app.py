@@ -1,4 +1,4 @@
-"""Ampera app backend: read-only JSON API over Lakebase `gold_lb` + the built React SPA.
+"""Ampera app backend: read-only JSON API over Lakebase `ampera_gold_lb` + the built React SPA.
 
 Spec: specs/06-app.md. Local run (from app/):
   DATABRICKS_CONFIG_PROFILE=<profile> LAKEBASE_ENDPOINT=projects/ampera-demo/branches/production/endpoints/primary \
@@ -8,13 +8,13 @@ import os
 import queue
 import time
 from contextlib import contextmanager
-from datetime import date
+from datetime import date, timedelta
 from functools import lru_cache
 from pathlib import Path
 
 import psycopg
 from databricks.sdk import WorkspaceClient
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from psycopg.rows import dict_row
@@ -116,7 +116,7 @@ def meta():
 
 @lru_cache(maxsize=4)
 def _meta(_b):
-    return query("SELECT min(dia) AS de, max(dia) AS ate FROM gold_lb.generation_daily")[0]
+    return query("SELECT min(dia) AS de, max(dia) AS ate FROM ampera_gold_lb.generation_daily")[0]
 
 
 @app.get("/api/plants")
@@ -129,7 +129,7 @@ def _plants(_b):
     return query("""
         SELECT plant_id, ceg, nome, uf, lat, lon, capacidade_mw, fonte, tipo, municipio,
                conjunto_key, nom_conjunto, match_method, mwh_total, mwh_30d, mwh_estimado_total
-        FROM gold_lb.plant_location ORDER BY mwh_total DESC NULLS LAST""")
+        FROM ampera_gold_lb.plant_location ORDER BY mwh_total DESC NULLS LAST""")
 
 
 @app.get("/api/reconciliation")
@@ -140,7 +140,7 @@ def reconciliation():
 @lru_cache(maxsize=4)
 def _reconciliation(_b):
     return query("""SELECT grao, mes, match_method, mwh, n_usinas
-                    FROM gold_lb.reconciliation_monthly ORDER BY grao, mes, match_method""")
+                    FROM ampera_gold_lb.reconciliation_monthly ORDER BY grao, mes, match_method""")
 
 
 @app.get("/api/overview")
@@ -161,7 +161,7 @@ def _overview(de, ate, uf, fonte, usina, conjunto, _b):
                max(uf) AS uf, count(DISTINCT plant_id) AS n_usinas,
                sum(mwh) AS mwh, sum(mwh_estimado) AS mwh_estimado, sum(valor_rs) AS valor_rs,
                avg(pld_medio_rs_mwh) AS pld_medio
-        FROM (SELECT date_trunc('{g}', dia)::date AS p, * FROM gold_lb.generation_daily {w}) t
+        FROM (SELECT date_trunc('{g}', dia)::date AS p, * FROM ampera_gold_lb.generation_daily {w}) t
         GROUP BY GROUPING SETS ((p, fonte), (fonte), (plant_id), (conjunto_key))""", params)
     by = {k: [r for r in rows if r["g"] == k] for k in ("serie", "fonte", "usina", "conjunto")}
     for r in by["fonte"]:
@@ -191,15 +191,96 @@ def plant(plant_id: str):
 
 @lru_cache(maxsize=128)
 def _plant(plant_id, _b):
-    info = query("SELECT * FROM gold_lb.plant_location WHERE plant_id = %s", (plant_id,))
+    info = query("SELECT * FROM ampera_gold_lb.plant_location WHERE plant_id = %s", (plant_id,))
     if not info:
         raise HTTPException(404, "Usina não encontrada")
     days = query("""
         SELECT dia, mwh, mwh_estimado, match_method, pld_medio_rs_mwh, pld_capturado_rs_mwh, valor_rs,
                vento_100m_ms_modelo, irradiancia_wm2_modelo, temp_c_modelo, precip_mm_modelo,
                vento_ms_medido, irradiancia_wm2_medida, fonte_medicao
-        FROM gold_lb.generation_daily WHERE plant_id = %s ORDER BY dia""", (plant_id,))
-    return {"usina": info[0], "dias": days}
+        FROM ampera_gold_lb.generation_daily WHERE plant_id = %s ORDER BY dia""", (plant_id,))
+    curt = query("""
+        SELECT dia, mwh_esperado, mwh_restrito, valor_rs_perdido, horas_restritas_modelo, horas_restritas_ons
+        FROM ampera_gold_lb.curtailment_daily WHERE plant_id = %s ORDER BY dia""", (plant_id,))
+    return {"usina": info[0], "dias": days, "curtailment": curt}
+
+
+# --- curtailment (ML, spec 11) ----------------------------------------------------------------
+
+@app.get("/api/curtailment")
+def curtailment(de: date | None = None, ate: date | None = None, uf: str | None = None, fonte: str | None = None):
+    return _curtailment(de, ate, uf, fonte, _bucket())
+
+
+@lru_cache(maxsize=64)
+def _curtailment(de, ate, uf, fonte, _b):
+    w, params = where(de, ate, {"uf": uf, "fonte": fonte})
+    t = "ampera_gold_lb.curtailment_daily"
+    serie = query(f"""
+        SELECT date_trunc('month', dia)::date AS mes, fonte, sum(mwh) AS mwh, sum(mwh_esperado) AS mwh_esperado,
+               sum(mwh_restrito) AS mwh_restrito, sum(valor_rs_perdido) AS valor_rs_perdido
+        FROM {t} {w} GROUP BY 1, 2 ORDER BY 1, 2""", params)
+    usinas = query(f"""
+        SELECT plant_id, max(nome) AS nome, max(uf) AS uf, max(fonte) AS fonte, max(capacidade_mw) AS capacidade_mw,
+               sum(mwh) AS mwh, sum(mwh_restrito) AS mwh_restrito, sum(valor_rs_perdido) AS valor_rs_perdido,
+               sum(horas_restritas_modelo) AS horas_modelo, sum(horas_restritas_ons) AS horas_ons
+        FROM {t} {w} GROUP BY plant_id ORDER BY valor_rs_perdido DESC NULLS LAST LIMIT 25""", params)
+    return {"serie": serie, "usinas": usinas}
+
+
+# --- ai_decide review queue (GenAI, spec 12) ------------------------------------------------
+
+@app.get("/api/reconciliation/ai")
+def reconciliation_ai():
+    return _reconciliation_ai(_bucket())
+
+
+@lru_cache(maxsize=4)
+def _reconciliation_ai(_b):
+    return query("SELECT * FROM ampera_gold_lb.reconciliation_ai_review ORDER BY ai_accepted, mwh_total DESC NULLS LAST")
+
+
+# --- Genie chat, on behalf of the signed-in user (spec 14) ------------------------------------
+
+def _genie_client(request: Request) -> WorkspaceClient:
+    # Databricks Apps forwards the user's token when user authorization (scope dashboards.genie) is on:
+    # Genie then runs as that user, so Unity Catalog grants apply per user. Local dev: the CLI profile.
+    tok = request.headers.get("x-forwarded-access-token")
+    return WorkspaceClient(host=_ws.config.host, token=tok, auth_type="pat") if tok else _ws
+
+
+GENIE_WAIT = timedelta(seconds=110)
+
+
+@app.post("/api/genie")
+def genie(body: dict, request: Request):
+    q = (body.get("pergunta") or "").strip()
+    if not q:
+        raise HTTPException(400, "Pergunta vazia")
+    w, space = _genie_client(request), os.environ["GENIE_SPACE_ID"]
+    try:
+        m = (w.genie.create_message_and_wait(space, body["conversa"], q, timeout=GENIE_WAIT) if body.get("conversa")
+             else w.genie.start_conversation_and_wait(space, q, timeout=GENIE_WAIT))
+    except Exception as e:  # permission/UC errors are the user's to see, not a 500
+        raise HTTPException(403 if "PERMISSION" in str(e).upper() else 502, str(e)[:400])
+    out = {"conversa": m.conversation_id, "mensagem": m.id, "texto": None, "sql": None,
+           "descricao": None, "colunas": [], "linhas": [], "sugestoes": []}
+    for a in m.attachments or []:
+        if a.text and a.text.content:
+            out["texto"] = a.text.content
+        if a.suggested_questions and a.suggested_questions.questions:
+            out["sugestoes"] = a.suggested_questions.questions
+        if a.query:
+            out["sql"], out["descricao"] = a.query.query, a.query.description
+            r = w.genie.get_message_attachment_query_result(space, m.conversation_id, m.id, a.attachment_id)
+            sr = r.statement_response
+            if sr and sr.manifest and sr.manifest.schema:
+                out["colunas"] = [{"nome": c.name, "tipo": c.type_name.value if c.type_name else "STRING"}
+                                  for c in sr.manifest.schema.columns]
+                out["linhas"] = (sr.result.data_array or [])[:500] if sr.result else []
+    if m.error and not out["texto"] and not out["sql"]:
+        out["texto"] = f"Genie não conseguiu responder: {m.error.error}"
+    return out
 
 
 _dist = Path(__file__).parent / "frontend" / "dist"

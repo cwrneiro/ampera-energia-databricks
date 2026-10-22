@@ -14,7 +14,7 @@ SELECT
   current_timestamp()                       AS _ingested_at,
   _metadata.file_path                       AS _source_file
 FROM STREAM read_files(
-  '/Volumes/${catalog}/bronze/raw/ons_member_solar',
+  '/Volumes/${catalog}/ampera_bronze/raw/ons_member_solar',
   format => 'parquet',
   pathGlobFilter => '*_202[5-9]_*.parquet'
 );
@@ -28,7 +28,7 @@ SELECT
   current_timestamp()                       AS _ingested_at,
   _metadata.file_path                       AS _source_file
 FROM STREAM read_files(
-  '/Volumes/${catalog}/bronze/raw/ons_member_solar',
+  '/Volumes/${catalog}/ampera_bronze/raw/ons_member_solar',
   format => 'parquet',
   pathGlobFilter => '*_2024_*.parquet'
 );

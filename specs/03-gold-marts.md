@@ -5,11 +5,11 @@
 Query-ready gold tables the app and Genie read: generation by CEG and by conjunto, enriched with
 price and weather — Ampera's "geração por CEG e/ou por conjunto".
 
-## Tables (decision #17) — `ampera_catalog.gold`, SQL materialized views
+## Tables (decision #17) — `ampera_catalog.ampera_gold`, SQL materialized views
 
 | Table | Grain | Rows | Served |
 |---|---|---|---|
-| `fact_generation_hourly` | plant × hour (from `silver.generation_plant`) | ~35M | lakehouse (Genie) |
+| `fact_generation_hourly` | plant × hour (from `ampera_silver.generation_plant`) | ~35M | lakehouse (Genie) |
 | `generation_daily` | plant × day; PK (dia, plant_id) | 1.46M | Lakebase |
 | `plant_location` | plant; lat/lon, capacity, totals | 2,292 | Lakebase |
 | `reconciliation_monthly` | grao (publicado / usina) × month × method | 283 | Lakebase |

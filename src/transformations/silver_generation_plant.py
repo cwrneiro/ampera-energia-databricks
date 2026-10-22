@@ -30,26 +30,26 @@ def _members(table, fuel):
 
 
 @dp.materialized_view(
-    name="silver.generation_plant",
+    name="ampera_silver.generation_plant",
     comment="Silver: hourly MWh per plant_id; complexes split into members (measured, or estimated).",
     cluster_by=["gen_date", "uf"],
 )
 @dp.expect_or_fail("has_plant_id", "plant_id IS NOT NULL")
 @dp.expect("non_negative_mwh", "mwh >= 0 OR mwh IS NULL")
 def generation_plant():
-    gen = (spark.read.table("silver.generation")  # noqa: F821
+    gen = (spark.read.table("ampera_silver.generation")  # noqa: F821
            .withColumnRenamed("id_subsistema", "submercado")
-           .join(spark.read.table("silver.ons_plant")  # noqa: F821
+           .join(spark.read.table("ampera_silver.ons_plant")  # noqa: F821
                  .select("ons_key", "fuel_cls"), "ons_key", "left"))
-    cm = spark.read.table("silver.conjunto_member")  # noqa: F821
+    cm = spark.read.table("ampera_silver.conjunto_member")  # noqa: F821
     ckeys = cm.select(F.col("conjunto_key").alias("ons_key")).distinct()
 
     base = gen.join(ckeys, "ons_key", "left_anti")
     cx = gen.join(ckeys, "ons_key", "left_semi")
 
     # --- measured members (hourly) ------------------------------------------------------------
-    mem = (_members("bronze.ons_member_generation_wind", "EOL")
-           .unionByName(_members("bronze.ons_member_generation_solar", "SOL"))
+    mem = (_members("ampera_bronze.ons_member_generation_wind", "EOL")
+           .unionByName(_members("ampera_bronze.ons_member_generation_solar", "SOL"))
            .groupBy("member_id", "cx_detail", "uf", "submercado", "nome", "ceg_norm", "fuel_cls", "ts")
            .agg(F.avg("val_geracaoverificada").alias("mwh")))
     # Early solar files (2024_10..12) lack id_ons_conjuntousina -> look the complex up in the mapping.

@@ -9,7 +9,7 @@ with data-quality expectations on the reconciliation output, and one job keeps L
 
 - **Pipeline `ampera_medallion`** (`resources/ampera_medallion.pipeline.yml`):
   serverless, triggered, SQL + Python files in `src/transformations/` (one dataset per file:
-  `bronze_*`, `silver_*`, `gold_*`). Publishes to `bronze` by default; silver/gold use
+  `bronze_*`, `silver_*`, `gold_*`). Publishes to `ampera_bronze` by default; silver/gold use
   `schema.table` names resolved against the pipeline catalog (`var.catalog`), and bronze volume
   paths use `${catalog}` from the pipeline `configuration` (spec 10).
 - **Job `ampera_refresh`** (`resources/ampera_refresh.job.yml`): medallion pipeline,

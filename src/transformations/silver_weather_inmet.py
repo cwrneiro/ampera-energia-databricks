@@ -13,7 +13,7 @@ def _num(c):  # comma decimals; -9999 = missing
 
 
 def _stations():
-    b = spark.read.table("bronze.inmet_weather")  # noqa: F821
+    b = spark.read.table("ampera_bronze.inmet_weather")  # noqa: F821
     keys = ["CODIGO (WMO):", "LATITUDE:", "LONGITUDE:", "ESTACAO:", "UF:"]
     meta = (b.filter(F.col("_c0").isin(*keys))
              .groupBy("_source_file").pivot("_c0", keys).agg(F.first("_c1")))
@@ -26,12 +26,12 @@ def _stations():
 
 
 @dp.materialized_view(
-    name="silver.weather_inmet_hourly",
+    name="ampera_silver.weather_inmet_hourly",
     comment="Silver: INMET hourly weather per station, local time; radiation kJ/m² -> W/m², aligned to ONS hours.",
     cluster_by=["station"],
 )
 def weather_inmet_hourly():
-    b = spark.read.table("bronze.inmet_weather")  # noqa: F821
+    b = spark.read.table("ampera_bronze.inmet_weather")  # noqa: F821
     rows = (b.filter(F.col("_c0").rlike(r"^\d{4}/\d{2}/\d{2}$"))
              .select("_source_file",
                      # Hora UTC "HHMM UTC" -> local = UTC-3 (Brasília, no DST since 2019)
@@ -55,14 +55,14 @@ def weather_inmet_hourly():
 
 
 @dp.materialized_view(
-    name="silver.plant_inmet_station",
+    name="ampera_silver.plant_inmet_station",
     comment="Silver: nearest INMET station (<= 50 km) for located plants that have no ONS at-plant weather.",
 )
 def plant_inmet_station():
     # ponytail: nearest station only — hours where it has gaps stay NULL; add a next-nearest fallback
     # if gaps matter on the plant page.
-    dim = spark.read.table("silver.dim_plant").filter("lat IS NOT NULL")  # noqa: F821
-    ons = spark.read.table("silver.weather_plant_measured").select("plant_id").distinct()  # noqa: F821
+    dim = spark.read.table("ampera_silver.dim_plant").filter("lat IS NOT NULL")  # noqa: F821
+    ons = spark.read.table("ampera_silver.weather_plant_measured").select("plant_id").distinct()  # noqa: F821
     st = _stations().drop("_source_file").dropDuplicates(["station"])
     p = dim.join(ons, "plant_id", "left_anti").select("plant_id", "lat", "lon")
     rad = F.lit(3.141592653589793 / 180)

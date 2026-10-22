@@ -9,6 +9,11 @@ don't join directly** — some plants have no CEG code — so correlating genera
 unreliable. This demo shows Databricks solving that reconciliation end to end and presenting the
 result through an app and a Genie Agent.
 
+**Second pain (2026-10-21):** curtailment — wind and solar output cut by ONS — is invisible in
+R$ terms. The build adds an ML model that estimates unconstrained output and values the lost
+energy at PLD, a GenAI (`ai_decide`) step for the plants the matching rules can't place, UC
+governance, and a Genie chat in the app (specs 11–15).
+
 **Done & successful (one sentence):** On `<profile>`, a Declarative Pipeline builds a clean
 medallion that assigns every ONS generation record a reliable unique plant ID (CEG or surrogate),
 served through an autoscaling Lakebase to a branded PT-BR app (with a map) and a Genie Agent that
@@ -23,7 +28,7 @@ answers "generation by CEG / by conjunto".
 CCEE PLD prices and weather (Open-Meteo, ONS at-plant, INMET); medallion via Lakeflow Declarative
 Pipeline; reconciliation to a unique plant ID; Lakebase + synced tables; FastAPI+React app with a
 map; Genie Agent. All SIGA generation types. **Out (v1):** streaming ingest; app auth/RBAC/
-multi-tenant; forecasting/ML; history beyond the 24-month window.
+multi-tenant; price/generation forecasting; history beyond the 24-month window.
 
 ## Decision log (all confirmed by the user on 2026-10-01)
 
@@ -41,17 +46,29 @@ multi-tenant; forecasting/ML; history beyond the 24-month window.
 | 10 | Reconciliation ID | Normalized CEG, else fuzzy name match (UF + fuel, numerals must match) with confidence, else surrogate; manual-override table. Capacity tie-break dropped (ONS has no capacity) — spec 02 |
 | 11 | ETL engine | Lakeflow Declarative Pipeline, bronze → silver → gold |
 | 12 | Serving | Autoscaling Lakebase fed from gold via synced tables |
-| 13 | Catalog | `ampera_catalog` with schemas `bronze` / `silver` / `gold` |
+| 13 | Catalog | `ampera_catalog` with schemas `ampera_bronze` / `ampera_silver` / `ampera_gold` |
 | 14 | Window | Last 24 months of ONS (2024-10 … 2026-09) |
 | 15 | Unmatched metric | SUCCESS #1 over plant-level MWh; complexes + state totals are separate categories |
 | 16 | Complex members | ONS measured per-member generation; capacity-weighted "estimado" only where no member data — spec 09 |
 | 17 | Gold tables | `fact_generation_hourly` (lakehouse only) + `generation_daily`, `plant_location`, `reconciliation_monthly` (Lakebase) — spec 03 |
 | 18 | Weather | Open-Meteo (ERA5) base layer for every plant; drill-down: ONS at-plant measurement, else INMET station ≤ 50 km. Open-Meteo free API is non-commercial (accepted for the demo; production = ERA5 via Copernicus) — spec 03 |
 | 19 | Price | CCEE PLD horário, browser-downloaded (CCEE blocks automated clients); manual refresh — spec 03 |
-| 20 | Lakebase | Project `ampera-demo` (PG 17, autoscale 0.5–4 CU, scale-to-zero after 20 min); SNAPSHOT synced tables in `ampera_catalog.gold_lb` (Postgres schema `gold_lb`); refresh job after the pipeline — spec 05 |
+| 20 | Lakebase | Project `ampera-demo` (PG 17, autoscale 0.5–4 CU, scale-to-zero after 20 min); SNAPSHOT synced tables in `ampera_catalog.ampera_gold_lb` (Postgres schema `ampera_gold_lb`); refresh job after the pipeline — spec 05 |
 | 21 | App shape | 4 pages (Visão geral, Reconciliação, Mapa, Usina); MapLibre GL + OpenFreeMap `positron` tiles; Recharts; `psycopg[binary]`; React/Vite built locally, `dist` shipped by the bundle (2026-10-02) — spec 06 |
 | 22 | Genie Agent | Raw gold tables (all 4, no Metric View) + SQL snippets; PT-BR surfaces; ~12 checked chat benchmarks; managed as a bundle `genie_spaces` resource (2026-10-02) — spec 07 |
-| 23–26 | Customer handoff | SETUP.md + AGENTS.md + `/setup`; additive `targets/<target>.yml`; cheap validation; catalog parameterized (2026-10-09) — spec 10 |
+| 23–26 | Handoff | SETUP.md + AGENTS.md + `/setup`; additive `targets/<target>.yml`; cheap validation; catalog parameterized (2026-10-09) — spec 10 |
+| 27 | Purpose | End-to-end demo for fictional **Ampera Energia Analytics** (public data only) |
+| 28 | Workspace | `<profile>`; schemas `ampera_*` inside `ampera_catalog` (existing catalog; the bundle never runs CREATE CATALOG) |
+| 29 | ML problem | Curtailment detection: expected unconstrained CF from weather; labels = ONS constrained-off flags already in bronze — spec 11 |
+| 30 | ML model | HistGBR per technology, train on unflagged hours, 18/6-month split, MLflow + UC `champion`; flag expected ≥ 10% cap & actual < Y×expected, Y tuned by F1 and stored on the version — spec 11 |
+| 31 | GenAI | `ai_decide` choice A/B/C/nenhum per unresolved ONS plant; auto-apply at confidence ≥ 0.9 (to revisit after calibration), else review queue — spec 12 |
+| 32 | GenAI rationale | None — per-candidate probabilities shown instead — spec 12 |
+| 33 | GenAI eval | Blind replay on CEG-matched plants with the CEG hidden; accuracy + calibration — spec 12 |
+| 34 | Governance | Group `ampera_analysts` reads gold only; tags layer/domain/source/ai; model in UC; lineage evidence — spec 13 |
+| 36 | App | Curtailment sheet, Usina expected-vs-actual, ai_decide queue on Reconciliação — spec 14 |
+| 37 | Genie chat | Slide-out panel on every page, on-behalf-of-user, SQL shown, Recharts chart by column-type heuristic — spec 14 |
+| 40 | Evidence | Executed notebooks (`.ipynb` with outputs) + text captures from one script; README index — spec 15 |
+| 41 | Publish | New public repo `cwrneiro/ampera-energia-databricks`, single sanitized root commit, after the user's go-ahead — spec 15 |
 
 ## What the data showed (2026-10-01; details in specs 01, 02, 09)
 

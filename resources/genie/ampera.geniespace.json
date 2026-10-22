@@ -43,7 +43,7 @@
   "data_sources": {
     "tables": [
       {
-        "identifier": "ampera_catalog.gold.fact_generation_hourly",
+        "identifier": "ampera_catalog.ampera_gold.fact_generation_hourly",
         "column_configs": [
           {
             "column_name": "ceg",
@@ -223,7 +223,7 @@
         ]
       },
       {
-        "identifier": "ampera_catalog.gold.generation_daily",
+        "identifier": "ampera_catalog.ampera_gold.generation_daily",
         "column_configs": [
           {
             "column_name": "ceg",
@@ -436,7 +436,7 @@
         ]
       },
       {
-        "identifier": "ampera_catalog.gold.plant_location",
+        "identifier": "ampera_catalog.ampera_gold.plant_location",
         "column_configs": [
           {
             "column_name": "capacidade_mw",
@@ -518,7 +518,7 @@
         ]
       },
       {
-        "identifier": "ampera_catalog.gold.reconciliation_monthly",
+        "identifier": "ampera_catalog.ampera_gold.reconciliation_monthly",
         "column_configs": [
           {
             "column_name": "grao",
@@ -569,7 +569,7 @@
           "Quais as 10 usinas com maior geração por CEG em 2025?"
         ],
         "sql": [
-          "SELECT g.ceg, MAX(g.nome) AS usina, MAX(g.uf) AS uf, MAX(g.fonte) AS fonte, ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh\nFROM ampera_catalog.gold.generation_daily g\nWHERE g.ceg IS NOT NULL AND g.dia BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY g.ceg\nORDER BY geracao_twh DESC\nLIMIT 10"
+          "SELECT g.ceg, MAX(g.nome) AS usina, MAX(g.uf) AS uf, MAX(g.fonte) AS fonte, ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh\nFROM ampera_catalog.ampera_gold.generation_daily g\nWHERE g.ceg IS NOT NULL AND g.dia BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY g.ceg\nORDER BY geracao_twh DESC\nLIMIT 10"
         ],
         "usage_guidance": [
           "Geração por CEG / por usina: some mwh por ceg em generation_daily; exclua ceg NULL."
@@ -581,7 +581,7 @@
           "Geração mensal do Conj. Santa Vitória do Palmar"
         ],
         "sql": [
-          "SELECT CAST(DATE_TRUNC('MONTH', g.dia) AS DATE) AS mes, ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh, COUNT(DISTINCT g.plant_id) AS n_usinas\nFROM ampera_catalog.gold.generation_daily g\nWHERE g.nom_conjunto = 'Conj. Santa Vitória do Palmar'\nGROUP BY 1\nORDER BY 1"
+          "SELECT CAST(DATE_TRUNC('MONTH', g.dia) AS DATE) AS mes, ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh, COUNT(DISTINCT g.plant_id) AS n_usinas\nFROM ampera_catalog.ampera_gold.generation_daily g\nWHERE g.nom_conjunto = 'Conj. Santa Vitória do Palmar'\nGROUP BY 1\nORDER BY 1"
         ],
         "usage_guidance": [
           "Série temporal de um conjunto. Para rankings de conjuntos agrupe por conjunto_key."
@@ -593,7 +593,7 @@
           "Geração por UF e fonte em 2025"
         ],
         "sql": [
-          "SELECT g.uf, g.fonte, ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh\nFROM ampera_catalog.gold.generation_daily g\nWHERE YEAR(g.dia) = 2025\nGROUP BY g.uf, g.fonte\nORDER BY g.uf, geracao_twh DESC"
+          "SELECT g.uf, g.fonte, ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh\nFROM ampera_catalog.ampera_gold.generation_daily g\nWHERE YEAR(g.dia) = 2025\nGROUP BY g.uf, g.fonte\nORDER BY g.uf, geracao_twh DESC"
         ]
       },
       {
@@ -602,7 +602,7 @@
           "PLD capturado vs PLD médio por fonte"
         ],
         "sql": [
-          "SELECT g.fonte,\n       ROUND(SUM(g.mwh) / 1e6, 1) AS geracao_twh,\n       ROUND(AVG(g.pld_medio_rs_mwh), 2) AS pld_medio_rs_mwh,\n       ROUND(TRY_DIVIDE(SUM(g.valor_rs), SUM(g.mwh)), 2) AS pld_capturado_rs_mwh,\n       ROUND(100 * (TRY_DIVIDE(SUM(g.valor_rs), SUM(g.mwh)) / AVG(g.pld_medio_rs_mwh) - 1), 1) AS desvio_pct\nFROM ampera_catalog.gold.generation_daily g\nGROUP BY g.fonte\nORDER BY pld_capturado_rs_mwh DESC"
+          "SELECT g.fonte,\n       ROUND(SUM(g.mwh) / 1e6, 1) AS geracao_twh,\n       ROUND(AVG(g.pld_medio_rs_mwh), 2) AS pld_medio_rs_mwh,\n       ROUND(TRY_DIVIDE(SUM(g.valor_rs), SUM(g.mwh)), 2) AS pld_capturado_rs_mwh,\n       ROUND(100 * (TRY_DIVIDE(SUM(g.valor_rs), SUM(g.mwh)) / AVG(g.pld_medio_rs_mwh) - 1), 1) AS desvio_pct\nFROM ampera_catalog.ampera_gold.generation_daily g\nGROUP BY g.fonte\nORDER BY pld_capturado_rs_mwh DESC"
         ],
         "usage_guidance": [
           "PLD capturado = SUM(valor_rs) / SUM(mwh) (ponderado pela geração); PLD médio = média simples."
@@ -614,7 +614,7 @@
           "Perfil horário de geração vs irradiância do Conj. Janaúba em 2026"
         ],
         "sql": [
-          "SELECT HOUR(f.ts) AS hora,\n       ROUND(SUM(f.mwh) / COUNT(DISTINCT f.gen_date), 1) AS mwh_medio_hora,\n       ROUND(AVG(f.irradiancia_wm2_modelo)) AS irradiancia_modelo_wm2,\n       ROUND(AVG(f.irradiancia_wm2_medida)) AS irradiancia_medida_wm2\nFROM ampera_catalog.gold.fact_generation_hourly f\nWHERE f.nom_conjunto = 'Conj. Janaúba' AND f.gen_date >= '2026-01-01'\nGROUP BY 1\nORDER BY 1"
+          "SELECT HOUR(f.ts) AS hora,\n       ROUND(SUM(f.mwh) / COUNT(DISTINCT f.gen_date), 1) AS mwh_medio_hora,\n       ROUND(AVG(f.irradiancia_wm2_modelo)) AS irradiancia_modelo_wm2,\n       ROUND(AVG(f.irradiancia_wm2_medida)) AS irradiancia_medida_wm2\nFROM ampera_catalog.ampera_gold.fact_generation_hourly f\nWHERE f.nom_conjunto = 'Conj. Janaúba' AND f.gen_date >= '2026-01-01'\nGROUP BY 1\nORDER BY 1"
         ],
         "usage_guidance": [
           "Use fact_generation_hourly só para perfis por hora do dia; sempre filtre conjunto/usina e período."
@@ -626,7 +626,7 @@
           "Quanto da geração vem de cada método de reconciliação?"
         ],
         "sql": [
-          "SELECT r.match_method, ROUND(SUM(r.mwh) / 1e6, 2) AS geracao_twh,\n       ROUND(100 * SUM(r.mwh) / SUM(SUM(r.mwh)) OVER (), 1) AS pct\nFROM ampera_catalog.gold.reconciliation_monthly r\nWHERE r.grao = 'usina'\nGROUP BY r.match_method\nORDER BY geracao_twh DESC"
+          "SELECT r.match_method, ROUND(SUM(r.mwh) / 1e6, 2) AS geracao_twh,\n       ROUND(100 * SUM(r.mwh) / SUM(SUM(r.mwh)) OVER (), 1) AS pct\nFROM ampera_catalog.ampera_gold.reconciliation_monthly r\nWHERE r.grao = 'usina'\nGROUP BY r.match_method\nORDER BY geracao_twh DESC"
         ],
         "usage_guidance": [
           "reconciliation_monthly: filtre sempre um único grao."
@@ -645,11 +645,11 @@
       {
         "id": "40000000000000000000000000000001",
         "left": {
-          "identifier": "ampera_catalog.gold.generation_daily",
+          "identifier": "ampera_catalog.ampera_gold.generation_daily",
           "alias": "generation_daily"
         },
         "right": {
-          "identifier": "ampera_catalog.gold.plant_location",
+          "identifier": "ampera_catalog.ampera_gold.plant_location",
           "alias": "plant_location"
         },
         "sql": [
@@ -660,11 +660,11 @@
       {
         "id": "40000000000000000000000000000002",
         "left": {
-          "identifier": "ampera_catalog.gold.fact_generation_hourly",
+          "identifier": "ampera_catalog.ampera_gold.fact_generation_hourly",
           "alias": "fact_generation_hourly"
         },
         "right": {
-          "identifier": "ampera_catalog.gold.plant_location",
+          "identifier": "ampera_catalog.ampera_gold.plant_location",
           "alias": "plant_location"
         },
         "sql": [
@@ -729,7 +729,7 @@
           "id": "31000000000000000000000000000002",
           "display_name": "Últimos 12 meses",
           "sql": [
-            "generation_daily.dia > ADD_MONTHS((SELECT MAX(generation_daily.dia) FROM ampera_catalog.gold.generation_daily), -12)"
+            "generation_daily.dia > ADD_MONTHS((SELECT MAX(generation_daily.dia) FROM ampera_catalog.ampera_gold.generation_daily), -12)"
           ],
           "synonyms": [
             "último ano",
@@ -750,7 +750,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.gold.generation_daily g WHERE g.ceg = 'UHE.PH.PA.030354-2.1' AND YEAR(g.dia) = 2025"
+              "SELECT ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.ampera_gold.generation_daily g WHERE g.ceg = 'UHE.PH.PA.030354-2.1' AND YEAR(g.dia) = 2025"
             ]
           }
         ]
@@ -764,7 +764,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.gold.generation_daily g WHERE g.ceg = 'UHE.PH.PA.030354-2.1' AND YEAR(g.dia) = 2025"
+              "SELECT ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.ampera_gold.generation_daily g WHERE g.ceg = 'UHE.PH.PA.030354-2.1' AND YEAR(g.dia) = 2025"
             ]
           }
         ]
@@ -778,7 +778,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT g.conjunto_key, MAX(g.nom_conjunto) AS conjunto, ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh FROM ampera_catalog.gold.generation_daily g WHERE g.conjunto_key IS NOT NULL AND YEAR(g.dia) = 2025 GROUP BY g.conjunto_key ORDER BY geracao_gwh DESC LIMIT 5"
+              "SELECT g.conjunto_key, MAX(g.nom_conjunto) AS conjunto, ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh FROM ampera_catalog.ampera_gold.generation_daily g WHERE g.conjunto_key IS NOT NULL AND YEAR(g.dia) = 2025 GROUP BY g.conjunto_key ORDER BY geracao_gwh DESC LIMIT 5"
             ]
           }
         ]
@@ -792,7 +792,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT g.conjunto_key, MAX(g.nom_conjunto) AS conjunto, ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh FROM ampera_catalog.gold.generation_daily g WHERE g.conjunto_key IS NOT NULL AND YEAR(g.dia) = 2025 GROUP BY g.conjunto_key ORDER BY geracao_gwh DESC LIMIT 5"
+              "SELECT g.conjunto_key, MAX(g.nom_conjunto) AS conjunto, ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh FROM ampera_catalog.ampera_gold.generation_daily g WHERE g.conjunto_key IS NOT NULL AND YEAR(g.dia) = 2025 GROUP BY g.conjunto_key ORDER BY geracao_gwh DESC LIMIT 5"
             ]
           }
         ]
@@ -806,7 +806,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.gold.generation_daily g WHERE g.uf = 'BA' AND YEAR(g.dia) = 2025"
+              "SELECT ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.ampera_gold.generation_daily g WHERE g.uf = 'BA' AND YEAR(g.dia) = 2025"
             ]
           }
         ]
@@ -820,7 +820,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.gold.generation_daily g WHERE g.uf = 'BA' AND YEAR(g.dia) = 2025"
+              "SELECT ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.ampera_gold.generation_daily g WHERE g.uf = 'BA' AND YEAR(g.dia) = 2025"
             ]
           }
         ]
@@ -834,7 +834,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT CAST(DATE_TRUNC('MONTH', g.dia) AS DATE) AS mes, ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh FROM ampera_catalog.gold.generation_daily g WHERE g.fonte = 'SOL' AND YEAR(g.dia) = 2025 GROUP BY 1 ORDER BY 1"
+              "SELECT CAST(DATE_TRUNC('MONTH', g.dia) AS DATE) AS mes, ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh FROM ampera_catalog.ampera_gold.generation_daily g WHERE g.fonte = 'SOL' AND YEAR(g.dia) = 2025 GROUP BY 1 ORDER BY 1"
             ]
           }
         ]
@@ -848,7 +848,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT CAST(DATE_TRUNC('MONTH', g.dia) AS DATE) AS mes, ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh FROM ampera_catalog.gold.generation_daily g WHERE g.fonte = 'SOL' AND YEAR(g.dia) = 2025 GROUP BY 1 ORDER BY 1"
+              "SELECT CAST(DATE_TRUNC('MONTH', g.dia) AS DATE) AS mes, ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh FROM ampera_catalog.ampera_gold.generation_daily g WHERE g.fonte = 'SOL' AND YEAR(g.dia) = 2025 GROUP BY 1 ORDER BY 1"
             ]
           }
         ]
@@ -862,7 +862,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT ROUND(TRY_DIVIDE(SUM(g.valor_rs), SUM(g.mwh)), 2) AS pld_capturado_rs_mwh FROM ampera_catalog.gold.generation_daily g WHERE g.fonte = 'EOL' AND YEAR(g.dia) = 2025"
+              "SELECT ROUND(TRY_DIVIDE(SUM(g.valor_rs), SUM(g.mwh)), 2) AS pld_capturado_rs_mwh FROM ampera_catalog.ampera_gold.generation_daily g WHERE g.fonte = 'EOL' AND YEAR(g.dia) = 2025"
             ]
           }
         ]
@@ -876,7 +876,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT ROUND(TRY_DIVIDE(SUM(g.valor_rs), SUM(g.mwh)), 2) AS pld_capturado_rs_mwh FROM ampera_catalog.gold.generation_daily g WHERE g.fonte = 'EOL' AND YEAR(g.dia) = 2025"
+              "SELECT ROUND(TRY_DIVIDE(SUM(g.valor_rs), SUM(g.mwh)), 2) AS pld_capturado_rs_mwh FROM ampera_catalog.ampera_gold.generation_daily g WHERE g.fonte = 'EOL' AND YEAR(g.dia) = 2025"
             ]
           }
         ]
@@ -890,7 +890,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh, ROUND(AVG(g.vento_100m_ms_modelo), 2) AS vento_medio_ms FROM ampera_catalog.gold.generation_daily g WHERE g.fonte = 'EOL' AND g.uf = 'RS' AND g.dia BETWEEN '2026-07-01' AND '2026-07-31'"
+              "SELECT ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh, ROUND(AVG(g.vento_100m_ms_modelo), 2) AS vento_medio_ms FROM ampera_catalog.ampera_gold.generation_daily g WHERE g.fonte = 'EOL' AND g.uf = 'RS' AND g.dia BETWEEN '2026-07-01' AND '2026-07-31'"
             ]
           }
         ]
@@ -904,7 +904,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh, ROUND(AVG(g.vento_100m_ms_modelo), 2) AS vento_medio_ms FROM ampera_catalog.gold.generation_daily g WHERE g.fonte = 'EOL' AND g.uf = 'RS' AND g.dia BETWEEN '2026-07-01' AND '2026-07-31'"
+              "SELECT ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh, ROUND(AVG(g.vento_100m_ms_modelo), 2) AS vento_medio_ms FROM ampera_catalog.ampera_gold.generation_daily g WHERE g.fonte = 'EOL' AND g.uf = 'RS' AND g.dia BETWEEN '2026-07-01' AND '2026-07-31'"
             ]
           }
         ]
@@ -918,7 +918,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.gold.generation_daily g"
+              "SELECT ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.ampera_gold.generation_daily g"
             ]
           }
         ]
@@ -932,7 +932,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.gold.generation_daily g"
+              "SELECT ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.ampera_gold.generation_daily g"
             ]
           }
         ]
@@ -946,7 +946,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT g.submercado, ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.gold.generation_daily g WHERE YEAR(g.dia) = 2025 GROUP BY g.submercado ORDER BY geracao_twh DESC LIMIT 1"
+              "SELECT g.submercado, ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.ampera_gold.generation_daily g WHERE YEAR(g.dia) = 2025 GROUP BY g.submercado ORDER BY geracao_twh DESC LIMIT 1"
             ]
           }
         ]
@@ -960,7 +960,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT g.submercado, ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.gold.generation_daily g WHERE YEAR(g.dia) = 2025 GROUP BY g.submercado ORDER BY geracao_twh DESC"
+              "SELECT g.submercado, ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.ampera_gold.generation_daily g WHERE YEAR(g.dia) = 2025 GROUP BY g.submercado ORDER BY geracao_twh DESC"
             ]
           }
         ]
@@ -974,7 +974,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT g.fonte, ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh, ROUND(100 * SUM(g.mwh) / SUM(SUM(g.mwh)) OVER (), 1) AS pct FROM ampera_catalog.gold.generation_daily g GROUP BY g.fonte ORDER BY geracao_twh DESC"
+              "SELECT g.fonte, ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh, ROUND(100 * SUM(g.mwh) / SUM(SUM(g.mwh)) OVER (), 1) AS pct FROM ampera_catalog.ampera_gold.generation_daily g GROUP BY g.fonte ORDER BY geracao_twh DESC"
             ]
           }
         ]
@@ -988,7 +988,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT ROUND(SUM(l.capacidade_mw), 1) AS capacidade_mw FROM ampera_catalog.gold.plant_location l WHERE l.fonte = 'SOL'"
+              "SELECT ROUND(SUM(l.capacidade_mw), 1) AS capacidade_mw FROM ampera_catalog.ampera_gold.plant_location l WHERE l.fonte = 'SOL'"
             ]
           }
         ]
@@ -1002,7 +1002,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT g.uf, ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.gold.generation_daily g WHERE g.fonte = 'EOL' GROUP BY g.uf ORDER BY geracao_twh DESC LIMIT 5"
+              "SELECT g.uf, ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.ampera_gold.generation_daily g WHERE g.fonte = 'EOL' GROUP BY g.uf ORDER BY geracao_twh DESC LIMIT 5"
             ]
           }
         ]
@@ -1016,7 +1016,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT ROUND(100 * SUM(g.mwh_estimado) / SUM(g.mwh), 2) AS pct_estimado FROM ampera_catalog.gold.generation_daily g"
+              "SELECT ROUND(100 * SUM(g.mwh_estimado) / SUM(g.mwh), 2) AS pct_estimado FROM ampera_catalog.ampera_gold.generation_daily g"
             ]
           }
         ]
@@ -1030,7 +1030,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT ROUND(SUM(g.valor_rs) / 1e9, 2) AS valor_rs_bilhoes FROM ampera_catalog.gold.generation_daily g WHERE g.ceg = 'UHE.PH.PR.001161-4.1' AND YEAR(g.dia) = 2025"
+              "SELECT ROUND(SUM(g.valor_rs) / 1e9, 2) AS valor_rs_bilhoes FROM ampera_catalog.ampera_gold.generation_daily g WHERE g.ceg = 'UHE.PH.PR.001161-4.1' AND YEAR(g.dia) = 2025"
             ]
           }
         ]
@@ -1044,7 +1044,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT CAST(DATE_TRUNC('MONTH', g.dia) AS DATE) AS mes, ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh FROM ampera_catalog.gold.generation_daily g WHERE g.fonte = 'SOL' GROUP BY 1 ORDER BY geracao_gwh DESC LIMIT 1"
+              "SELECT CAST(DATE_TRUNC('MONTH', g.dia) AS DATE) AS mes, ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh FROM ampera_catalog.ampera_gold.generation_daily g WHERE g.fonte = 'SOL' GROUP BY 1 ORDER BY geracao_gwh DESC LIMIT 1"
             ]
           }
         ]
@@ -1058,7 +1058,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT COUNT(*) AS n_usinas FROM ampera_catalog.gold.plant_location l WHERE l.fonte = 'EOL' AND l.uf = 'BA'"
+              "SELECT COUNT(*) AS n_usinas FROM ampera_catalog.ampera_gold.plant_location l WHERE l.fonte = 'EOL' AND l.uf = 'BA'"
             ]
           }
         ]
@@ -1072,7 +1072,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT YEAR(g.dia) AS ano, ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.gold.generation_daily g WHERE MONTH(g.dia) <= 6 AND YEAR(g.dia) IN (2025, 2026) GROUP BY 1 ORDER BY 1"
+              "SELECT YEAR(g.dia) AS ano, ROUND(SUM(g.mwh) / 1e6, 2) AS geracao_twh FROM ampera_catalog.ampera_gold.generation_daily g WHERE MONTH(g.dia) <= 6 AND YEAR(g.dia) IN (2025, 2026) GROUP BY 1 ORDER BY 1"
             ]
           }
         ]
@@ -1086,7 +1086,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT g.submercado, ROUND(TRY_DIVIDE(SUM(g.valor_rs), SUM(g.mwh)), 2) AS pld_capturado_rs_mwh FROM ampera_catalog.gold.generation_daily g WHERE YEAR(g.dia) = 2025 GROUP BY g.submercado ORDER BY g.submercado"
+              "SELECT g.submercado, ROUND(TRY_DIVIDE(SUM(g.valor_rs), SUM(g.mwh)), 2) AS pld_capturado_rs_mwh FROM ampera_catalog.ampera_gold.generation_daily g WHERE YEAR(g.dia) = 2025 GROUP BY g.submercado ORDER BY g.submercado"
             ]
           }
         ]
@@ -1100,7 +1100,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT HOUR(f.ts) AS hora, ROUND(SUM(f.mwh) / COUNT(DISTINCT f.gen_date), 1) AS mwh_medio_hora FROM ampera_catalog.gold.fact_generation_hourly f WHERE f.nom_conjunto = 'Conj. Futura' AND f.gen_date >= '2026-01-01' GROUP BY 1 ORDER BY 1"
+              "SELECT HOUR(f.ts) AS hora, ROUND(SUM(f.mwh) / COUNT(DISTINCT f.gen_date), 1) AS mwh_medio_hora FROM ampera_catalog.ampera_gold.fact_generation_hourly f WHERE f.nom_conjunto = 'Conj. Futura' AND f.gen_date >= '2026-01-01' GROUP BY 1 ORDER BY 1"
             ]
           }
         ]
@@ -1114,7 +1114,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT ROUND(SUM(CASE WHEN r.match_method = 'ceg' THEN r.mwh END) / 1e6, 2) AS ceg_twh, ROUND(100 * SUM(CASE WHEN r.match_method = 'ceg' THEN r.mwh END) / SUM(r.mwh), 1) AS pct FROM ampera_catalog.gold.reconciliation_monthly r WHERE r.grao = 'usina' AND YEAR(r.mes) = 2025"
+              "SELECT ROUND(SUM(CASE WHEN r.match_method = 'ceg' THEN r.mwh END) / 1e6, 2) AS ceg_twh, ROUND(100 * SUM(CASE WHEN r.match_method = 'ceg' THEN r.mwh END) / SUM(r.mwh), 1) AS pct FROM ampera_catalog.ampera_gold.reconciliation_monthly r WHERE r.grao = 'usina' AND YEAR(r.mes) = 2025"
             ]
           }
         ]
@@ -1128,7 +1128,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT COUNT(*) AS n_usinas FROM ampera_catalog.gold.plant_location l WHERE l.ceg IS NULL"
+              "SELECT COUNT(*) AS n_usinas FROM ampera_catalog.ampera_gold.plant_location l WHERE l.ceg IS NULL"
             ]
           }
         ]
@@ -1142,7 +1142,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT ROUND(AVG(g.temp_c_modelo), 1) AS temp_media_c FROM ampera_catalog.gold.generation_daily g WHERE g.fonte = 'SOL' AND g.uf = 'MG' AND g.dia BETWEEN '2026-01-01' AND '2026-01-31'"
+              "SELECT ROUND(AVG(g.temp_c_modelo), 1) AS temp_media_c FROM ampera_catalog.ampera_gold.generation_daily g WHERE g.fonte = 'SOL' AND g.uf = 'MG' AND g.dia BETWEEN '2026-01-01' AND '2026-01-31'"
             ]
           }
         ]
@@ -1156,7 +1156,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT g.plant_id, MAX(g.nome) AS usina, ROUND(SUM(g.valor_rs) / 1e9, 2) AS valor_rs_bilhoes FROM ampera_catalog.gold.generation_daily g WHERE YEAR(g.dia) = 2025 GROUP BY g.plant_id ORDER BY valor_rs_bilhoes DESC LIMIT 3"
+              "SELECT g.plant_id, MAX(g.nome) AS usina, ROUND(SUM(g.valor_rs) / 1e9, 2) AS valor_rs_bilhoes FROM ampera_catalog.ampera_gold.generation_daily g WHERE YEAR(g.dia) = 2025 GROUP BY g.plant_id ORDER BY valor_rs_bilhoes DESC LIMIT 3"
             ]
           }
         ]
@@ -1170,7 +1170,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT CAST(DATE_TRUNC('MONTH', g.dia) AS DATE) AS mes, ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh FROM ampera_catalog.gold.generation_daily g WHERE g.fonte = 'NUC' AND YEAR(g.dia) = 2025 GROUP BY 1 ORDER BY 1"
+              "SELECT CAST(DATE_TRUNC('MONTH', g.dia) AS DATE) AS mes, ROUND(SUM(g.mwh) / 1e3, 1) AS geracao_gwh FROM ampera_catalog.ampera_gold.generation_daily g WHERE g.fonte = 'NUC' AND YEAR(g.dia) = 2025 GROUP BY 1 ORDER BY 1"
             ]
           }
         ]
@@ -1184,7 +1184,7 @@
           {
             "format": "SQL",
             "content": [
-              "SELECT ROUND(SUM(g.mwh) / COUNT(DISTINCT g.dia), 1) AS mwh_por_dia FROM ampera_catalog.gold.generation_daily g WHERE g.fonte = 'EOL' AND g.uf = 'RN' AND g.dia BETWEEN '2026-08-01' AND '2026-08-31'"
+              "SELECT ROUND(SUM(g.mwh) / COUNT(DISTINCT g.dia), 1) AS mwh_por_dia FROM ampera_catalog.ampera_gold.generation_daily g WHERE g.fonte = 'EOL' AND g.uf = 'RN' AND g.dia BETWEEN '2026-08-01' AND '2026-08-31'"
             ]
           }
         ]

@@ -23,7 +23,7 @@ enforce both (§4.4).
 
 | Resource | Bundle key / file | Notes |
 |---|---|---|
-| Pipeline `ampera_medallion` | `resources/ampera_medallion.pipeline.yml` | Serverless, triggered; catalog `var.catalog`, default schema `bronze`; code = `src/transformations/**` |
+| Pipeline `ampera_medallion` | `resources/ampera_medallion.pipeline.yml` | Serverless, triggered; catalog `var.catalog`, default schema `ampera_bronze`; code = `src/transformations/**` |
 | Job `ampera_refresh` | `resources/ampera_refresh.job.yml` | medallion → the 3 synced-table pipelines (`var.sync_pipeline_*`); daily 06:00 BRT, paused by default |
 | App `ampera-app` | `resources/ampera_app.app.yml`, `app/` | FastAPI + built React SPA; `postgres` resource on `projects/${var.lakebase_project}/branches/production`, `CAN_CONNECT_AND_CREATE`; gets its own service principal |
 | Genie space "Ampera · Geração Elétrica" | `resources/ampera_genie.genie_space.yml` + JSON body | Runs on `var.warehouse_id`; 4 gold tables, instructions, examples, 32 benchmarks |
@@ -32,11 +32,11 @@ enforce both (§4.4).
 
 | Resource | SETUP | Points at it |
 |---|---|---|
-| Catalog + schemas `bronze` `silver` `gold` `gold_lb` | §2 | `var.catalog` |
-| Volume `<catalog>.bronze.raw` (one folder per source) | §2, §5 | `${catalog}` in the bronze SQL |
-| Table `<catalog>.silver.plant_match_override` | §2 | read by `silver_plant_match.py` |
+| Catalog + schemas `ampera_bronze` `ampera_silver` `ampera_gold` `ampera_gold_lb` | §2 | `var.catalog` |
+| Volume `<catalog>.ampera_bronze.raw` (one folder per source) | §2, §5 | `${catalog}` in the bronze SQL |
+| Table `<catalog>.ampera_silver.plant_match_override` | §2 | read by `silver_plant_match.py` |
 | Lakebase project (PG 17; endpoint `primary`, 0.5–4 CU, suspends after 20 min) | §4 | `var.lakebase_project`, `LAKEBASE_ENDPOINT` in `app/app.yaml` |
-| 3 synced tables `<catalog>.gold_lb.*` (SNAPSHOT) and their pipelines | §6.2 | `var.sync_pipeline_*`; metadata in `<catalog>.default` |
+| 3 synced tables `<catalog>.ampera_gold_lb.*` (SNAPSHOT) and their pipelines | §6.2 | `var.sync_pipeline_*`; metadata in `<catalog>.default` |
 | Postgres grants for the app service principal | §6.6 | — |
 
 ### Depended on (must already exist)
@@ -47,7 +47,7 @@ enforce both (§4.4).
 | SQL warehouse | `var.warehouse_id` | Genie |
 | Users group | `permissions` in `targets/<target>.yml` | app `CAN_USE`, Genie `CAN_RUN`, UC `SELECT` on gold |
 | Public sources: ONS open data (S3), ANEEL CKAN, INMET portal, Open-Meteo archive API | SETUP §5 / `scripts/fetch_open_meteo.py` | raw landing |
-| CCEE PLD CSVs (browser download) | SETUP §5 | `bronze.ccee_pld_horario` |
+| CCEE PLD CSVs (browser download) | SETUP §5 | `ampera_bronze.ccee_pld_horario` |
 | OpenFreeMap tiles | `app/frontend` (no key) | loaded by the viewer's browser |
 
 ### Data objects (all created by the pipeline)
@@ -60,12 +60,12 @@ enforce both (§4.4).
 | **silver** — enrichment | `price_pld_hourly`, `weather_cell_hourly` (Open-Meteo), `weather_plant_measured` (ONS), `weather_inmet_hourly`, `plant_inmet_station` (≤ 50 km) | Joined by hour + submarket / location |
 | **silver** — checks | `plant_match_check`, `generation_plant_key_check`, `generation_balance` | Expectations (§4.4) |
 | **gold** (materialized views) | `fact_generation_hourly` (plant × hour), `generation_daily` (plant × day), `plant_location` (plant), `reconciliation_monthly` (grain × month × method) | Read by Genie; the last three are synced to Lakebase |
-| **gold_lb** (synced, Postgres schema `gold_lb`) | `generation_daily`, `plant_location`, `reconciliation_monthly` | Read by the app |
+| **gold_lb** (synced, Postgres schema `ampera_gold_lb`) | `generation_daily`, `plant_location`, `reconciliation_monthly` | Read by the app |
 
 ## 3. How it connects
 
 ```
- ONS S3 · ANEEL CKAN · INMET ──(1)──▶ Volume <catalog>.bronze.raw/<source>/
+ ONS S3 · ANEEL CKAN · INMET ──(1)──▶ Volume <catalog>.ampera_bronze.raw/<source>/
  CCEE (browser) · Open-Meteo API ─┘                │
                                                    (2) Auto Loader
                                                    ▼
@@ -78,11 +78,11 @@ enforce both (§4.4).
                                                            │ (8) Postgres + OAuth token
    Browser ◀──(10)── App ampera-app (FastAPI + SPA) ◀┘
       └──(11) OpenFreeMap tiles
-   User ──(12)──▶ Genie space ──(13) SQL on warehouse──▶ gold.*
+   User ──(12)──▶ Genie space ──(13) SQL on warehouse──▶ ampera_gold.*
 ```
 
 1. **Landing.** SETUP §5 commands (ONS, SIGA, INMET), a browser download (CCEE) and
-   `scripts/fetch_open_meteo.py` (Open-Meteo) put files under `/Volumes/<catalog>/bronze/raw/`.
+   `scripts/fetch_open_meteo.py` (Open-Meteo) put files under `/Volumes/<catalog>/ampera_bronze/raw/`.
 2. **Ingest.** Each bronze streaming table reads its folder with `read_files`, which picks up only
    new files. The path comes from the pipeline `configuration.catalog`.
 3. **Silver.** Reconciliation follows the ladder in §1 (`reco_sql.py`, the Spark-expression mirror
@@ -90,21 +90,21 @@ enforce both (§4.4).
    capacity-weighted estimate as the fallback. Price and weather are joined in.
 4. **Gold.** Materialized views read the plant-grain fact plus enrichment. They recompute fully on
    each run.
-5. **Overrides.** People insert rows into `silver.plant_match_override`. The next run applies them,
+5. **Overrides.** People insert rows into `ampera_silver.plant_match_override`. The next run applies them,
    and the newest `updated_at` per `ons_id` wins.
-6. **Sync.** Three SNAPSHOT synced tables copy gold into Lakebase Postgres schema `gold_lb`.
+6. **Sync.** Three SNAPSHOT synced tables copy gold into Lakebase Postgres schema `ampera_gold_lb`.
 7. **Orchestration.** The job runs the medallion, then the three sync pipelines.
 8. **App → Lakebase.** The `postgres` app resource injects `PGHOST`, `PGUSER` and `PGDATABASE`.
    The app mints a 1-hour OAuth database token as its service principal
    (`generate_database_credential` on `LAKEBASE_ENDPOINT`) and reads with `SELECT` grants on
-   `gold_lb`. It never queries the lakehouse.
+   `ampera_gold_lb`. It never queries the lakehouse.
 9. **Cold start.** After 20 min idle the Lakebase compute suspends. The API drops dead
    connections, retries, then returns 503 "waking", and the UI retries on its own.
 10. **Users → app.** Workspace SSO. Access is the app `CAN_USE` permission.
 11. **Map tiles.** Fetched by the viewer's browser from OpenFreeMap; nothing goes through the app.
 12. **Users → Genie.** Access is `CAN_RUN` on the space.
 13. **Genie → data.** SQL runs on the warehouse **as the asking user**, so users need UC
-    `USE CATALOG`, `USE SCHEMA` and `SELECT` on `<catalog>.gold`, plus `CAN_USE` on the warehouse.
+    `USE CATALOG`, `USE SCHEMA` and `SELECT` on `<catalog>.ampera_gold`, plus `CAN_USE` on the warehouse.
 
 **Identities:** the pipeline and job run as the deploying user (add `run_as` in the target for a
 service principal). The app runs as its own service principal. Genie runs as the end user.
@@ -116,7 +116,7 @@ service principal). The app runs as its own service principal. Genie runs as the
 2. **Refresh:** land new raw files (SETUP §5), then
    `databricks bundle run ampera_refresh -t <target>`. Or unpause the job's schedule once
    landing is automated.
-3. **Fix a match:** insert into `silver.plant_match_override`
+3. **Fix a match:** insert into `ampera_silver.plant_match_override`
    `(ons_id, plant_id, note, updated_at = current_timestamp())`, then refresh.
 4. **Observe:** pipeline expectations, warn vs fail:
 
@@ -128,7 +128,7 @@ service principal). The app runs as its own service principal. Genie runs as the
 | monthly plant total within ±2% of published | `generation_balance` | warn |
 | MWh ≥ 0, PLD in range, modeled weather present | `generation*`, `price_pld_hourly`, `weather_cell_hourly` | warn |
 
-   Reconciliation quality over time: `gold.reconciliation_monthly`, also the app's
+   Reconciliation quality over time: `ampera_gold.reconciliation_monthly`, also the app's
    "Reconciliação" page. Plant-level unmatched should stay well under 5% of MWh.
 5. **Checks:** `python3 tests/test_reconciliation.py` (matching logic),
    `tests/test_genie_space.py` (Genie payload; `GENIE_LIVE=1` runs every curated SQL),
@@ -139,7 +139,7 @@ service principal). The app runs as its own service principal. Genie runs as the
 - **External dependencies:** ONS, ANEEL and INMET portals (formats change; spec 01 lists the quirks
   handled). CCEE is a manual download. **Open-Meteo's free tier is non-commercial**: use a paid plan
   or ERA5 from Copernicus in production.
-- **Grants:** UC catalog/schema/`SELECT` for Genie users; Postgres `USAGE` and `SELECT` on `gold_lb`
+- **Grants:** UC catalog/schema/`SELECT` for Genie users; Postgres `USAGE` and `SELECT` on `ampera_gold_lb`
   for the app service principal. Rerun the Postgres grant if you drop and recreate a synced table.
 - **Cadence:** the job is paused by default. Unpause it only after raw landing is automated.
 - **Caveats:** synced tables are read-only in Postgres. Before a manual `start-update`, stop the

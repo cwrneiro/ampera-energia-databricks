@@ -24,7 +24,7 @@ Open the expectations: `has_plant_id` (fail), `plant_match_check` / `generation_
 (fail on double-counting), monthly balance ±2% (warn).
 **Say:** one declarative pipeline, one refresh job; bad data stops it before it reaches the app.
 
-## 3. Reconciliation — the heart (5 min) — app **Reconciliação** + `silver.plant_match`
+## 3. Reconciliation — the heart (5 min) — app **Reconciliação** + `ampera_silver.plant_match`
 
 **Say:** the join failed on *format* and *grain*, not on missing IDs.
 - Format: ONS CEG ends `.01`, SIGA `.1` → normalized, **64.6% of MWh links on CEG**, confidence 1.0.

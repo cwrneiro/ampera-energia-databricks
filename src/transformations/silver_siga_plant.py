@@ -11,11 +11,11 @@ def _dec(col):  # SIGA numbers use comma decimals, stored as STRING in bronze
 
 
 @dp.materialized_view(
-    name="silver.siga_plant",
+    name="ampera_silver.siga_plant",
     comment="Silver: cleaned SIGA plant registry, one row per normalized CEG, with lat/long + MW.",
 )
 def siga_plant():
-    s = spark.read.table("bronze.siga_plants")  # noqa: F821
+    s = spark.read.table("ampera_bronze.siga_plants")  # noqa: F821
     df = (
         s.withColumn("plant_id", S.ceg_norm_col("CodCEG"))
         .withColumn("name_norm", S.name_norm_col("NomEmpreendimento"))

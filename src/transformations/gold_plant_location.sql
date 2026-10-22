@@ -1,8 +1,8 @@
 -- Gold: one row per plant for the map (point map, decision #9) and plant pages. lat/lon from SIGA
 -- where the plant links to it. Synced to Lakebase. Spec: specs/03-gold-marts.md (decision #17)
-CREATE OR REFRESH MATERIALIZED VIEW gold.plant_location
+CREATE OR REFRESH MATERIALIZED VIEW ampera_gold.plant_location
   COMMENT 'Gold: one row per plant_id — name, UF, lat/lon (SIGA), capacity, fonte, conjunto, total and last-30-day MWh.'
-AS WITH last_day AS (SELECT max(dia) AS d FROM gold.generation_daily),
+AS WITH last_day AS (SELECT max(dia) AS d FROM ampera_gold.generation_daily),
 agg AS (
   SELECT plant_id,
          sum(mwh)                                                      AS mwh_total,
@@ -10,7 +10,7 @@ agg AS (
          sum(mwh_estimado)                                             AS mwh_estimado_total,
          max_by(match_method, mwh)                                     AS match_method,
          max(nom_conjunto)                                             AS nom_conjunto
-  FROM gold.generation_daily
+  FROM ampera_gold.generation_daily
   GROUP BY plant_id
 )
 SELECT
@@ -31,5 +31,5 @@ SELECT
   a.mwh_total,
   a.mwh_30d,
   a.mwh_estimado_total
-FROM silver.dim_plant d
+FROM ampera_silver.dim_plant d
 JOIN agg a USING (plant_id);

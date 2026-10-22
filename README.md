@@ -39,7 +39,7 @@ your workspace; `AGENTS.md` for coding agents, `/setup` in Claude Code).
 
 - `databricks.yml`, `resources/` — Asset Bundle: pipeline `ampera_medallion`, job `ampera_refresh`,
   app `ampera_app`, Genie space `ampera_genie` (body in `resources/genie/*.geniespace.json`)
-- `app/` — Databricks App: `app.py` (FastAPI, read-only over Lakebase `gold_lb`), `app.yaml`,
+- `app/` — Databricks App: `app.py` (FastAPI, read-only over Lakebase `ampera_gold_lb`), `app.yaml`,
   `frontend/` (React + Vite + Recharts + MapLibre; built `dist/` is gitignored, synced by the bundle)
 - `src/transformations/` — one dataset per file (`bronze_*`, `silver_*`, `gold_*`); `reco_lib.py`
   (tested matching reference) and `reco_sql.py` (its Spark-expression mirror)
@@ -70,6 +70,6 @@ App: `ampera-app` in the workspace (workspace login). Map tiles
 come from OpenFreeMap (free, no key) and load in the viewer's browser.
 
 **Workspace:** Databricks CLI profile `<profile>`. Catalog `ampera_catalog`
-(`bronze` / `silver` / `gold` / `gold_lb`); Lakebase project `ampera-demo`.
+(`ampera_bronze` / `ampera_silver` / `ampera_gold` / `ampera_gold_lb`); Lakebase project `ampera-demo`.
 
 **Repo:** https://github.com/cwrneiro/ampera-energia-databricks.

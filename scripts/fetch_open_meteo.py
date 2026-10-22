@@ -3,7 +3,7 @@
 Usage:  python3 scripts/fetch_open_meteo.py [--budget 9500]
 Input:  data/raw/open_meteo/cells.json — 0.25° cells with plants, exported with:
           databricks experimental aitools tools query "SELECT round(lat*4)/4 AS lat, round(lon*4)/4 AS lon,
-          count(*) plants FROM <catalog>.silver.dim_plant WHERE lat IS NOT NULL GROUP BY 1,2"
+          count(*) plants FROM <catalog>.ampera_silver.dim_plant WHERE lat IS NOT NULL GROUP BY 1,2"
           --profile <profile> --output json > data/raw/open_meteo/cells.json
 Output: data/raw/open_meteo/raw/<YYYY_MM>/cell_<lat>_<lon>.json — the API's JSON object for that
         location (requests batch 10 cells; bronze ingests these files as-is). Existing files are skipped, so the script can resume.

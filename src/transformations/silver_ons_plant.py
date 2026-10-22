@@ -5,11 +5,11 @@ import reco_sql as S
 
 
 @dp.materialized_view(
-    name="silver.ons_plant",
+    name="ampera_silver.ons_plant",
     comment="Silver: one row per ONS plant (id_ons) with normalized name/CEG/fuel match keys.",
 )
 def ons_plant():
-    g = spark.read.table("bronze.ons_generation")  # noqa: F821
+    g = spark.read.table("ampera_bronze.ons_generation")  # noqa: F821
     # Small-plant groups (Tipo III / MMGD) have a name but no id_ons -> key on name as fallback.
     g = g.withColumn("ons_key", F.coalesce(F.expr("nullif(trim(id_ons), '')"), F.col("nom_usina")))
     p = g.groupBy("ons_key").agg(

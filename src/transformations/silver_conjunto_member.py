@@ -10,12 +10,12 @@ def _date(col):
 
 
 @dp.materialized_view(
-    name="silver.conjunto_member",
+    name="ampera_silver.conjunto_member",
     comment="Silver: complex (conjunto_key) -> member plant_id with validity dates and SIGA capacity.",
 )
 def conjunto_member():
-    m = spark.read.table("bronze.ons_conjunto_member")  # noqa: F821
-    siga = (spark.read.table("silver.siga_plant")  # noqa: F821
+    m = spark.read.table("ampera_bronze.ons_conjunto_member")  # noqa: F821
+    siga = (spark.read.table("ampera_silver.siga_plant")  # noqa: F821
             .select("plant_id", "capacity_mw"))
     return (
         m.select(F.trim("id_ons_conjunto").alias("conjunto_key"),

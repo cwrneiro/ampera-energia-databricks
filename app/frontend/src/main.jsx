@@ -7,6 +7,8 @@ import Overview from "./Overview.jsx";
 import Reconciliation from "./Reconciliation.jsx";
 const MapSheet = lazy(() => import("./MapSheet.jsx")); // MapLibre is most of the bundle
 import Plant from "./Plant.jsx";
+import Curtailment from "./Curtailment.jsx";
+import Chat from "./Chat.jsx";
 
 // Hash routing: the backend only serves static files, so no server-side fallback is needed.
 function useRoute() {
@@ -23,6 +25,7 @@ function useRoute() {
 const SHEETS = [
   { page: "", nome: "Visão geral", hint: "geração por fonte, CEG e conjunto" },
   { page: "reconciliacao", nome: "Reconciliação", hint: "como o ONS liga à ANEEL" },
+  { page: "curtailment", nome: "Curtailment", hint: "energia perdida por restrição" },
   { page: "mapa", nome: "Mapa", hint: "usinas por coordenada" },
   { page: "usina", nome: "Usina", hint: "preço e clima de uma usina" },
 ];
@@ -175,7 +178,7 @@ function App() {
   useEffect(() => { if (page === "usina" && id) setLastPlant(id); }, [page, id]);
   const byId = useMemo(() => Object.fromEntries(plants.map((p) => [p.plant_id, p])), [plants]);
 
-  const show = page === "" ? { periodo: true, conjunto: true, usina: true } : null;
+  const show = page === "" ? { periodo: true, conjunto: true, usina: true } : page === "curtailment" ? { periodo: true } : null;
   const ready = meta.data && plantsQ.data && f.de;
 
   return (
@@ -192,11 +195,13 @@ function App() {
                     retry={() => { meta.retry(); plantsQ.retry(); }} />
           </div>
         ) : page === "reconciliacao" ? <Reconciliation />
+          : page === "curtailment" ? <Curtailment f={f} />
           : page === "mapa" ? <Suspense fallback={<div className="sheet sheet--boot"><Status loading /></div>}><MapSheet f={f} plants={plants}
               filters={<Filters f={f} set={setF} meta={meta.data} plants={plants} show={{ conjunto: true }} slim />} /></Suspense>
           : page === "usina" && id ? <Plant id={id} plant={byId[id]} />
           : <Overview f={f} setF={setF} meta={meta.data} byId={byId} />}
       </main>
+      <Chat />
     </>
   );
 }

@@ -24,6 +24,8 @@ export const METODOS = [
     desc: "Conjunto do ONS resolvido pela geração que o próprio ONS publica por usina-membro." },
   { id: "member_estimated", nome: "Membro estimado", cor: "#b08ae8", hatch: true, grao: "usina",
     desc: "Conjunto sem medição por membro: rateio pela capacidade instalada (estimado)." },
+  { id: "ai_decide", nome: "Decisão por IA", cor: "#cbb5f1",
+    desc: "Sem CEG nem nome parecido: ai_decide escolheu entre 3 candidatos da SIGA com confiança ≥ 90%." },
   { id: "fuzzy", nome: "Nome aproximado", cor: "#e3d8f6",
     desc: "Sem CEG: nome normalizado + UF + fonte, com numerais iguais, e uma nota de confiança." },
   { id: "ons_conjunto", nome: "Conjunto ONS", cor: "#6e6478",
@@ -68,6 +70,13 @@ export async function api(path, params = {}) {
   if (r.status === 503) throw Object.assign(new Error("O banco ainda está acordando."), { waking: true });
   if (!r.ok) throw new Error(r.status === 404 ? "Não encontrado." : `Erro ${r.status} ao ler o Lakebase.`);
   return r.json();
+}
+
+export async function apiPost(path, body) {
+  const r = await fetch(`/api/${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(r.status === 403 ? "Sem permissão para estes dados no Unity Catalog." : j.detail || `Erro ${r.status}.`);
+  return j;
 }
 
 const WAKE_RETRIES = 10, WAKE_EVERY_MS = 3000; // ~30 s on top of the server's own retries

@@ -1,18 +1,18 @@
 import { useMemo } from "react";
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, ComposedChart, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ANIM, CADASTRO, FONTE, METODO, fmt, lugar, useApi } from "./lib.js";
 import { Block, Sheet, SOURCES, Status, Swatch } from "./Sheet.jsx";
 
 const AXIS = { stroke: "#d9d7e3", tick: { fill: "#626262", fontSize: 13 }, tickLine: false };
 const INK = "#0a0a0a", MUTED = "#8a8794";
 
-function Tip({ active, payload, label, unit, names }) {
+function Tip({ active, payload, label, unit, names, cor }) {
   if (!active || !payload?.length) return null;
   return (
     <div className="tip">
       <div className="tip-h">{fmt.data(label)}</div>
       {payload.filter((p) => p.value != null).map((p) => (
-        <div key={p.dataKey} className="tip-r"><Swatch cor={p.color} hatch={p.dataKey === "est"} />{names[p.dataKey]}
+        <div key={p.dataKey} className="tip-r"><Swatch cor={String(p.color).startsWith("url") ? cor : p.color} hatch={p.dataKey === "est" || p.dataKey === "restrito"} />{names[p.dataKey]}
           <span>{fmt.num(p.value, unit === "MWh" ? 0 : 1)} {unit}</span></div>
       ))}
     </div>
@@ -54,6 +54,7 @@ export default function Plant({ id, plant }) {
   const q = useApi(`plant/${encodeURIComponent(id)}`);
   const u = q.data?.usina || plant;
   const dias = q.data?.dias || [];
+  const curt = q.data?.curtailment || [];
   const f = u && FONTE[u.fonte];
 
   const s = useMemo(() => {
@@ -68,7 +69,16 @@ export default function Plant({ id, plant }) {
              med: dias.find((d) => d.fonte_medicao)?.fonte_medicao };
   }, [dias, u]);
 
-  const rows = useMemo(() => dias.map((d) => ({ ...d, med: (d.mwh || 0) - (d.mwh_estimado || 0), est: d.mwh_estimado || null })), [dias]);
+  // Curtailment model output (spec 11) joined by day onto the shared x-axis.
+  const rows = useMemo(() => {
+    const c = Object.fromEntries(curt.map((r) => [r.dia, r]));
+    return dias.map((d) => ({ ...d, med: (d.mwh || 0) - (d.mwh_estimado || 0), est: d.mwh_estimado || null,
+                              esperado: c[d.dia]?.mwh_esperado ?? null, restrito: c[d.dia]?.mwh_restrito || null }));
+  }, [dias, curt]);
+  const ct = useMemo(() => curt.length ? curt.reduce((a, r) => ({
+    perd: a.perd + (r.mwh_restrito || 0), rs: a.rs + (r.valor_rs_perdido || 0), esp: a.esp + (r.mwh_esperado || 0),
+    hm: a.hm + (r.horas_restritas_modelo || 0), ho: r.horas_restritas_ons == null ? a.ho : (a.ho || 0) + r.horas_restritas_ons,
+  }), { perd: 0, rs: 0, esp: 0, hm: 0, ho: null }) : null, [curt]);
 
   if (!u) return <Sheet title="Usina" margin={null}><Status {...q} /></Sheet>;
   const w = weatherSpec(u, dias);
@@ -89,6 +99,16 @@ export default function Plant({ id, plant }) {
           {s.est > 0 && <><dt><em className="tag tag--est">estimado</em></dt><dd className="num">{fmt.pct(s.est / s.mwh)} da energia</dd></>}
         </dl>
       </Block>
+      {ct && (
+        <Block title="Curtailment (modelo)">
+          <dl className="facts">
+            <dt>Energia perdida</dt><dd className="num">{fmt.energia(ct.perd)}</dd>
+            <dt>R$ perdidos</dt><dd className="num">{fmt.reais(ct.rs)}</dd>
+            <dt>Do esperado</dt><dd className="num">{fmt.pct2(ct.esp ? ct.perd / ct.esp : null)}</dd>
+            <dt>Horas restritas</dt><dd className="num">{fmt.int(ct.hm)} modelo · {ct.ho == null ? "ONS não publica" : `${fmt.int(ct.ho)} ONS`}</dd>
+          </dl>
+        </Block>
+      )}
       <Block title="Ficha">
         <dl className="facts">
           <dt>Fonte</dt><dd><Swatch cor={f?.cor} shape="dot" />{f?.nome || u.fonte}{u.tipo ? ` · ${u.tipo}` : ""}</dd>
@@ -127,12 +147,34 @@ export default function Plant({ id, plant }) {
                 <CartesianGrid vertical={false} stroke="#ecebf2" />
                 {xa}
                 <YAxis {...AXIS} axisLine={false} width={64} tickFormatter={(v) => fmt.num(v, 0)} />
-                <Tooltip content={<Tip unit="MWh" names={{ med: "Medida", est: "Estimado" }} />} />
+                <Tooltip content={<Tip unit="MWh" cor={f?.cor} names={{ med: "Medida", est: "Estimado" }} />} />
                 <Area dataKey="med" stackId="g" type="monotone" stroke={f?.cor} strokeWidth={1.5} fill={f?.cor} fillOpacity={0.16} animationDuration={700} isAnimationActive={ANIM} dot={false} />
                 {s.est > 0 && <Area dataKey="est" stackId="g" type="monotone" stroke={f?.cor} strokeWidth={1} fill="url(#hatch-p)" animationDuration={700} isAnimationActive={ANIM} dot={false} />}
               </AreaChart>
             </ResponsiveContainer>
           </Panel>
+          {ct && (
+            <Panel title="Gerada × esperada sem restrição, MWh"
+                   legend={<><Key cor={f?.cor}>gerada</Key><Key cor={MUTED} dash>esperada (modelo)</Key><Key cor={f?.cor} hatch>perdida (curtailment)</Key></>}
+                   note="Esperada: modelo curtailment_expected_cf (clima Open-Meteo + histórico da usina). Perdida: esperada − gerada nas horas restritas.">
+              <ResponsiveContainer width="100%" height={220}>
+                <ComposedChart {...sync}>
+                  <defs>
+                    <pattern id="hatch-c" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+                      <rect width="6" height="6" fill={f?.cor} fillOpacity="0.28" /><rect width="2.5" height="6" fill={f?.cor} />
+                    </pattern>
+                  </defs>
+                  <CartesianGrid vertical={false} stroke="#ecebf2" />
+                  {xa}
+                  <YAxis {...AXIS} axisLine={false} width={64} tickFormatter={(v) => fmt.num(v, 0)} />
+                  <Tooltip content={<Tip unit="MWh" cor={f?.cor} names={{ mwh: "Gerada", esperado: "Esperada", restrito: "Perdida" }} />} />
+                  <Bar dataKey="restrito" fill="url(#hatch-c)" stroke={f?.cor} strokeWidth={0.5} animationDuration={700} isAnimationActive={ANIM} />
+                  <Line dataKey="esperado" stroke={MUTED} strokeWidth={1.5} strokeDasharray="4 3" dot={false} animationDuration={700} isAnimationActive={ANIM} />
+                  <Line dataKey="mwh" stroke={f?.cor} strokeWidth={2} dot={false} animationDuration={700} isAnimationActive={ANIM} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </Panel>
+          )}
           <Panel title="PLD capturado × médio, R$/MWh" legend={<><Key cor={INK}>capturado</Key><Key cor={MUTED} dash>médio do submercado</Key></>}>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart {...sync}>

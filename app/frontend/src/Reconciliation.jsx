@@ -20,6 +20,62 @@ function Tip({ active, payload, label }) {
   );
 }
 
+// ai_decide verdicts (spec 12): applied matches and the human review queue, with each candidate's
+// probability — the probabilities are the explanation (no generated rationale).
+function AiReview() {
+  const q = useApi("reconciliation/ai");
+  const [view, setView] = useState("revisar");
+  const all = q.data || [];
+  const rows = all.filter((r) => view === "todas" || (view === "aplicadas") === r.ai_accepted);
+  const n = { aplicadas: all.filter((r) => r.ai_accepted).length, revisar: all.filter((r) => !r.ai_accepted).length, todas: all.length };
+  const stake = all.filter((r) => !r.ai_accepted).reduce((a, r) => a + (r.mwh_total || 0), 0);
+  const cand = (r, k) => ({ id: r[`${k}_id`], nome: r[`${k}_nome`], mun: r[`${k}_municipio`], p: r[`ai_prob_${k}`], k: k.toUpperCase() });
+  return (
+    <section className="ai-review">
+      <div className="ai-head">
+        <div>
+          <h2>Decisões da IA para usinas sem CEG</h2>
+          <p className="lede">Para cada usina do ONS cujo CEG não liga à SIGA, a função <b>ai_decide</b> escolhe entre os 3 candidatos da SIGA
+            de nome mais parecido na mesma UF, ou nenhum, com probabilidades calibradas. Com confiança ≥ 90% a escolha entra na
+            reconciliação; abaixo disso a usina fica na fila de revisão{q.data ? ` (${fmt.energia(stake)} em jogo)` : ""}.</p>
+        </div>
+        <div className="seg-ctl" role="radiogroup" aria-label="Decisões">
+          {[["revisar", "Fila de revisão"], ["aplicadas", "Aplicadas"], ["todas", "Todas"]].map(([k, l]) => (
+            <button key={k} role="radio" aria-checked={view === k} onClick={() => setView(k)}>{l} <span className="num">{q.data ? n[k] : ""}</span></button>
+          ))}
+        </div>
+      </div>
+      {!q.data ? <Status {...q} /> : !rows.length ? <Status empty="Nenhuma usina nesta lista." /> : (
+        <table className="board board--ai">
+          <thead><tr><th>Usina no ONS</th><th>Candidatos da SIGA (probabilidade)</th><th className="num">Confiança</th><th>Situação</th><th className="num">Energia</th></tr></thead>
+          <tbody>
+            {rows.slice(0, 60).map((r) => (
+              <tr key={r.ons_key}>
+                <td className="name"><span>{r.nom_usina}</span><small>{r.uf} · {r.tipo} · {r.ons_key}</small></td>
+                <td>
+                  <ul className="cands">
+                    {["a", "b", "c"].map((k) => cand(r, k)).filter((c) => c.id).concat([{ k: "nenhum", nome: "Nenhum destes", p: r.ai_prob_nenhum }]).map((c) => (
+                      <li key={c.k} className={r.ai_choice === c.k || (c.k === "nenhum" && r.ai_choice === "nenhum") ? "is-pick" : ""}>
+                        <span className="cand-bar" style={{ "--w": c.p || 0 }} aria-hidden="true" />
+                        <span className="cand-name">{c.nome}{c.id && <small>{c.id}{c.mun ? ` · ${c.mun}` : ""}</small>}</span>
+                        <span className="num">{fmt.pct(c.p)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </td>
+                <td className="num">{fmt.pct(r.ai_confidence)}</td>
+                <td>{r.ai_accepted ? <span className="state state--ok">Aplicada</span> : <span className="state">Revisar</span>}</td>
+                <td className="num">{fmt.energia(r.mwh_total)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      <p className="panel-note">Para confirmar ou corrigir uma usina: inserir uma linha em <b>ampera_silver.plant_match_override</b> (a mais recente vence na próxima atualização).</p>
+    </section>
+  );
+}
+
 export default function Reconciliation() {
   const q = useApi("reconciliation");
   const [grao, setGrao] = useState("usina");
@@ -47,7 +103,7 @@ export default function Reconciliation() {
   // complexes and state totals are separate categories, not unmatched.
   const pub = (m) => all.filter((r) => r.grao === "publicado" && r.match_method === m).reduce((s, r) => s + r.mwh, 0);
   const unmatched = pub("unmatched");
-  const plantLevel = pub("ceg") + pub("fuzzy") + unmatched;
+  const plantLevel = pub("ceg") + pub("fuzzy") + pub("ai_decide") + unmatched;
   const dup = grao === "usina" ? other - total : total - other;
 
   const toggle = (
@@ -86,6 +142,7 @@ export default function Reconciliation() {
   );
 
   const below = q.data && (
+    <>
     <table className="board">
       <thead><tr><th>Método</th><th className="num">Energia</th><th className="num">Parte</th><th className="num">Usinas (máx./mês)</th></tr></thead>
       <tbody>
@@ -101,6 +158,8 @@ export default function Reconciliation() {
         <tr className="sum"><td>Total</td><td className="num">{fmt.energia(total)}</td><td className="num">100%</td><td /></tr>
       </tbody>
     </table>
+    <AiReview />
+    </>
   );
 
   return (

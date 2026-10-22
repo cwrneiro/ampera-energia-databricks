@@ -62,7 +62,7 @@ the brand tokens in `specs/08-branding.md`. **Deployed** 2026-10-02 (`ampera-app
   (overview, series and plant totals tie).
 - Design world "carta topográfica" (Impeccable; contract in `.impeccable/surfaces/app-frontend.md`,
   product record in `PRODUCT.md`). Fonte and method palettes passed the dataviz validator.
-- Unmatched on Reconciliação = SUCCESS #1 definition: unmatched ÷ (ceg + fuzzy + unmatched) at the
+- Unmatched on Reconciliação = SUCCESS #1 definition: unmatched ÷ (ceg + fuzzy + ai_decide + unmatched) at the
   published grain (0.59%).
 - Deploy: `(cd app/frontend && npm ci && npm run build) && databricks bundle deploy && databricks
   bundle run ampera_app`, then grant the app SP `USAGE` on `ampera_gold_lb` and `SELECT` on its tables.

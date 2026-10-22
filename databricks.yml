@@ -19,15 +19,15 @@ variables:
   # Lakebase synced-table pipelines (SNAPSHOT). Created by `databricks postgres create-synced-table`
   # (DAB support for synced tables isn't available yet), so referenced by id. Spec: specs/05
   sync_pipeline_generation_daily:
-    default: TBD-after-first-run
+    default: <synced-table-pipeline-id>
   sync_pipeline_plant_location:
-    default: TBD-after-first-run
+    default: <synced-table-pipeline-id>
   sync_pipeline_reconciliation_monthly:
-    default: TBD-after-first-run
+    default: <synced-table-pipeline-id>
   sync_pipeline_reconciliation_ai_review:
-    default: TBD-after-first-run
+    default: <synced-table-pipeline-id>
   sync_pipeline_curtailment_daily:
-    default: TBD-after-first-run
+    default: <synced-table-pipeline-id>
   warehouse_id:
     description: SQL warehouse the Genie space queries (spec 07)
     default: <warehouse-id>

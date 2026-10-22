@@ -11,7 +11,8 @@
 # MAGIC - Data: `ampera_gold.curtailment_features_hourly` (pipeline output; Open-Meteo weather, SIGA capacity, ONS label).
 # MAGIC - Train only on hours ONS did **not** flag as constrained (`restrito_ons = false`), first 18 months.
 # MAGIC - Test on the last 6 months: regression error vs ONS's own estimate, then tune the flag ratio `Y`
-# MAGIC   by F1 against ONS's constrained-off flags. `Y` is stored with the model version.
+# MAGIC   against ONS's constrained-off flags: best recall with precision >= 0.8, so the R$ figure is a
+# MAGIC   conservative "at least". `Y` is stored with the model version.
 # MAGIC - One `HistGradientBoostingRegressor` per technology (EOL, SOL), wrapped in one MLflow pyfunc and
 # MAGIC   registered in Unity Catalog with alias `champion`.
 
@@ -27,6 +28,7 @@ FEAT = f"{CAT}.ampera_gold.curtailment_features_hourly"
 MODEL = f"{CAT}.ampera_gold.curtailment_expected_cf"
 SPLIT = "2026-04-01"        # train < SPLIT <= test (18 / 6 months)
 MIN_EXPECTED_CF = 0.10      # spec 11: only judge hours where the plant should produce >= 10% of capacity
+PRECISION_FLOOR = 0.80      # spec 11 (user decision 2026-10-22): best recall with precision >= 0.8 -> conservative R$
 SAMPLE_ROWS = 1_500_000     # per technology, training sample cap (driver memory)
 print(FEAT, MODEL)
 
@@ -42,7 +44,8 @@ from sklearn.metrics import mean_absolute_error, precision_recall_fscore_support
 
 mlflow.set_registry_uri("databricks-uc")
 UFS = sorted(r.uf for r in spark.table(FEAT).select("uf").distinct().collect())  # noqa: F821
-WEATHER = {"EOL": "vento_100m_ms", "SOL": "irradiancia_wm2"}
+WEATHER = {"EOL": "vento_100m_ms", "SOL": "irradiancia_wm2"}                       # Open-Meteo, every plant
+MEASURED = {"EOL": "vento_ms_medido_ons", "SOL": "irradiancia_wm2_medida_ons"}      # ONS at the plant, NaN elsewhere
 
 
 def features(pdf, fonte, plant_cf, ufs):
@@ -50,6 +53,7 @@ def features(pdf, fonte, plant_cf, ufs):
     fb = np.nanmedian(list(plant_cf.values())) if plant_cf else 0.3
     return pd.DataFrame({
         "weather": pdf[WEATHER[fonte]].astype(float),
+        "weather_measured": pdf[MEASURED[fonte]].astype(float),
         "hora": pdf["hora"].astype(int), "mes": pdf["mes"].astype(int),
         "temp_c": pdf["temp_c"].astype(float),
         "lat": pdf["lat"].astype(float), "lon": pdf["lon"].astype(float),
@@ -110,12 +114,13 @@ print(pd.DataFrame(report).to_string(index=False))
 
 # COMMAND ----------
 
-# MAGIC %md ## Tune the flag ratio Y by F1 against ONS constrained-off flags
-# MAGIC Flag an hour when `expected CF >= 10%` and `actual < Y x expected`.
+# MAGIC %md ## Tune the flag ratio Y against ONS constrained-off flags
+# MAGIC Flag an hour when `expected CF >= 10%` and `actual < Y x expected`. Pick the Y with the best recall
+# MAGIC whose precision is >= 0.8 (ONS flags ~40% of hours, so F1 alone rewards flagging every shortfall).
 
 # COMMAND ----------
 
-grid = np.round(np.arange(0.30, 0.95, 0.05), 2)
+grid = np.round(np.arange(0.30, 1.0001, 0.05), 2)
 rows = []
 for fonte, te in test.items():
     judge = te[te["cf_esperado"] >= MIN_EXPECTED_CF]
@@ -124,8 +129,15 @@ for fonte, te in test.items():
         p, r, f1, _ = precision_recall_fscore_support(judge["restrito_ons"], pred, average="binary", zero_division=0)
         rows.append({"fonte": fonte, "Y": Y, "precision": round(p, 3), "recall": round(r, 3), "f1": round(f1, 3)})
 tune = pd.DataFrame(rows)
-best = tune.loc[tune.groupby("fonte")["f1"].idxmax()].set_index("fonte")
-print(tune.pivot(index="Y", columns="fonte", values="f1").to_string())
+
+
+def choose(t):
+    ok = t[t["precision"] >= PRECISION_FLOOR]
+    return ok.loc[ok["recall"].idxmax()] if len(ok) else t.loc[t["precision"].idxmax()]
+
+
+best = pd.DataFrame([choose(t) for _, t in tune.groupby("fonte")]).set_index("fonte")
+print(tune.pivot(index="Y", columns="fonte", values=["precision", "recall", "f1"]).to_string())
 print("\nchosen:\n", best.to_string())
 Y_BY_FONTE = best["Y"].to_dict()
 
@@ -142,7 +154,8 @@ class ExpectedCF(mlflow.pyfunc.PythonModel):
     def __init__(self, models, plant_cfs, ufs):
         self.models, self.plant_cfs, self.ufs = models, plant_cfs, ufs
 
-    def predict(self, context, df):
+    def predict(self, context, model_input):
+        df = model_input
         out = pd.Series(np.nan, index=df.index)
         for fonte, m in self.models.items():
             idx = df["fonte"] == fonte
@@ -151,11 +164,13 @@ class ExpectedCF(mlflow.pyfunc.PythonModel):
         return out
 
 
-cols = ["fonte", "plant_id", "uf", "hora", "mes", "vento_100m_ms", "irradiancia_wm2", "temp_c", "lat", "lon"]
+cols = ["fonte", "plant_id", "uf", "hora", "mes", "vento_100m_ms", "irradiancia_wm2", "temp_c", "lat", "lon",
+        "vento_ms_medido_ons", "irradiancia_wm2_medida_ons"]
 example = pd.concat([test["EOL"][cols].head(3), test["SOL"][cols].head(3)], ignore_index=True)
 model = ExpectedCF(models, plant_cfs, UFS)
 with mlflow.start_run(run_name="curtailment_expected_cf") as run:
     mlflow.log_params({"split": SPLIT, "min_expected_cf": MIN_EXPECTED_CF, "sample_rows": SAMPLE_ROWS,
+                       "precision_floor": PRECISION_FLOOR,
                        "y_eol": Y_BY_FONTE["EOL"], "y_sol": Y_BY_FONTE["SOL"]})
     for r in report:
         mlflow.log_metrics({f"{r['fonte']}_mae_cf_model": r["mae_cf_model"],

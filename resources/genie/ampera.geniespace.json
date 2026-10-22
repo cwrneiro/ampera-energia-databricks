@@ -37,11 +37,165 @@
         "question": [
           "Quanto da geração foi reconciliada diretamente pelo CEG?"
         ]
+      },
+      {
+        "id": "00000000000000000000000000000007",
+        "question": [
+          "Quanto as eólicas perderam por curtailment em 2026?"
+        ]
       }
     ]
   },
   "data_sources": {
     "tables": [
+      {
+        "identifier": "ampera_catalog.ampera_gold.curtailment_daily",
+        "column_configs": [
+          {
+            "column_name": "capacidade_mw",
+            "description": [
+              "Capacidade instalada da usina (SIGA), MW."
+            ],
+            "synonyms": [
+              "capacidade"
+            ]
+          },
+          {
+            "column_name": "conjunto_key",
+            "description": [
+              "Chave do conjunto ONS da usina (quando membro de conjunto)."
+            ],
+            "synonyms": [
+              "conjunto"
+            ]
+          },
+          {
+            "column_name": "dia",
+            "description": [
+              "Dia (horário de Brasília)."
+            ],
+            "synonyms": [
+              "data",
+              "dia"
+            ]
+          },
+          {
+            "column_name": "fonte",
+            "description": [
+              "EOL (eólica) ou SOL (solar). Curtailment só existe para essas duas fontes."
+            ],
+            "synonyms": [
+              "fonte",
+              "tecnologia"
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "horas_restritas_modelo",
+            "description": [
+              "Horas no dia em que o modelo identificou curtailment (esperado ≥ 10% da capacidade e gerado bem abaixo do esperado)."
+            ],
+            "synonyms": [
+              "horas restritas"
+            ]
+          },
+          {
+            "column_name": "horas_restritas_ons",
+            "description": [
+              "Horas no dia em que o ONS marcou restrição (constrained-off). NULL = ONS não publica restrição para a usina."
+            ],
+            "synonyms": [
+              "horas restritas ONS",
+              "constrained-off"
+            ]
+          },
+          {
+            "column_name": "mwh",
+            "description": [
+              "Energia gerada no dia, MWh."
+            ],
+            "synonyms": [
+              "geração"
+            ]
+          },
+          {
+            "column_name": "mwh_esperado",
+            "description": [
+              "Energia que o modelo esperava sem restrição, MWh (curtailment_expected_cf)."
+            ],
+            "synonyms": [
+              "esperado",
+              "potencial"
+            ]
+          },
+          {
+            "column_name": "mwh_restrito",
+            "description": [
+              "Energia perdida por curtailment estimada pelo modelo, MWh (esperado − gerado nas horas restritas)."
+            ],
+            "synonyms": [
+              "energia perdida",
+              "curtailment",
+              "corte de geração"
+            ]
+          },
+          {
+            "column_name": "nome",
+            "description": [
+              "Nome da usina."
+            ],
+            "synonyms": [
+              "usina"
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "plant_id",
+            "description": [
+              "Identificador único da usina (CEG ou SURR-…)."
+            ],
+            "synonyms": [
+              "usina",
+              "CEG"
+            ]
+          },
+          {
+            "column_name": "submercado",
+            "description": [
+              "Submercado (subsistema ONS): SE, S, NE, N."
+            ],
+            "synonyms": [
+              "submercado"
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "uf",
+            "description": [
+              "UF da usina."
+            ],
+            "synonyms": [
+              "estado"
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "valor_rs_perdido",
+            "description": [
+              "Valor da energia perdida ao PLD horário, R$."
+            ],
+            "synonyms": [
+              "R$ perdidos",
+              "prejuízo",
+              "receita perdida"
+            ]
+          }
+        ]
+      },
       {
         "identifier": "ampera_catalog.ampera_gold.fact_generation_hourly",
         "column_configs": [
@@ -631,13 +785,25 @@
         "usage_guidance": [
           "reconciliation_monthly: filtre sempre um único grao."
         ]
+      },
+      {
+        "id": "10000000000000000000000000000007",
+        "question": [
+          "Quais usinas eólicas mais perderam receita por curtailment em 2026?"
+        ],
+        "sql": [
+          "SELECT c.plant_id, MAX(c.nome) AS usina, MAX(c.uf) AS uf, ROUND(SUM(c.mwh_restrito) / 1e3, 1) AS perdido_gwh,\n       ROUND(SUM(c.valor_rs_perdido) / 1e6, 2) AS perdido_rs_milhoes\nFROM ampera_catalog.ampera_gold.curtailment_daily c\nWHERE c.fonte = 'EOL' AND YEAR(c.dia) = 2026\nGROUP BY c.plant_id\nORDER BY perdido_rs_milhoes DESC\nLIMIT 10"
+        ],
+        "usage_guidance": [
+          "Curtailment / energia perdida / receita perdida: some mwh_restrito e valor_rs_perdido em curtailment_daily."
+        ]
       }
     ],
     "text_instructions": [
       {
         "id": "20000000000000000000000000000001",
         "content": [
-          "## PURPOSE\n- Geração elétrica brasileira reconciliada (ONS + ANEEL SIGA), out/2024 a set/2026, com PLD da CCEE e clima. Usuários: analistas e executivos da Ampera.\n\n## DISAMBIGUATION\n- \"Usina\" = plant_id; \"CEG\" = coluna ceg; \"conjunto\" = complexo ONS (agrupe por conjunto_key, exiba nom_conjunto).\n- Perguntas por dia, mês ou ano usam generation_daily; fact_generation_hourly só para perfis por hora.\n- Sem período informado, use todo o histórico e diga isso.\n\n## DATA QUALITY NOTES\n- ceg é NULL em usinas substitutas (plant_id SURR-…); \"geração por CEG\" exclui essas linhas.\n- mwh_estimado já está contido em mwh.\n- Cada tabela está em um único grão (usina × dia, usina × hora): some mwh diretamente, sem deduplicar séries ONS.\n- reconciliation_monthly: nunca some grao publicado com grao usina; para totais use usina.\n- Clima *_modelo vem do Open-Meteo; *_medido/*_medida do ONS ou INMET (fonte_medicao).\n\n## Instructions you must follow when providing summaries\n- Responda em português do Brasil.\n- Energia em MWh, GWh ou TWh com 1–2 casas; preços em R$/MWh com 2 casas.\n- Informe o período usado."
+          "## PURPOSE\n- Geração elétrica brasileira reconciliada (ONS + ANEEL SIGA), out/2024 a set/2026, com PLD da CCEE e clima. Usuários: analistas e executivos da Ampera.\n\n## DISAMBIGUATION\n- \"Usina\" = plant_id; \"CEG\" = coluna ceg; \"conjunto\" = complexo ONS (agrupe por conjunto_key, exiba nom_conjunto).\n- Perguntas por dia, mês ou ano usam generation_daily; fact_generation_hourly só para perfis por hora.\n- Sem período informado, use todo o histórico e diga isso.\n\n## DATA QUALITY NOTES\n- ceg é NULL em usinas substitutas (plant_id SURR-…); \"geração por CEG\" exclui essas linhas.\n- mwh_estimado já está contido em mwh.\n- Cada tabela está em um único grão (usina × dia, usina × hora): some mwh diretamente, sem deduplicar séries ONS.\n- reconciliation_monthly: nunca some grao publicado com grao usina; para totais use usina.\n- Clima *_modelo vem do Open-Meteo; *_medido/*_medida do ONS ou INMET (fonte_medicao).\n- Curtailment (energia perdida por restrição): curtailment_daily, só EOL/SOL; mwh_restrito e valor_rs_perdido são estimativas do modelo de ML; horas_restritas_ons é o registro oficial do ONS.\n\n## Instructions you must follow when providing summaries\n- Responda em português do Brasil.\n- Energia em MWh, GWh ou TWh com 1–2 casas; preços em R$/MWh com 2 casas.\n- Informe o período usado."
         ]
       }
     ],
@@ -1185,6 +1351,90 @@
             "format": "SQL",
             "content": [
               "SELECT ROUND(SUM(g.mwh) / COUNT(DISTINCT g.dia), 1) AS mwh_por_dia FROM ampera_catalog.ampera_gold.generation_daily g WHERE g.fonte = 'EOL' AND g.uf = 'RN' AND g.dia BETWEEN '2026-08-01' AND '2026-08-31'"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "50000000000000000000000000000033",
+        "question": [
+          "Quanta energia eólica foi perdida por curtailment em 2025, em GWh?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT ROUND(SUM(c.mwh_restrito) / 1e3, 1) AS perdido_gwh FROM ampera_catalog.ampera_gold.curtailment_daily c WHERE c.fonte = 'EOL' AND YEAR(c.dia) = 2025"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "50000000000000000000000000000034",
+        "question": [
+          "Qual o valor perdido por curtailment na solar em 2026, em R$ milhões?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT ROUND(SUM(c.valor_rs_perdido) / 1e6, 1) AS perdido_rs_milhoes FROM ampera_catalog.ampera_gold.curtailment_daily c WHERE c.fonte = 'SOL' AND YEAR(c.dia) = 2026"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "50000000000000000000000000000035",
+        "question": [
+          "Qual UF teve mais energia eólica perdida por curtailment?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT c.uf, ROUND(SUM(c.mwh_restrito) / 1e3, 1) AS perdido_gwh FROM ampera_catalog.ampera_gold.curtailment_daily c WHERE c.fonte = 'EOL' GROUP BY c.uf ORDER BY perdido_gwh DESC LIMIT 1"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "50000000000000000000000000000036",
+        "question": [
+          "Que percentual da geração esperada das eólicas foi perdido por curtailment em 2026?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT ROUND(100 * SUM(c.mwh_restrito) / SUM(c.mwh_esperado), 2) AS pct_perdido FROM ampera_catalog.ampera_gold.curtailment_daily c WHERE c.fonte = 'EOL' AND YEAR(c.dia) = 2026"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "50000000000000000000000000000037",
+        "question": [
+          "Quantas horas de restrição o ONS registrou para usinas solares em 2026?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT SUM(c.horas_restritas_ons) AS horas_ons FROM ampera_catalog.ampera_gold.curtailment_daily c WHERE c.fonte = 'SOL' AND YEAR(c.dia) = 2026"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "50000000000000000000000000000038",
+        "question": [
+          "Curtailment eólico por mês em 2026, em GWh"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT CAST(DATE_TRUNC('MONTH', c.dia) AS DATE) AS mes, ROUND(SUM(c.mwh_restrito) / 1e3, 1) AS perdido_gwh FROM ampera_catalog.ampera_gold.curtailment_daily c WHERE c.fonte = 'EOL' AND YEAR(c.dia) = 2026 GROUP BY 1 ORDER BY 1"
             ]
           }
         ]

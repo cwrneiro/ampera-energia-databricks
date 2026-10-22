@@ -13,14 +13,16 @@ plants for which ONS publishes no curtailment flag. Decisions #29–#30 (00-over
   `val_geracaoestimada` (ONS's own estimate). → `silver.curtailment_label_hourly` (plant-hour).
 - **Features:** `gold.curtailment_features_hourly` (pipeline): EOL/SOL measured plant-hours, target
   capacity factor = MWh / SIGA capacity, Open-Meteo wind 100 m / irradiance, temperature, hour,
-  month, UF, lat/lon, PLD, ONS label (NULL where not published).
+  month, UF, lat/lon, PLD, ONS label (NULL where not published), plus ONS's at-plant measured wind /
+  irradiance where it exists (NULL elsewhere; added after the first run, see Results).
 - **Model:** one scikit-learn `HistGradientBoostingRegressor` per technology on the *unconstrained*
   capacity factor, plus each plant's mean training CF as a feature. Trained only on hours ONS did
   not flag; time split 2024-10…2026-03 train / 2026-04…2026-09 test. One MLflow pyfunc
   `ampera_gold.curtailment_expected_cf` in UC, alias `champion`.
 - **Flag:** curtailed hour = expected CF ≥ 10% **and** actual < Y × expected. Y tuned per technology
-  by F1 against ONS flags on the test months and stored as model-version tags (`y_eol`, `y_sol`) —
-  frozen with the version, read by scoring.
+  on the test months against ONS flags: **best recall with precision ≥ 0.8** (decision 2026-10-22; F1
+  rewarded flagging every shortfall because ONS flags ~40% of hours). Stored as model-version tags
+  (`y_eol`, `y_sol`) — frozen with the version, read by scoring.
 - **Valuation:** MWh lost = expected − actual on flagged hours; R$ lost = MWh lost × hourly PLD.
 - **Runs:** `notebooks/train_curtailment` (job param `train=true`) and `score_curtailment` (every
   refresh) in `ampera_refresh`, between the medallion and the Lakebase syncs (serverless SDP can't
@@ -36,4 +38,8 @@ plants for which ONS publishes no curtailment flag. Decisions #29–#30 (00-over
 
 ## Results
 
-_Filled after the first training run._
+- **Run 1** (2026-10-22, Open-Meteo weather only): test MAE of capacity factor 0.145 wind / 0.022 solar
+  vs 0.098 / 0.015 for ONS's own estimate (which uses measured wind and power curves). F1-tuned Y
+  hit the grid edge (0.9), flagging 37% of the wind hours ONS didn't flag: 56 TWh / R$ 9.4 bi lost
+  for wind, inflated. → added ONS measured weather as a feature and the precision-floor rule.
+- **Run 2:** see `evidence/`.

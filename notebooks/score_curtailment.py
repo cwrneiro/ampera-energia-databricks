@@ -37,7 +37,8 @@ expected_cf = mlflow.pyfunc.spark_udf(spark, f"models:/{MODEL}@champion", result
 
 # COMMAND ----------
 
-cols = ["fonte", "plant_id", "uf", "hora", "mes", "vento_100m_ms", "irradiancia_wm2", "temp_c", "lat", "lon"]
+cols = ["fonte", "plant_id", "uf", "hora", "mes", "vento_100m_ms", "irradiancia_wm2", "temp_c", "lat", "lon",
+        "vento_ms_medido_ons", "irradiancia_wm2_medida_ons"]
 f = spark.table(FEAT)  # noqa: F821
 y = F.when(F.col("fonte") == "EOL", F.lit(Y["EOL"])).otherwise(F.lit(Y["SOL"]))
 s = (f.withColumn("cf_esperado", expected_cf(*cols))

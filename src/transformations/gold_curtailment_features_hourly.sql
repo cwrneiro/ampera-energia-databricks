@@ -1,6 +1,7 @@
 -- Gold: model-ready plant-hours for the curtailment model (wind + solar, measured generation only).
 -- Target = capacity factor (mwh / SIGA capacity); weather = Open-Meteo (available for every located
--- plant, so the model also scores plants ONS doesn't report curtailment for); label = ONS flag where
+-- plant, so the model also scores plants ONS doesn't report curtailment for) plus ONS's at-plant
+-- measurement where it exists (NULL elsewhere; the model handles missing values); label = ONS flag where
 -- published. Read by notebooks/train_curtailment + score_curtailment. Spec: specs/11-ml-curtailment.md
 CREATE OR REFRESH MATERIALIZED VIEW ampera_gold.curtailment_features_hourly (
   CONSTRAINT has_capacity EXPECT (capacity_mw > 0) ON VIOLATION DROP ROW,
@@ -25,6 +26,8 @@ AS SELECT
   f.vento_100m_ms_modelo                        AS vento_100m_ms,
   f.irradiancia_wm2_modelo                      AS irradiancia_wm2,
   f.temp_c_modelo                               AS temp_c,
+  CASE WHEN f.fonte_medicao = 'ONS' THEN f.vento_ms_medido END        AS vento_ms_medido_ons,
+  CASE WHEN f.fonte_medicao = 'ONS' THEN f.irradiancia_wm2_medida END AS irradiancia_wm2_medida_ons,
   d.lat,
   d.lon,
   f.pld_rs_mwh,

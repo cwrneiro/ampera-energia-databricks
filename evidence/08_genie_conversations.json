@@ -1,0 +1,350 @@
+[
+ {
+  "pergunta": "Quanto as eólicas perderam por curtailment em 2026, em GWh e R$ milhões?",
+  "conversa": "<genie-conversation-id>",
+  "mensagem": "<genie-message-id>",
+  "texto": "Em **2026**, as usinas **eólicas** perderam **16.113,12 GWh** por curtailment, o que corresponde a **R$ 2.076,24 milhões**. Como o resultado traz um único total consolidado para **2026**, esses são os valores agregados do período consultado.",
+  "sql": "SELECT ROUND(try_divide(SUM(`mwh_restrito`),1e3), 2) AS `perdido_gwh`, ROUND(try_divide(SUM(`valor_rs_perdido`),1e6), 2) AS `perdido_rs_milhoes` FROM `ampera_catalog`.`ampera_gold`.`curtailment_daily` WHERE `fonte` = 'EOL' AND YEAR(`dia`) = 2026",
+  "descricao": "Você quer saber a quantidade total de energia perdida por curtailment nas usinas eólicas em 2026, expressa em GWh, e o valor total dessa perda em reais, expresso em milhões.",
+  "colunas": [
+   {
+    "nome": "perdido_gwh",
+    "tipo": "DOUBLE"
+   },
+   {
+    "nome": "perdido_rs_milhoes",
+    "tipo": "DOUBLE"
+   }
+  ],
+  "linhas": [
+   [
+    "16113.12",
+    "2076.24"
+   ]
+  ],
+  "sugestoes": [
+   "Quais foram as 10 usinas eólicas que mais perderam receita por curtailment em 2026?",
+   "Qual foi a perda de energia por curtailment e o prejuízo financeiro por submercado para as usinas eólicas em 2026?"
+  ]
+ },
+ {
+  "pergunta": "Quais os 5 conjuntos que mais geraram em 2025?",
+  "conversa": "<genie-conversation-id>",
+  "mensagem": "<genie-message-id>",
+  "texto": "No período de **2025**, os 5 conjuntos que mais geraram foram:\n- **1º:** **Conj. Curral Novo do Piauí II 230 kV** — **3.828,8 GWh**\n- **2º:** **Conj. Lagoa dos Ventos** — **2.890,8 GWh**\n- **3º:** **Conj. São Roque** — **2.808,2 GWh**\n- **4º:** **Conj. Serra do Assuruá** — **2.451,0 GWh**\n- **5º:** **Conj. Ourolândia II** — **2.428,0 GWh**\n\nEntre esses 5, o líder foi **Curral Novo do Piauí II 230 kV**, com cerca de **938,0 GWh** a mais que o 2º colocado.",
+  "sql": "WITH conjuntos AS (\n  SELECT\n    generation_daily.conjunto_key,\n    generation_daily.nom_conjunto,\n    SUM(generation_daily.mwh) AS geracao_mwh\n  FROM ampera_catalog.ampera_gold.generation_daily\n  WHERE generation_daily.dia BETWEEN DATE('2025-01-01') AND DATE('2025-12-31')\n    AND generation_daily.conjunto_key IS NOT NULL\n    AND generation_daily.nom_conjunto IS NOT NULL\n    AND generation_daily.mwh IS NOT NULL\n  GROUP BY generation_daily.conjunto_key, generation_daily.nom_conjunto\n), ranked AS (\n  SELECT\n    conjunto_key,\n    nom_conjunto,\n    geracao_mwh,\n    RANK() OVER (ORDER BY geracao_mwh DESC) AS rank_geracao\n  FROM conjuntos\n)\nSELECT\n  conjunto_key,\n  nom_conjunto,\n  ROUND(try_divide(geracao_mwh,1e3), 1) AS geracao_gwh,\n  rank_geracao\nFROM ranked\nWHERE rank_geracao <= 5\nORDER BY rank_geracao, geracao_gwh DESC, nom_conjunto",
+  "descricao": "Você quer ver os 5 conjuntos que tiveram a maior geração total de energia em MWh durante o ano de 2025.",
+  "colunas": [
+   {
+    "nome": "conjunto_key",
+    "tipo": "STRING"
+   },
+   {
+    "nome": "nom_conjunto",
+    "tipo": "STRING"
+   },
+   {
+    "nome": "geracao_gwh",
+    "tipo": "DOUBLE"
+   },
+   {
+    "nome": "rank_geracao",
+    "tipo": "INT"
+   }
+  ],
+  "linhas": [
+   [
+    "CJU_PI4ECNP",
+    "Conj. Curral Novo do Piauí II 230 kV",
+    "3828.8",
+    "1"
+   ],
+   [
+    "CJU_PILDV",
+    "Conj. Lagoa dos Ventos",
+    "2890.8",
+    "2"
+   ],
+   [
+    "CJU_PIVSR",
+    "Conj. São Roque",
+    "2808.2",
+    "3"
+   ],
+   [
+    "CJU_BASAR",
+    "Conj. Serra do Assuruá",
+    "2451.0",
+    "4"
+   ],
+   [
+    "CJU_BAOUR",
+    "Conj. Ourolândia II",
+    "2428.0",
+    "5"
+   ]
+  ],
+  "sugestoes": [
+   "Qual a geração total dos 5 conjuntos que mais geraram em 2025?",
+   "Quais os 5 conjuntos com maior geração mensal em algum mês de 2025?"
+  ]
+ },
+ {
+  "pergunta": "Geração solar por mês em 2025, em GWh",
+  "conversa": "<genie-conversation-id>",
+  "mensagem": "<genie-message-id>",
+  "texto": "No período de **jan/2025 a dez/2025**, a geração solar mensal variou de **6.103,9 GWh** a **9.180,6 GWh**. Exemplos incluem:\n- **jan/2025:** **7.624,2 GWh**\n- **mar/2025:** **8.325,2 GWh**\n- **jun/2025:** **6.103,9 GWh**\n- **out/2025:** **8.340,1 GWh**\n- **dez/2025:** **9.180,6 GWh**\n\nAo longo dos **12 meses de 2025**, houve queda até **junho** e depois recuperação contínua, com pico no **fim do ano**.",
+  "sql": "SELECT CAST(DATE_TRUNC('MONTH', `dia`) AS DATE) AS `mes`, ROUND(try_divide(SUM(`mwh`),1e3), 1) AS `geracao_gwh`\nFROM `ampera_catalog`.`ampera_gold`.`generation_daily`\nWHERE `fonte` = 'SOL'\n  AND `dia` BETWEEN '2025-01-01' AND '2025-12-31'\nGROUP BY CAST(DATE_TRUNC('MONTH', `dia`) AS DATE)\nORDER BY `mes`",
+  "descricao": "Você quer ver a geração mensal de energia solar em 2025, expressa em gigawatt-hora (GWh).",
+  "colunas": [
+   {
+    "nome": "mes",
+    "tipo": "DATE"
+   },
+   {
+    "nome": "geracao_gwh",
+    "tipo": "DOUBLE"
+   }
+  ],
+  "linhas": [
+   [
+    "2025-01-01",
+    "7624.2"
+   ],
+   [
+    "2025-02-01",
+    "7200.2"
+   ],
+   [
+    "2025-03-01",
+    "8325.2"
+   ],
+   [
+    "2025-04-01",
+    "7011.4"
+   ],
+   [
+    "2025-05-01",
+    "6679.5"
+   ],
+   [
+    "2025-06-01",
+    "6103.9"
+   ],
+   [
+    "2025-07-01",
+    "6784.4"
+   ],
+   [
+    "2025-08-01",
+    "7199.5"
+   ],
+   [
+    "2025-09-01",
+    "7573.4"
+   ],
+   [
+    "2025-10-01",
+    "8340.1"
+   ],
+   [
+    "2025-11-01",
+    "8752.8"
+   ],
+   [
+    "2025-12-01",
+    "9180.6"
+   ]
+  ],
+  "sugestoes": []
+ },
+ {
+  "pergunta": "Qual o PLD capturado por fonte em 2025?",
+  "conversa": "<genie-conversation-id>",
+  "mensagem": "<genie-message-id>",
+  "texto": "Em **2025**, o PLD capturado por fonte variou de **R$ 163,46/MWh** a **R$ 240,85/MWh**. Alguns valores representativos incluem:\n- **OTHER**: **R$ 240,85/MWh**\n- **THERM**: **R$ 230,96/MWh**\n- **NUC**: **R$ 227,38/MWh**\n- **HID**: **R$ 213,50/MWh**\n- **EOL**: **R$ 200,73/MWh**\n\nEntre as 6 fontes retornadas, **OTHER** teve o maior PLD capturado e **SOL** o menor, com **R$ 163,46/MWh**.",
+  "sql": "SELECT\n  `g`.`fonte`,\n  ROUND(try_divide(SUM(`g`.`mwh`),1e6), 2) AS `geracao_twh`,\n  ROUND(AVG(`g`.`pld_medio_rs_mwh`), 2) AS `pld_medio_rs_mwh`,\n  ROUND(TRY_DIVIDE(SUM(`g`.`valor_rs`), SUM(`g`.`mwh`)), 2) AS `pld_capturado_rs_mwh`\nFROM `ampera_catalog`.`ampera_gold`.`generation_daily` AS `g`\nWHERE `g`.`dia` BETWEEN DATE('2025-01-01') AND DATE('2025-12-31')\n  AND `g`.`fonte` IS NOT NULL\nGROUP BY `g`.`fonte`\nORDER BY `pld_capturado_rs_mwh` DESC",
+  "descricao": "Você quer ver o PLD capturado por fonte de geração para o ano de 2025, incluindo a geração total em TWh, o PLD médio e o PLD capturado (valor ponderado pela geração) para cada fonte.",
+  "colunas": [
+   {
+    "nome": "fonte",
+    "tipo": "STRING"
+   },
+   {
+    "nome": "geracao_twh",
+    "tipo": "DOUBLE"
+   },
+   {
+    "nome": "pld_medio_rs_mwh",
+    "tipo": "DOUBLE"
+   },
+   {
+    "nome": "pld_capturado_rs_mwh",
+    "tipo": "DOUBLE"
+   }
+  ],
+  "linhas": [
+   [
+    "OTHER",
+    "13.31",
+    "202.83",
+    "240.85"
+   ],
+   [
+    "THERM",
+    "59.66",
+    "201.92",
+    "230.96"
+   ],
+   [
+    "NUC",
+    "15.81",
+    "224.31",
+    "227.38"
+   ],
+   [
+    "HID",
+    "404.0",
+    "218.25",
+    "213.5"
+   ],
+   [
+    "EOL",
+    "114.0",
+    "182.13",
+    "200.73"
+   ],
+   [
+    "SOL",
+    "90.78",
+    "199.59",
+    "163.46"
+   ]
+  ],
+  "sugestoes": [
+   "Qual o PLD médio por submercado em 2025?",
+   "Qual o PLD capturado por usina e fonte em 2025?"
+  ]
+ },
+ {
+  "pergunta": "Quantas usinas foram reconciliadas pela IA (ai_decide)?",
+  "conversa": "<genie-conversation-id>",
+  "mensagem": "<genie-message-id>",
+  "texto": "No período consultado, de **out/2024 a set/2026**, foram reconciliadas pela IA (**ai_decide**) **2 usinas por mês**. Esse número ficou **estável em todos os 24 meses** retornados, sem variação ao longo do período.",
+  "sql": "SELECT\n  `mes`,\n  `n_usinas`\nFROM `ampera_catalog`.`ampera_gold`.`reconciliation_monthly`\nWHERE `grao` = 'usina'\n  AND `match_method` = 'ai_decide'\n  AND `mes` IS NOT NULL\nORDER BY `mes`",
+  "descricao": "Você quer saber quantas usinas foram reconciliadas pela inteligência artificial (método 'ai_decide') em cada mês, considerando apenas dados do grão 'usina'.",
+  "colunas": [
+   {
+    "nome": "mes",
+    "tipo": "DATE"
+   },
+   {
+    "nome": "n_usinas",
+    "tipo": "LONG"
+   }
+  ],
+  "linhas": [
+   [
+    "2024-10-01",
+    "2"
+   ],
+   [
+    "2024-11-01",
+    "2"
+   ],
+   [
+    "2024-12-01",
+    "2"
+   ],
+   [
+    "2025-01-01",
+    "2"
+   ],
+   [
+    "2025-02-01",
+    "2"
+   ],
+   [
+    "2025-03-01",
+    "2"
+   ],
+   [
+    "2025-04-01",
+    "2"
+   ],
+   [
+    "2025-05-01",
+    "2"
+   ],
+   [
+    "2025-06-01",
+    "2"
+   ],
+   [
+    "2025-07-01",
+    "2"
+   ],
+   [
+    "2025-08-01",
+    "2"
+   ],
+   [
+    "2025-09-01",
+    "2"
+   ],
+   [
+    "2025-10-01",
+    "2"
+   ],
+   [
+    "2025-11-01",
+    "2"
+   ],
+   [
+    "2025-12-01",
+    "2"
+   ],
+   [
+    "2026-01-01",
+    "2"
+   ],
+   [
+    "2026-02-01",
+    "2"
+   ],
+   [
+    "2026-03-01",
+    "2"
+   ],
+   [
+    "2026-04-01",
+    "2"
+   ],
+   [
+    "2026-05-01",
+    "2"
+   ],
+   [
+    "2026-06-01",
+    "2"
+   ],
+   [
+    "2026-07-01",
+    "2"
+   ],
+   [
+    "2026-08-01",
+    "2"
+   ],
+   [
+    "2026-09-01",
+    "2"
+   ]
+  ],
+  "sugestoes": [
+   "Qual o total de usinas reconciliadas pela IA (ai_decide) no período disponível?",
+   "Qual a geração total das usinas reconciliadas pela IA (ai_decide) no último ano disponível?",
+   "Quantas usinas foram reconciliadas por cada método de reconciliação no último ano disponível?"
+  ]
+ }
+]

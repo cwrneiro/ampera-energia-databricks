@@ -4,8 +4,10 @@
 # MAGIC
 # MAGIC Declares, idempotently, on every refresh:
 # MAGIC 1. **Access** — group `ampera_analysts` reads the gold marts only (no bronze/silver, no writes).
-# MAGIC 2. **Tags** — every schema and table carries `layer`, `domain` and its upstream `source`; ML/GenAI
-# MAGIC    outputs carry `ai`; plant coordinates carry the governed tag `class.geo_coordinates`.
+# MAGIC 2. **Tags** — every schema and table carries `ampera_layer`, `ampera_domain` and its upstream
+# MAGIC    `ampera_source`; ML/GenAI outputs carry `ampera_ai`; plant coordinates carry the governed tag
+# MAGIC    `class.geo_coordinates`. Keys are namespaced (`ampera_*`) so they never collide with governed tag policies such as `layer`, `domain`, `source`
+# MAGIC    and `project`, which may already exist in a metastore with their own allowed values.
 # MAGIC 3. **Evidence** — prints grants, tags and table lineage (`system.access.table_lineage`).
 
 # COMMAND ----------
@@ -50,7 +52,7 @@ for q in [f"GRANT USE CATALOG ON CATALOG {CAT} TO `{GRP}`",
 
 LAYER = {"bronze": "bronze", "silver": "silver", "gold": "gold", "gold_lb": "serving"}
 for k, s in S.items():
-    sql(f"ALTER SCHEMA {s} SET TAGS ('layer' = '{LAYER[k]}', 'domain' = 'energia', 'project' = 'ampera')")
+    sql(f"ALTER SCHEMA {s} SET TAGS ('ampera_layer' = '{LAYER[k]}', 'ampera_domain' = 'energia')")
 
 SOURCE = {  # table -> upstream public source(s)
     "ons_generation": "ONS", "ons_conjunto_member": "ONS", "ons_member_generation_wind": "ONS",
@@ -63,9 +65,9 @@ tables = sql(f"""SELECT table_schema, table_name FROM {CAT}.information_schema.t
                  WHERE table_schema IN ('ampera_bronze', 'ampera_silver', 'ampera_gold')""").collect()
 for t in tables:
     fqn, layer = f"{CAT}.{t.table_schema}.{t.table_name}", t.table_schema.removeprefix("ampera_")
-    tags = {"layer": layer, "domain": "energia", "source": SOURCE.get(t.table_name, "derived")}
+    tags = {"ampera_layer": layer, "ampera_domain": "energia", "ampera_source": SOURCE.get(t.table_name, "derived")}
     if t.table_name in AI:
-        tags["ai"] = AI[t.table_name]
+        tags["ampera_ai"] = AI[t.table_name]
     body = ", ".join(f"'{k}' = '{v}'" for k, v in tags.items())
     try:
         sql(f"ALTER {kind(fqn)} {fqn} SET TAGS ({body})")
@@ -92,7 +94,7 @@ for k in ("bronze", "silver", "gold"):
     show(f"SHOW GRANTS `{GRP}` ON SCHEMA {S[k]}")
 print("\n-- table tags")
 show(f"""SELECT schema_name, table_name, concat_ws(', ', collect_list(concat(tag_name, '=', tag_value))) AS tags
-         FROM {CAT}.information_schema.table_tags WHERE schema_name LIKE 'ampera_%'
+         FROM {CAT}.information_schema.table_tags WHERE schema_name LIKE 'ampera_%' AND tag_name LIKE 'ampera_%'
          GROUP BY ALL ORDER BY ALL""")
 print("\n-- column tags")
 show(f"""SELECT schema_name, table_name, column_name, tag_name FROM {CAT}.information_schema.column_tags

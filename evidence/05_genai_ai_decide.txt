@@ -1,0 +1,60 @@
+# GenAI — ai_decide reconciliation verdicts and blind evaluation
+# captured 2026-10-22 01:28 UTC from workspace profile <profile>
+
+-- every ai_decide verdict in production (applied at confidence >= 0.9, else review queue)
+SELECT nom_usina, uf, tipo, ai_choice, ai_confidence, ai_accepted, a_nome, ai_prob_a, b_nome, ai_prob_b,
+             c_nome, ai_prob_c, ai_prob_nenhum, match_method, plant_id
+      FROM ampera_catalog.ampera_gold.reconciliation_ai_review ORDER BY ai_accepted DESC, ai_confidence DESC
+
+                   a_nome  ai_accepted  ai_choice  ai_confidence  ai_prob_a  ai_prob_b  ai_prob_c  ai_prob_nenhum                     b_nome                   c_nome  match_method                                 nom_usina               plant_id                  tipo  uf
+              CGVE INNOVA         true          A           0.97       0.98        0.0        0.0            0.02                  Igrejinha                  TECNOVA     ai_decide                           UTE CGVE INNOVA   UTE.AI.RS.040886-7.2  Resíduos Industriais  RS
+             Do Atlântico         true          A           0.96       0.97       0.01        0.0            0.02              Mantecorp IQF    São Sebastião do Alto     ai_decide                              Do Atlântico   UTE.CM.RJ.029587-6.1  Resíduos Industriais  RJ
+          Prosperidade II         true          A           0.95       0.96       0.01        0.0            0.03             Prosperidade I          Prosperidade IV         fuzzy                           Prosperidade II   UTE.GN.BA.037897-6.2                   Gás  BA
+   Solar Lagoa do Barro I        false     nenhum           0.91       0.05       0.01       0.01            0.93    Solar Lagoa do Barro II  Solar Lagoa do Barro VI     unmatched                               Campo Maior  SURR-bb7b9e9d97eef4fd           Óleo Diesel  PI
+                  Altus I        false     nenhum           0.87       0.07       0.01       0.01            0.91                    Altus V                  Altus X     unmatched                                     Altos  SURR-a4053e0c4c817cab           Óleo Diesel  PI
+              Carnaúba IV        false     nenhum           0.85       0.07       0.02       0.02            0.89                Carnaúba II              Carnaúba IX     unmatched                                 Marambaia  SURR-b2427a81eac31b8a           Óleo Diesel  PI
+Frederico João Cerutti SA        false     nenhum           0.75       0.14       0.02       0.02            0.82     Bela União(trincheira)       Elebrás Cidreira 1     unmatched  Pequenas Centrais Hidroelétricas da Ceee  SURR-e086be7f594fa365            Hidráulica  RS
+                    Joana        false     nenhum           0.74       0.12       0.03       0.04            0.81                  Damascena                Aroeira 1     unmatched                                    Apoena  SURR-f85cd104b7f824ef      Óleo Combustível  BA
+       Ibiapaba Norte III        false     nenhum           0.74       0.11       0.04       0.04            0.81                 Ouro Verde        Ibiapaba Norte II     unmatched                         Juazeiro do Norte  SURR-939acd0ef5cb29b4           Óleo Diesel  CE
+               CAMAÇARI-1        false     nenhum           0.73       0.12       0.04       0.04             0.8                 CAMAÇARI-2               CAMAÇARI-3     unmatched                             Termocamaçari  SURR-a33e756bb7ffe2b7                   Gás  BA
+                  Jandaia        false     nenhum           0.72       0.14       0.03       0.04            0.79                   Cajucoco              Carnaúba II     unmatched                                   Caucaia  SURR-a335095e246b63ef           Óleo Diesel  CE
+                   Buriti        false     nenhum           0.71       0.15       0.03       0.04            0.78  Parque Eólico de Beberibe                 Mucuripe     unmatched                                  Baturité  SURR-5acf35c5688353dd           Óleo Diesel  CE
+                  Guajirú        false     nenhum           0.71       0.16       0.02       0.03            0.79                    Umari I                 Jaguar I     unmatched                                    Iguatu  SURR-207a980cab145091           Óleo Diesel  CE
+                 Passagem        false     nenhum           0.68       0.17       0.02       0.04            0.77                 Assu Sol 1              Jerusalém V     unmatched                            PSM_PASSAGEM_1  SURR-d1270fd8f7337581                Eólica  RN
+                    Jambo        false     nenhum           0.61       0.14       0.04       0.11            0.71                  Calheiros                  Comperj     unmatched                                    Campos  SURR-b7eb26be7262f1c7                   Gás  RJ
+              Icaraizinho        false     nenhum           0.58       0.15       0.03       0.13            0.69                     Buriti                   Icaraí     unmatched                                     Crato  SURR-55b285997f822268           Óleo Diesel  CE
+                    Pilar        false     nenhum           0.56       0.15       0.12       0.06            0.67             Usina da Pedra                 Da Pedra     unmatched                                    PIE-RP  SURR-bc6ed961a2790dd8              Biomassa  SP
+                Pecém H2v        false     nenhum           0.54       0.17       0.06       0.11            0.66             Porto do Pecém        Porto do Pecém II     unmatched                                     Pecém  SURR-04ff09006a76816a           Óleo Diesel  CE
+             Pau Ferro II        false     nenhum           0.51       0.26       0.07       0.03            0.64                  Pau Ferro        Serra das Vacas V     unmatched                               Pau Ferro I  SURR-97501cc7cd2a1c77           Óleo Diesel  PE
+               Monte Belo        false     nenhum            0.5       0.16       0.18       0.03            0.63          Colorado do Oeste                Rondon II     unmatched                              Termonorte 1  SURR-7226610f274c1af3           Óleo Diesel  RO
+                 Guanambi        false     nenhum           0.46       0.13        0.2       0.07             0.6                   Macarani                  Guirapá     unmatched                                   Guarani  SURR-5bc23f1f468634a4      Óleo Combustível  BA
+          Prosperidade II        false     nenhum           0.43       0.27       0.08       0.08            0.57             Prosperidade I          Prosperidade IV     unmatched                          Prosperidade III  SURR-bb597643c66a3e5f                   Gás  BA
+                Rondon II        false          A            0.4       0.55        0.1       0.01            0.34             Termo Norte II              Apertadinho     unmatched                                 Rondon II  SURR-cd5601b1bb2a9379              Biomassa  RO
+        Jordão – BBF Acre        false     nenhum           0.39       0.29       0.08       0.08            0.55             Tarauacá – CEA  Porto Walter – BBF Acre     unmatched                               Belo Jardim  SURR-d647a14121bd01c5           Óleo Diesel  AC
+               Monte Belo        false     nenhum           0.39       0.16       0.26       0.04            0.54          Colorado do Oeste                Rondon II     unmatched                              Termonorte I  SURR-3f9b83e4f575ffd9           Óleo Diesel  RO
+                Termocabo        false     nenhum           0.39       0.29       0.12       0.04            0.55            Termopernambuco                Pau Ferro     unmatched                               Termomanaus  SURR-3436a76679bbceba           Óleo Diesel  PE
+                Corrupião        false     nenhum           0.37       0.13       0.02       0.32            0.53                    Cumulus                   Ciemil     unmatched                                   Curumim  SURR-ae2e2e7bed2091c5      Óleo Combustível  BA
+                   SEDE 1        false     nenhum           0.37       0.17       0.01       0.29            0.53              Solar Irecê 1                 Futura 1     unmatched                               UTE SYKUE 1  SURR-35e00347d73759e8              Biomassa  BA
+           Ribeirão Preto        false          A           0.36       0.52       0.01       0.06            0.41                    Piedade                    Peixe     unmatched                                Predilecta  SURR-5130e4bb84e33db0              Biomassa  SP
+                 DTCEA-0I        false     nenhum           0.31       0.38       0.07       0.06            0.49      Santo Antônio do Jari           Salto Cafesoca     unmatched                                   Santana  SURR-a076545ab5ddfa88      Óleo Combustível  AP
+    Usaçúcar - Terra Rica        false          A           0.31       0.49       0.01       0.01            0.49                  Beira Rio           Jaguaricatu II     unmatched                              US. FIGUEIRA  SURR-d385baa3b744666b                Carvão  PR
+                  NAZARIA        false          A           0.29       0.47       0.37       0.01            0.15                     TSA-NA              Carnaúba IV     unmatched                                   Nazária  SURR-73251a6e4b55344e           Óleo Diesel  PI
+            FORTALEZA - 2        false          A           0.23       0.43       0.23       0.01            0.33              FORTALEZA - 1                   Fortal     unmatched                                 Fortaleza  SURR-38c954c9b49b7fb7                   Gás  CE
+
+-- blind eval (CEG registry number hidden), confusion
+SELECT truth, ai_choice, count(*) AS n FROM ampera_catalog.ampera_silver.ai_decide_eval GROUP BY ALL ORDER BY ALL
+
+ai_choice    n   truth
+        A  145       A
+        B    1       A
+   nenhum    4       A
+        A    1       B
+        B    9       B
+        A    1       C
+        C    1       C
+   nenhum    2       C
+        A    5  nenhum
+        B    3  nenhum
+        C    1  nenhum
+   nenhum   27  nenhum
+

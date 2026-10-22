@@ -92,7 +92,7 @@ print("\nModel flag vs ONS flag, all labeled plant-hours (both periods):")
 show(f"""SELECT fonte, restrito_ons, restrito_modelo, count(*) AS plant_hours
     FROM {CAT}.ampera_gold.curtailment_hourly WHERE restrito_ons IS NOT NULL
     GROUP BY ALL ORDER BY ALL""")
-print("\nCoverage: plant-hours the model scores that ONS publishes no curtailment flag for:")
+print("\nCoverage: plant-hours with no ONS curtailment flag (ONS's Oct-Dec 2024 solar files carry none) — the model still scores them:")
 show(f"""SELECT fonte, count_if(restrito_ons IS NULL) AS sem_rotulo_ons, count(*) AS total,
            round(sum(CASE WHEN restrito_ons IS NULL THEN mwh_restrito END)/1e3, 1) AS restrito_gwh_sem_rotulo
     FROM {CAT}.ampera_gold.curtailment_hourly GROUP BY fonte ORDER BY fonte""")

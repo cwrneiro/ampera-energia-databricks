@@ -1,0 +1,57 @@
+# ML — curtailment model in UC, scoring output and agreement with ONS
+# captured 2026-10-22 01:28 UTC from workspace profile <profile>
+
+{
+ "comment": "Expected unconstrained capacity factor (wind/solar) from Open-Meteo weather; flags curtailment where actual < Y x expected. Spec 11. Trained by notebooks/train_curtailment.",
+ "created_at": 1792629731360,
+ "full_name": "ampera_catalog.ampera_gold.curtailment_expected_cf",
+ "owner": "owner@example.com",
+ "updated_at": 1792631680468
+}
+
+version 2  status=READY  run_id=<mlflow-run-id>  created=1792631677360
+version 1  status=READY  run_id=<mlflow-run-id>  created=1792629731837
+
+-- batch scoring output
+SELECT fonte, count(DISTINCT plant_id) AS plants, round(sum(mwh) / 1e6, 2) AS gen_twh,
+             round(sum(mwh_restrito) / 1e3, 1) AS curtailed_gwh, round(sum(valor_rs_perdido) / 1e6, 1) AS lost_rs_millions,
+             round(100 * sum(mwh_restrito) / sum(mwh_esperado), 2) AS pct_of_expected, max(model_version) AS model_version
+      FROM ampera_catalog.ampera_gold.curtailment_hourly GROUP BY 1 ORDER BY 1
+
+curtailed_gwh  fonte  gen_twh  lost_rs_millions  model_version  pct_of_expected  plants
+      41639.6    EOL   213.55            5742.7              2            16.49    1052
+      24187.8    SOL    64.51            2635.4              2            28.23     546
+
+-- model flag vs ONS constrained-off flag, all 24 months
+SELECT fonte, count_if(restrito_modelo AND restrito_ons) AS tp, count_if(restrito_modelo AND NOT restrito_ons) AS fp,
+             count_if(NOT restrito_modelo AND restrito_ons) AS fn,
+             round(count_if(restrito_modelo AND restrito_ons) / count_if(restrito_modelo AND restrito_ons IS NOT NULL), 3) AS precision_vs_ons,
+             round(count_if(restrito_modelo AND restrito_ons) / count_if(restrito_ons), 3) AS recall_vs_ons
+      FROM ampera_catalog.ampera_gold.curtailment_hourly GROUP BY 1 ORDER BY 1
+
+     fn  fonte      fp  precision_vs_ons  recall_vs_ons       tp
+4367625    EOL  924535             0.763          0.406  2980037
+ 413326    SOL  551956             0.763          0.811  1773036
+
+-- real model output: the top plant by R$ lost, two weeks
+SELECT dia, round(mwh, 1) AS mwh, round(mwh_esperado, 1) AS mwh_expected, horas_restritas_modelo AS h_model,
+             horas_restritas_ons AS h_ons, round(mwh_restrito, 1) AS mwh_lost, round(valor_rs_perdido) AS rs_lost
+      FROM ampera_catalog.ampera_gold.curtailment_daily WHERE plant_id = (SELECT plant_id FROM ampera_catalog.ampera_gold.curtailment_daily
+           GROUP BY 1 ORDER BY sum(valor_rs_perdido) DESC LIMIT 1) AND dia BETWEEN '2026-08-01' AND '2026-08-14' ORDER BY dia
+
+       dia  h_model  h_ons    mwh  mwh_expected  mwh_lost  rs_lost
+2026-08-01       16     23  236.1         626.4     349.4  31306.0
+2026-08-02       14     19  328.2         732.1     352.6  28948.0
+2026-08-03       15     20  317.5         779.8     404.3  33227.0
+2026-08-04       14     15  397.6         780.5     344.5  33514.0
+2026-08-05       14     16  362.1         743.8     298.4  33479.0
+2026-08-06       14     21  433.2         861.8     383.0  53581.0
+2026-08-07        4     10  624.4         817.7     131.6  18232.0
+2026-08-08       14     21  342.0         784.3     409.4  37860.0
+2026-08-09       16     21  318.5         848.0     508.2  61121.0
+2026-08-10       20     20  166.2         748.3     576.1  61238.0
+2026-08-11        9     10  359.0         722.0     312.1  39119.0
+2026-08-12       18     19  200.8         524.2     299.5  34682.0
+2026-08-13       12     19  448.0         842.6     377.7  53627.0
+2026-08-14       13     17  314.8         661.9     319.9  37116.0
+

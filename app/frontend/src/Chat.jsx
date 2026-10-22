@@ -25,13 +25,13 @@ const short = (v) => {
 const cell = (v, tipo) => (v == null ? "—" : NUM.has(tipo) ? fmt.num(Number(v), Math.abs(Number(v)) < 10 ? 2 : 1) : DATE.has(tipo) ? fmt.data(String(v).slice(0, 10)) : v);
 
 // Picks a chart from the result's column types: date → line, category + number → bar,
-// two numbers → scatter, one value → a figure, otherwise a table.
+// two numbers → scatter, a single row → its figures, otherwise a table.
 export function pickChart(colunas, linhas) {
   const idx = (pred) => colunas.findIndex((c) => pred(c.tipo));
   const nums = colunas.map((c, i) => (NUM.has(c.tipo) ? i : -1)).filter((i) => i >= 0);
   const d = idx((t) => DATE.has(t)), cat = idx((t) => !NUM.has(t) && !DATE.has(t));
   if (!linhas.length || !nums.length) return { kind: "table" };
-  if (linhas.length === 1 && nums.length === 1 && colunas.length <= 2) return { kind: "figure", y: nums[0] };
+  if (linhas.length === 1 && nums.length <= 4) return { kind: "figure", ys: nums };
   if (d >= 0) return { kind: "line", x: d, ys: nums.slice(0, 3), by: cat >= 0 && nums.length === 1 ? cat : -1 };
   if (cat >= 0) return { kind: "bar", x: cat, ys: nums.slice(0, 2) };
   if (nums.length >= 2) return { kind: "scatter", x: nums[0], y: nums[1] };
@@ -56,7 +56,11 @@ function Plot({ r }) {
   const spec = useMemo(() => pickChart(cols, linhas), [cols, linhas]);
   const n = (v) => (v == null ? null : Number(v));
   if (spec.kind === "figure") {
-    return <p className="chat-figure"><span className="num">{short(n(linhas[0][spec.y]))}</span> <small>{cols[spec.y].nome}</small></p>;
+    return (
+      <dl className="chat-figures">
+        {spec.ys.map((i) => <div key={i}><dt>{cols[i].nome}</dt><dd className="num">{short(n(linhas[0][i]))}</dd></div>)}
+      </dl>
+    );
   }
   const common = { margin: { top: 8, right: 12, bottom: 0, left: 0 } };
   const yAxis = <YAxis {...AXIS} axisLine={false} width={52} tickFormatter={short} />;

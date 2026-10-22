@@ -102,7 +102,7 @@ export default function Curtailment({ f }) {
           ))}
         </tbody>
       </table>
-      <p className="panel-note">"—" em horas ONS: o ONS não publica restrição para esta usina; só o modelo a enxerga.</p>
+      <p className="panel-note">"—" em horas ONS: sem registro de restrição do ONS no período (os arquivos solares de out–dez/2024 não trazem a marcação); o modelo cobre essas horas.</p>
     </div>
   );
 

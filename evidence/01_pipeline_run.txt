@@ -1,0 +1,75 @@
+# Lakeflow Declarative Pipeline — latest update, flows and expectations
+# captured 2026-10-22 01:25 UTC from workspace profile <profile>
+
+pipeline ampera_medallion <pipeline-id>
+latest update <pipeline-update-id> state=COMPLETED cause=JOB_TASK
+
+-- data-quality expectations, latest update (event_log)
+SELECT origin.flow_name AS dataset, e.name AS expectation,
+             sum(e.passed_records) AS passed, sum(e.failed_records) AS failed
+      FROM (SELECT origin, explode(from_json(details:flow_progress.data_quality.expectations,
+                   'array<struct<name:string,dataset:string,passed_records:bigint,failed_records:bigint>>')) AS e
+            FROM event_log('<pipeline-id>') WHERE event_type = 'flow_progress' AND origin.update_id = '<pipeline-update-id>'
+              AND details:flow_progress.data_quality.expectations IS NOT NULL)
+      GROUP BY ALL ORDER BY dataset, expectation
+
+                                                  dataset             expectation   failed    passed
+ ampera_catalog.ampera_gold.curtailment_features_hourly            has_capacity  1311696  26316437
+ ampera_catalog.ampera_gold.curtailment_features_hourly             has_weather  1306848  26321285
+  ampera_catalog.ampera_silver.curtailment_label_hourly                has_flag   908592  25636085
+                ampera_catalog.ampera_silver.generation            has_plant_id        0  12131219
+                ampera_catalog.ampera_silver.generation        non_negative_mwh       33  12131186
+        ampera_catalog.ampera_silver.generation_balance     balance_within_2pct        0        24
+        ampera_catalog.ampera_silver.generation_balance   published_mwh_present        0        24
+          ampera_catalog.ampera_silver.generation_plant            has_plant_id        0  35094136
+          ampera_catalog.ampera_silver.generation_plant        non_negative_mwh        0  35094136
+ampera_catalog.ampera_silver.generation_plant_key_check  one_row_per_plant_hour        0         0
+               ampera_catalog.ampera_silver.plant_match            has_plant_id        0       967
+            ampera_catalog.ampera_silver.plant_match_ai             ai_answered        0        33
+         ampera_catalog.ampera_silver.plant_match_check      one_row_per_series        0         0
+         ampera_catalog.ampera_silver.plant_match_check           override_wins        0         0
+          ampera_catalog.ampera_silver.price_pld_hourly        known_submercado        0     96576
+          ampera_catalog.ampera_silver.price_pld_hourly           plausible_pld        0     96576
+       ampera_catalog.ampera_silver.weather_cell_hourly              has_values        0   8216880
+
+-- flows of the latest update
+SELECT origin.flow_name AS dataset, max(details:flow_progress.metrics.num_output_rows)::bigint AS output_rows,
+             max_by(details:flow_progress.status::string, timestamp) AS final_status
+      FROM event_log('<pipeline-id>') WHERE event_type = 'flow_progress' AND origin.update_id = '<pipeline-update-id>'
+      GROUP BY ALL ORDER BY dataset
+
+                                                           dataset  final_status  output_rows
+                   ampera_catalog.ampera_bronze.ccee_pld_horario     COMPLETED             
+                      ampera_catalog.ampera_bronze.inmet_weather     COMPLETED             
+                ampera_catalog.ampera_bronze.ons_conjunto_member     COMPLETED             
+                     ampera_catalog.ampera_bronze.ons_generation     COMPLETED             
+   ampera_catalog.ampera_bronze.ons_member_generation_solar_2024     COMPLETED             
+ampera_catalog.ampera_bronze.ons_member_generation_solar_2025_on     COMPLETED             
+         ampera_catalog.ampera_bronze.ons_member_generation_wind     COMPLETED             
+                 ampera_catalog.ampera_bronze.open_meteo_weather     COMPLETED             
+                        ampera_catalog.ampera_bronze.siga_plants     COMPLETED             
+          ampera_catalog.ampera_gold.curtailment_features_hourly                   26316437
+               ampera_catalog.ampera_gold.fact_generation_hourly                   35094136
+                     ampera_catalog.ampera_gold.generation_daily                    1458248
+                       ampera_catalog.ampera_gold.plant_location                       2292
+             ampera_catalog.ampera_gold.reconciliation_ai_review                         33
+               ampera_catalog.ampera_gold.reconciliation_monthly                        331
+                    ampera_catalog.ampera_silver.conjunto_member     COMPLETED         2143
+           ampera_catalog.ampera_silver.curtailment_label_hourly     COMPLETED     26544677
+                          ampera_catalog.ampera_silver.dim_plant                       2292
+                         ampera_catalog.ampera_silver.generation                   12131219
+                 ampera_catalog.ampera_silver.generation_balance                         24
+                   ampera_catalog.ampera_silver.generation_plant                   35094136
+         ampera_catalog.ampera_silver.generation_plant_key_check                          0
+                          ampera_catalog.ampera_silver.ons_plant     COMPLETED          967
+                ampera_catalog.ampera_silver.plant_inmet_station                        291
+                        ampera_catalog.ampera_silver.plant_match                        967
+                     ampera_catalog.ampera_silver.plant_match_ai                         33
+                  ampera_catalog.ampera_silver.plant_match_check                          0
+                   ampera_catalog.ampera_silver.price_pld_hourly     COMPLETED        96576
+                         ampera_catalog.ampera_silver.siga_plant     COMPLETED        25042
+                ampera_catalog.ampera_silver.weather_cell_hourly     COMPLETED      8216880
+               ampera_catalog.ampera_silver.weather_inmet_hourly     COMPLETED     13640760
+             ampera_catalog.ampera_silver.weather_plant_measured     COMPLETED     24866196
+                         pipelines.flowTimeMetrics.missingFlowName                           
+

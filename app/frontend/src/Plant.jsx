@@ -105,7 +105,7 @@ export default function Plant({ id, plant }) {
             <dt>Energia perdida</dt><dd className="num">{fmt.energia(ct.perd)}</dd>
             <dt>R$ perdidos</dt><dd className="num">{fmt.reais(ct.rs)}</dd>
             <dt>Do esperado</dt><dd className="num">{fmt.pct2(ct.esp ? ct.perd / ct.esp : null)}</dd>
-            <dt>Horas restritas</dt><dd className="num">{fmt.int(ct.hm)} modelo · {ct.ho == null ? "ONS não publica" : `${fmt.int(ct.ho)} ONS`}</dd>
+            <dt>Horas restritas</dt><dd className="num">{fmt.int(ct.hm)} modelo · {ct.ho == null ? "sem registro ONS" : `${fmt.int(ct.ho)} ONS`}</dd>
           </dl>
         </Block>
       )}

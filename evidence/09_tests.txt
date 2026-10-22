@@ -1,0 +1,16 @@
+# Runnable checks — reconciliation logic and Genie benchmark SQL (live)
+# captured 2026-10-22 01:30 UTC from workspace profile <profile>
+
+$ python3 tests/test_reconciliation.py
+ok test_fuel_class
+ok test_name_sim_crosses_threshold
+ok test_normalize_ceg
+ok test_normalize_name
+ok test_numbered_plants_never_fuzzy_match
+ALL PASS
+exit=0
+
+$ python3 tests/test_genie_space.py
+ok
+exit=0
+

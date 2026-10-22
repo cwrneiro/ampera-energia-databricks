@@ -1,0 +1,78 @@
+# Databricks App — deployed app, API responses read from Lakebase
+# captured 2026-10-22 01:32 UTC from workspace profile <profile>
+
+app ampera-app  status=RUNNING  compute=ACTIVE  user_api_scopes=['dashboards.genie', 'iam.access-control:read', 'iam.current-user:read']
+resources=[{"name": "postgres", "postgres": {"branch": "projects/ampera-demo/branches/production", "database": "projects/ampera-demo/branches/production/databases/databricks-postgres", "permission": "CAN_CONNECT_AND_CREATE"}}, {"genie_space": {"name": "Ampera · Geração Elétrica", "permission": "CAN_RUN", "space_id": "<genie-space-id>"}, "name": "genie"}]
+
+GET /api/meta -> {"de": "2024-10-01", "ate": "2026-09-30"}
+
+GET /api/overview -> kpis {"mwh": 1404190183.3386633, "mwh_estimado": 7822578.613026093, "valor_rs": 297071553097.3687, "pld_capturado": 211.56076763835404, "n_usinas": 2292}
+   fontes [{"fonte": "EOL", "mwh": 223551772.95922613, "pld_medio": 190.5787511467236, "pld_capturado": 199.77568560029803, "n_usinas": 1111}, {"fonte": "HID", "mwh": 817453126.7921065, "pld_medio": 217.00733678583572, "pld_capturado": 223.61857935079888, "n_usinas": 252}, {"fonte": "NUC", "mwh": 29346101.767000016, "pld_medio": 219.67460502283075, "pld_capturado": 219.70476581390275, "n_usinas": 2}, {"fonte": "OTHER", "mwh": 25980923.15238875, "pld_medio": 205.79503983025177, "pld_capturado": 221.5867046279117, "n_usinas": 46}, {"fonte": "SOL", "mwh": 189182524.5084357, "pld_medio": 200.4241773423231, "pld_capturado": 154.73823959706772, "n_usinas": 672}, {"fonte": "THERM", "mwh": 118675734.15950638, "pld_medio": 205.885958449515, "pld_capturado": 237.0776243488789, "n_usinas": 209}]
+   top plants [{"plant_id": "UHE.PH.PR.001161-4.1", "nome": "Itaipu (Parte Brasileira)", "uf": "PR", "mwh": 96562614.22341643, "mwh_estimado": 0.0}, {"plant_id": "UHE.PH.PA.030354-2.1", "nome": "Belo Monte", "uf": "PA", "mwh": 57231031.22375227, "mwh_estimado": 0.0}, {"plant_id": "UHE.PH.PA.002889-4.1", "nome": "Tucuruí", "uf": "PA", "mwh": 54297234.60769049, "mwh_estimado": 0.0}]
+
+GET /api/curtailment -> 48 month×fonte rows; top plants:
+[
+ {
+  "plant_id": "EOL.CV.CE.028788-1.1",
+  "nome": "Canoa Quebrada",
+  "uf": "CE",
+  "fonte": "EOL",
+  "capacidade_mw": 57.0,
+  "mwh": 256880.11,
+  "mwh_restrito": 166077.4863164473,
+  "valor_rs_perdido": 27304285.731208175,
+  "horas_modelo": 7895,
+  "horas_ons": 8570
+ },
+ {
+  "plant_id": "EOL.CV.RN.028443-2.1",
+  "nome": "Alegria II",
+  "uf": "RN",
+  "fonte": "EOL",
+  "capacidade_mw": 100.65,
+  "mwh": 216917.80749999997,
+  "mwh_restrito": 159764.39147465903,
+  "valor_rs_perdido": 26720012.2389369,
+  "horas_modelo": 6381,
+  "horas_ons": 10025
+ },
+ {
+  "plant_id": "EOL.CV.RN.032207-5.1",
+  "nome": "Cumaru I",
+  "uf": "RN",
+  "fonte": "EOL",
+  "capacidade_mw": 42.0,
+  "mwh": 241924.64449999994,
+  "mwh_restrito": 154547.84208766575,
+  "valor_rs_perdido": 25363584.588243183,
+  "horas_modelo": 7631,
+  "horas_ons": 11121
+ },
+ {
+  "plant_id": "EOL.CV.RN.032208-3.1",
+  "nome": "Cumaru II",
+  "uf": "RN",
+  "fonte": "EOL",
+  "capacidade_mw": 42.0,
+  "mwh": 221250.9929999999,
+  "mwh_restrito": 142824.19618721097,
+  "valor_rs_perdido": 23004763.92504195,
+  "horas_modelo": 7620,
+  "horas_ons": 11121
+ },
+ {
+  "plant_id": "EOL.CV.RN.032518-0.1",
+  "nome": "Monte Verde I",
+  "uf": "RN",
+  "fonte": "EOL",
+  "capacidade_mw": 67.2,
+  "mwh": 590645.9095,
+  "mwh_restrito": 151782.4754948978,
+  "valor_rs_perdido": 22148695.572342142,
+  "horas_modelo": 4958,
+  "horas_ons": 11166
+ }
+]
+
+GET /api/reconciliation/ai -> 33 verdicts, 3 applied
+

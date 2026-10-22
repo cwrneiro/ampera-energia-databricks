@@ -498,8 +498,9 @@ table.board > tbody > tr > td:first-child .sw { margin-right: 4px; }
 .chat-a { display: flex; flex-direction: column; gap: 10px; }
 .chat-text { margin: 0; white-space: pre-wrap; }
 .chat-desc { margin: 0; font-size: 0.8125rem; color: var(--ink-2); }
-.chat-figure { margin: 0; font-size: 1rem; font-weight: 700; color: var(--ink-2); }
-.chat-figure .num { font-size: 2.25rem; font-weight: 800; color: var(--primary); letter-spacing: -0.015em; }
+.chat-figures { display: flex; flex-wrap: wrap; gap: 8px 32px; margin: 0; }
+.chat-figures dt { font-size: 0.8125rem; font-weight: 700; color: var(--ink-2); }
+.chat-figures dd { margin: 0; text-align: left; font-size: 2.25rem; font-weight: 800; line-height: 1.1; color: var(--primary); letter-spacing: -0.015em; }
 .seg-ctl--sm { align-self: flex-start; }
 .seg-ctl--sm button { padding: 5px 12px; font-size: 0.8125rem; }
 .chat-table { max-height: 300px; overflow: auto; border: 1px solid var(--rule-2); border-radius: 4px; }

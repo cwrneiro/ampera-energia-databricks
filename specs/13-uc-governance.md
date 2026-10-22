@@ -12,8 +12,9 @@ came from. Decision #34.
 - **Access:** group `ampera_analysts` gets `USE CATALOG` + `USE SCHEMA, SELECT` on `ampera_gold`
   only; bronze/silver revoked. The app's Genie chat runs on behalf of the user, so these grants
   decide what each person can ask about.
-- **Tags:** schema and table tags `layer`, `domain=energia`, `source` (ONS, ANEEL SIGA, CCEE,
-  Open-Meteo, INMET, derived), `ai` on ML/GenAI outputs; governed tag `class.geo_coordinates` on
+- **Tags:** schema and table tags `ampera_layer`, `ampera_domain=energia`, `ampera_source` (ONS, ANEEL
+  SIGA, CCEE, Open-Meteo, INMET, derived), `ampera_ai` on ML/GenAI outputs — namespaced because
+  `layer`/`domain`/`source`/`project` may already be governed tag policies in a metastore; governed tag `class.geo_coordinates` on
   plant lat/lon (skipped with a message if the tag policy refuses).
 - **Model:** `ampera_gold.curtailment_expected_cf` registered in UC (alias `champion`).
 - **Lineage:** printed from `system.access.table_lineage` (bronze → silver → gold → ML → serving).

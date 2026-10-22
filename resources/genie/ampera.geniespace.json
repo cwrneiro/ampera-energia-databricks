@@ -445,7 +445,7 @@
           {
             "column_name": "match_method",
             "description": [
-              "Como a geração ONS foi ligada ao SIGA: ceg (CEG direto), member_measured / member_estimated (usina de conjunto, medida ou estimada), ons_conjunto (só no nível do conjunto), ons_aggregate (agregados ONS sem usina SIGA), fuzzy (nome aproximado), unmatched."
+              "Como a geração ONS foi ligada ao SIGA: ceg (CEG direto), member_measured / member_estimated (usina de conjunto, medida ou estimada), ons_conjunto (só no nível do conjunto), ons_aggregate (agregados ONS sem usina SIGA), fuzzy (nome aproximado), ai_decide (escolhido pela IA ai_decide com confiança ≥ 90%), unmatched."
             ],
             "synonyms": [
               "método de reconciliação",

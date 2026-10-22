@@ -35,6 +35,8 @@ plants for which ONS publishes no curtailment flag. Decisions #29–#30 (00-over
 - Precision / recall / F1 of the flag vs ONS, per technology, reported; Y recorded on the version.
 - `curtailment_daily` in Lakebase; app Curtailment sheet + Usina expected-vs-actual; Genie answers
   "quanto a usina X perdeu por curtailment".
+- Coverage note: ONS's Oct–Dec 2024 solar detail files carry no restriction flag (0.9 M plant-hours);
+  the model scores those hours anyway — that's where it adds coverage, not "plants ONS ignores".
 
 ## Results
 

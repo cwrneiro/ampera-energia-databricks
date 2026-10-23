@@ -3,7 +3,7 @@ bundle:
 
 include:
   - resources/*.yml
-  - targets/*.yml        # per-environment overlays (SETUP.md); the dev target below is the demo
+  - targets/*.yml        # per-environment overlays: target, host and the environment-specific variables (SETUP.md)
 
 sync:
   include:
@@ -12,28 +12,15 @@ sync:
 variables:
   catalog:
     description: UC catalog for the medallion (schemas ampera_bronze / ampera_silver / ampera_gold / ampera_gold_lb)
-    default: ampera_catalog
   lakebase_project:
     description: Lakebase project the app reads (branch production, database databricks_postgres)
     default: ampera-demo
   # Lakebase synced-table pipelines (SNAPSHOT). Created by `databricks postgres create-synced-table`
   # (DAB support for synced tables isn't available yet), so referenced by id. Spec: specs/05
   sync_pipeline_generation_daily:
-    default: <synced-table-pipeline-id>
   sync_pipeline_plant_location:
-    default: <synced-table-pipeline-id>
   sync_pipeline_reconciliation_monthly:
-    default: <synced-table-pipeline-id>
   sync_pipeline_reconciliation_ai_review:
-    default: <synced-table-pipeline-id>
   sync_pipeline_curtailment_daily:
-    default: <synced-table-pipeline-id>
   warehouse_id:
     description: SQL warehouse the Genie space queries (spec 07)
-    default: <warehouse-id>
-
-targets:
-  dev:
-    default: true
-    workspace:
-      host: https://<workspace-host>

@@ -41,3 +41,6 @@ data/
 # Per-customer setup state and runbook (written by /setup)
 handoff/
 .isaac/
+
+# Per-environment bundle overlays (workspace-specific); the .example is the template
+targets/*.yml

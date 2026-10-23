@@ -22,7 +22,7 @@ Set these once per shell (examples):
 ```bash
 export P=<profile>            # CLI profile:   databricks auth profiles
 export T=<target>             # bundle target, e.g. prod
-export CAT=<catalog>          # UC catalog, e.g. ampera_catalog
+export CAT=<catalog>          # UC catalog, e.g. main
 export LB=<lakebase-project>  # Lakebase project id; default ampera-demo (no app.yaml edit)
 ```
 

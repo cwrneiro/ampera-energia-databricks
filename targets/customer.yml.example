@@ -18,7 +18,7 @@ targets:
     variables:
       # UC catalog for the medallion; must exist with schemas ampera_bronze/silver/gold/gold_lb (SETUP §2).
       # Discover: databricks catalogs list --profile <profile>
-      catalog: ampera_catalog
+      catalog: <catalog>
       # Lakebase Autoscaling project the app reads (SETUP §4).
       # Discover: databricks postgres list-projects --profile <profile>
       lakebase_project: ampera-demo
@@ -30,6 +30,8 @@ targets:
       sync_pipeline_generation_daily: <pipeline-id>
       sync_pipeline_plant_location: <pipeline-id>
       sync_pipeline_reconciliation_monthly: <pipeline-id>
+      sync_pipeline_reconciliation_ai_review: <pipeline-id>
+      sync_pipeline_curtailment_daily: <pipeline-id>
 
     resources:
       genie_spaces:

@@ -25,12 +25,16 @@ const short = (v) => {
 };
 const cell = (v, tipo) => (v == null ? "—" : NUM.has(tipo) ? fmt.num(Number(v), Math.abs(Number(v)) < 10 ? 2 : 1) : DATE.has(tipo) ? fmt.data(String(v).slice(0, 10)) : v);
 
+const KEYCOL = /(^|_)(key|id|ceg|cod|codigo)$/i;
+const ORDINAL = /^(rank|ranking|posicao|ordem|pos)(_|$)/i;  // a rank is a position, not a measure to plot
+
 // Picks a chart from the result's column types: date → line, category + number → bar,
 // two numbers → scatter, a single row → its figures, otherwise a table.
 export function pickChart(colunas, linhas) {
   const idx = (pred) => colunas.findIndex((c) => pred(c.tipo));
-  const nums = colunas.map((c, i) => (NUM.has(c.tipo) ? i : -1)).filter((i) => i >= 0);
-  const d = idx((t) => DATE.has(t)), cat = idx((t) => !NUM.has(t) && !DATE.has(t));
+  const nums = colunas.map((c, i) => (NUM.has(c.tipo) && !ORDINAL.test(c.nome) ? i : -1)).filter((i) => i >= 0);
+  const d = idx((t) => DATE.has(t)), texts = colunas.map((c, i) => (!NUM.has(c.tipo) && !DATE.has(c.tipo) ? i : -1)).filter((i) => i >= 0);
+  const cat = texts.find((i) => !KEYCOL.test(colunas[i].nome)) ?? texts[0] ?? -1;  // label with the name, not the *_key / id column
   if (!linhas.length || !nums.length) return { kind: "table" };
   if (linhas.length === 1 && nums.length <= 4) return { kind: "figure", ys: nums };
   if (d >= 0) return { kind: "line", x: d, ys: nums.slice(0, 3), by: cat >= 0 && nums.length === 1 ? cat : -1 };
@@ -196,6 +200,12 @@ export default function Chat() {
   const input = useRef(null), log = useRef(null), btn = useRef(null);
 
   useEffect(() => { if (open) input.current?.focus(); }, [open]);
+  const [scrolled, setScrolled] = useState(false);  // label shows at the top, collapses to the icon so it never covers the side notes
+  useEffect(() => {
+    const on = () => setScrolled(window.scrollY > 80);
+    on(); window.addEventListener("scroll", on, { passive: true });
+    return () => window.removeEventListener("scroll", on);
+  }, []);
   useEffect(() => {
     if (!open) return undefined;
     const esc = (e) => { if (e.key === "Escape") { setOpen(false); btn.current?.focus(); } };
@@ -225,12 +235,12 @@ export default function Chat() {
 
   return (
     <>
-      <button ref={btn} type="button" className="chat-toggle" aria-expanded={open} aria-controls="chat" onClick={() => setOpen((o) => !o)}>
+      <button ref={btn} type="button" className={"chat-toggle" + (scrolled ? " is-compact" : "")} aria-label="Pergunte ao Genie" aria-expanded={open} aria-controls="chat" onClick={() => setOpen((o) => !o)}>
         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
           <path d="M4 5.5h16v10H9.5L5.5 19v-3.5H4z" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" />
           <path d="M8 10.5h8M8 13h5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
         </svg>
-        Pergunte ao Genie
+        <span className="chat-label">Pergunte ao Genie</span>
       </button>
       <aside id="chat" className={"chat" + (open ? " is-open" : "")} aria-label="Chat com o Genie" aria-hidden={!open} inert={!open ? "" : undefined}>
         <header className="chat-head">

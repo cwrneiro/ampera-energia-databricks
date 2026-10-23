@@ -494,6 +494,8 @@ table.board > tbody > tr > td:first-child .sw { margin-right: 4px; }
   transition: background-color 0.2s var(--ease), opacity 0.2s var(--ease);
 }
 .chat-toggle:hover { background: var(--primary-hover); }
+.chat-toggle.is-compact:not(:hover):not(:focus-visible) { padding: 11px; }
+.chat-toggle.is-compact:not(:hover):not(:focus-visible) .chat-label { display: none; }
 .chat-toggle[aria-expanded="true"] { opacity: 0; pointer-events: none; }
 .chat {
   position: fixed; top: 0; right: 0; bottom: 0; z-index: 50; width: min(34rem, 100vw);

@@ -1,5 +1,5 @@
 # Lakeflow Declarative Pipeline — latest update, flows and expectations
-# captured 2026-10-22 01:25 UTC from workspace profile <profile>
+# captured 2026-10-23 15:18 UTC from workspace profile <profile>
 
 pipeline ampera_medallion <pipeline-id>
 latest update <pipeline-update-id> state=COMPLETED cause=JOB_TASK
@@ -54,22 +54,22 @@ ampera_catalog.ampera_bronze.ons_member_generation_solar_2025_on     COMPLETED
                        ampera_catalog.ampera_gold.plant_location                       2292
              ampera_catalog.ampera_gold.reconciliation_ai_review                         33
                ampera_catalog.ampera_gold.reconciliation_monthly                        331
-                    ampera_catalog.ampera_silver.conjunto_member     COMPLETED         2143
-           ampera_catalog.ampera_silver.curtailment_label_hourly     COMPLETED     26544677
+                    ampera_catalog.ampera_silver.conjunto_member                       2143
+           ampera_catalog.ampera_silver.curtailment_label_hourly                   26544677
                           ampera_catalog.ampera_silver.dim_plant                       2292
                          ampera_catalog.ampera_silver.generation                   12131219
                  ampera_catalog.ampera_silver.generation_balance                         24
                    ampera_catalog.ampera_silver.generation_plant                   35094136
          ampera_catalog.ampera_silver.generation_plant_key_check                          0
-                          ampera_catalog.ampera_silver.ons_plant     COMPLETED          967
-                ampera_catalog.ampera_silver.plant_inmet_station                        291
+                          ampera_catalog.ampera_silver.ons_plant                        967
+                ampera_catalog.ampera_silver.plant_inmet_station     COMPLETED          291
                         ampera_catalog.ampera_silver.plant_match                        967
                      ampera_catalog.ampera_silver.plant_match_ai                         33
                   ampera_catalog.ampera_silver.plant_match_check                          0
-                   ampera_catalog.ampera_silver.price_pld_hourly     COMPLETED        96576
-                         ampera_catalog.ampera_silver.siga_plant     COMPLETED        25042
-                ampera_catalog.ampera_silver.weather_cell_hourly     COMPLETED      8216880
-               ampera_catalog.ampera_silver.weather_inmet_hourly     COMPLETED     13640760
-             ampera_catalog.ampera_silver.weather_plant_measured     COMPLETED     24866196
+                   ampera_catalog.ampera_silver.price_pld_hourly                      96576
+                         ampera_catalog.ampera_silver.siga_plant                      25042
+                ampera_catalog.ampera_silver.weather_cell_hourly                    8216880
+               ampera_catalog.ampera_silver.weather_inmet_hourly                   13640760
+             ampera_catalog.ampera_silver.weather_plant_measured                   24866196
                          pipelines.flowTimeMetrics.missingFlowName                           
 

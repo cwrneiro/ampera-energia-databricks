@@ -26,7 +26,9 @@ function AiReview() {
   const q = useApi("reconciliation/ai");
   const [view, setView] = useState("revisar");
   const all = q.data || [];
-  const rows = all.filter((r) => view === "todas" || (view === "aplicadas") === r.ai_accepted);
+  const inView = all.filter((r) => view === "todas" || (view === "aplicadas") === r.ai_accepted);
+  const rows = inView.filter((r) => r.mwh_total > 0);  // retired registry entries with no generation change no number
+  const hidden = inView.length - rows.length;
   const n = { aplicadas: all.filter((r) => r.ai_accepted).length, revisar: all.filter((r) => !r.ai_accepted).length, todas: all.length };
   const stake = all.filter((r) => !r.ai_accepted).reduce((a, r) => a + (r.mwh_total || 0), 0);
   const cand = (r, k) => ({ id: r[`${k}_id`], nome: r[`${k}_nome`], mun: r[`${k}_municipio`], p: r[`ai_prob_${k}`], k: k.toUpperCase() });
@@ -71,6 +73,7 @@ function AiReview() {
           </tbody>
         </table>
       )}
+      {hidden > 0 && <p className="panel-note">{hidden} usina{hidden > 1 ? "s" : ""} sem geração no período não aparece{hidden > 1 ? "m" : ""} na lista.</p>}
       <p className="panel-note">Para confirmar ou corrigir uma usina: inserir uma linha em <b>ampera_silver.plant_match_override</b> (a mais recente vence na próxima atualização).</p>
     </section>
   );

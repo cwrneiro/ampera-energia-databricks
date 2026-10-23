@@ -1,5 +1,5 @@
 # Runnable checks — reconciliation logic and Genie benchmark SQL (live)
-# captured 2026-10-22 01:30 UTC from workspace profile <profile>
+# captured 2026-10-23 15:25 UTC from workspace profile <profile>
 
 $ python3 tests/test_reconciliation.py
 ok test_fuel_class

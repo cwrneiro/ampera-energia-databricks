@@ -78,7 +78,8 @@ def pipeline_and_job():
 
 def medallion():
     tabs = sql(f"""SELECT table_schema, table_name, table_type, comment FROM {CAT}.information_schema.tables
-                   WHERE table_schema LIKE 'ampera_%' ORDER BY 1, 2""")
+                   WHERE table_schema LIKE 'ampera_%' AND table_name NOT LIKE '\\_\\_%'
+                     AND table_name NOT LIKE 'event\\_log\\_%' ORDER BY 1, 2""")  # skip pipeline internals
     rows = []
     for t in tabs:
         n = sql(f"SELECT count(*) AS n FROM {CAT}.{t['table_schema']}.{t['table_name']}")[0]["n"]
@@ -102,7 +103,7 @@ def medallion():
 
 def ml_genai():
     body = json.dumps({k: v for k, v in cli("registered-models", "get", f"{CAT}.ampera_gold.curtailment_expected_cf").items()
-                       if k in ("full_name", "comment", "owner", "aliases", "created_at", "updated_at")}, indent=1) + "\n\n"
+                       if k in ("full_name", "comment", "aliases", "created_at", "updated_at")}, indent=1) + "\n\n"
     for v in cli("model-versions", "list", f"{CAT}.ampera_gold.curtailment_expected_cf"):
         body += f"version {v['version']}  status={v.get('status')}  run_id={v.get('run_id')}  created={v.get('created_at')}\n"
     body += "\n" + section(f"""SELECT fonte, count(DISTINCT plant_id) AS plants, round(sum(mwh) / 1e6, 2) AS gen_twh,

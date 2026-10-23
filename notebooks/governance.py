@@ -62,7 +62,8 @@ SOURCE = {  # table -> upstream public source(s)
 AI = {"plant_match_ai": "genai:ai_decide", "ai_decide_eval": "genai:ai_decide",
       "curtailment_hourly": "ml:curtailment_expected_cf", "curtailment_daily": "ml:curtailment_expected_cf"}
 tables = sql(f"""SELECT table_schema, table_name FROM {CAT}.information_schema.tables
-                 WHERE table_schema IN ('ampera_bronze', 'ampera_silver', 'ampera_gold')""").collect()
+                 WHERE table_schema IN ('ampera_bronze', 'ampera_silver', 'ampera_gold')
+                   AND table_name NOT LIKE '\\_\\_%' AND table_name NOT LIKE 'event\\_log\\_%'""").collect()  # skip pipeline internals
 for t in tables:
     fqn, layer = f"{CAT}.{t.table_schema}.{t.table_name}", t.table_schema.removeprefix("ampera_")
     tags = {"ampera_layer": layer, "ampera_domain": "energia", "ampera_source": SOURCE.get(t.table_name, "derived")}

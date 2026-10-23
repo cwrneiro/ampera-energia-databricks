@@ -23,9 +23,9 @@ function useRoute() {
 }
 
 const SHEETS = [
-  { page: "", nome: "Visão geral", hint: "geração por fonte, CEG e conjunto" },
-  { page: "reconciliacao", nome: "Reconciliação", hint: "como o ONS liga à ANEEL" },
-  { page: "curtailment", nome: "Curtailment", hint: "energia perdida por restrição" },
+  { page: "", nome: "Visão geral", curto: "Geral", hint: "geração por fonte, CEG e conjunto" },
+  { page: "reconciliacao", nome: "Reconciliação", curto: "Reconc.", hint: "como o ONS liga à ANEEL" },
+  { page: "curtailment", nome: "Curtailment", curto: "Curtail.", hint: "energia perdida por restrição" },
   { page: "mapa", nome: "Mapa", hint: "usinas por coordenada" },
   { page: "usina", nome: "Usina", hint: "preço e clima de uma usina" },
 ];
@@ -46,11 +46,11 @@ function SheetIndex({ page, lastPlant }) {
         const current = page === s.page;
         return href ? (
           <a key={s.page} href={href} className="index-cell" aria-current={current ? "page" : undefined}>
-            <span className="index-name">{s.nome}</span><span className="index-hint">{s.hint}</span>
+            <span className="index-name"><span className="nm">{s.nome}</span><span className="nm-curto" aria-hidden="true">{s.curto || s.nome}</span></span><span className="index-hint">{s.hint}</span>
           </a>
         ) : (
           <span key={s.page} className="index-cell is-off" title="Escolha uma usina no mapa ou nos rankings">
-            <span className="index-name">{s.nome}</span><span className="index-hint">escolha no mapa</span>
+            <span className="index-name"><span className="nm">{s.nome}</span><span className="nm-curto" aria-hidden="true">{s.nome}</span></span><span className="index-hint">escolha no mapa</span>
           </span>
         );
       })}

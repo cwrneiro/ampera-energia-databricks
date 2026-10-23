@@ -25,7 +25,7 @@ especially "geração por CEG" and "por conjunto" — and get correct SQL-backed
 - **Text instructions** (< 2,000 chars): CEG NULL for SURR- plants, `mwh_estimado` ⊂ `mwh`, never sum
   the two `grao`, group conjuntos by `conjunto_key` (names repeat across keys in `plant_location`), daily
   table unless an hourly profile is asked.
-- **Benchmarks:** 32 checked-SQL chat benchmarks (meets the ≥30 bar for optimization runs). First 14 =
+- **Benchmarks:** 38 checked-SQL chat benchmarks (32 base + 6 curtailment, spec 14; meets the ≥30 bar for optimization runs). First 14 =
   7 questions × 2 phrasings: CEG, top conjuntos, UF,
   solar by month, wind captured PLD, wind vs modeled wind speed (RS, Jul 2026), all-history total.
   The other 18 add submercado, fonte shares, capacity, estimated share, value at PLD, peak month,
@@ -34,7 +34,7 @@ especially "geração por CEG" and "por conjunto" — and get correct SQL-backed
 ## Out of scope
 
 - A separate chat UI (Genie's native surface; embed later if wanted). Model fine-tuning.
-- Running benchmark-driven optimization (the 32 benchmarks make it possible when needed).
+- Running benchmark-driven optimization (the 38 benchmarks make it possible when needed).
 
 ## Acceptance criteria
 

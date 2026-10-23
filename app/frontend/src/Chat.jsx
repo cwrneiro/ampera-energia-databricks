@@ -20,6 +20,7 @@ const SUGESTOES = [
 
 const short = (v) => {
   const a = Math.abs(v);
+  if (v === 0) return "0";
   return a >= 1e9 ? `${fmt.num(v / 1e9)} bi` : a >= 1e6 ? `${fmt.num(v / 1e6)} mi` : a >= 1e4 ? `${fmt.num(v / 1e3)} mil` : fmt.num(v, a < 10 ? 2 : 0);
 };
 const cell = (v, tipo) => (v == null ? "—" : NUM.has(tipo) ? fmt.num(Number(v), Math.abs(Number(v)) < 10 ? 2 : 1) : DATE.has(tipo) ? fmt.data(String(v).slice(0, 10)) : v);
@@ -36,6 +37,20 @@ export function pickChart(colunas, linhas) {
   if (cat >= 0) return { kind: "bar", x: cat, ys: nums.slice(0, 2) };
   if (nums.length >= 2) return { kind: "scatter", x: nums[0], y: nums[1] };
   return { kind: "table" };
+}
+
+// Genie answers use a little Markdown: **bold** and "- " bullet lines. Render just that, as React nodes
+// (no HTML injection, no dependency).
+const bold = (t) => t.split(/\*\*(.+?)\*\*/g).map((x, i) => (i % 2 ? <b key={i}>{x}</b> : x));
+function Md({ text }) {
+  const blocks = [];
+  text.split("\n").forEach((l) => {
+    const li = l.match(/^\s*[-*]\s+(.*)/);
+    const last = blocks.at(-1);
+    if (li) (last?.ul ? last.items : (blocks.push({ ul: true, items: [] }), blocks.at(-1).items)).push(li[1]);
+    else if (l.trim()) blocks.push({ p: l });
+  });
+  return blocks.map((b, i) => (b.ul ? <ul key={i}>{b.items.map((x, j) => <li key={j}>{bold(x)}</li>)}</ul> : <p key={i}>{bold(b.p)}</p>));
 }
 
 function Tip({ active, payload, label, xfmt }) {
@@ -65,7 +80,8 @@ function Plot({ r }) {
   const common = { margin: { top: 8, right: 12, bottom: 0, left: 0 } };
   const yAxis = <YAxis {...AXIS} axisLine={false} width={52} tickFormatter={short} />;
   if (spec.kind === "line") {
-    const dfmt = (v) => fmt.data(String(v).slice(0, 10));
+    const monthly = linhas.every((l) => String(l[spec.x]).slice(8, 10) === "01");  // first-of-month series
+    const dfmt = (v) => (monthly ? fmt.mes(String(v).slice(0, 10)) : fmt.data(String(v).slice(0, 10)));
     let data, series;
     if (spec.by >= 0) {  // long format (date, category, value) -> one line per category, top 6
       const y = spec.ys[0], m = new Map(), tot = {};
@@ -137,7 +153,7 @@ function Answer({ r }) {
   const [view, setView] = useState(spec.kind === "table" ? "tabela" : "grafico");
   return (
     <div className="chat-a">
-      {r.texto && <p className="chat-text">{r.texto}</p>}
+      {r.texto && <div className="chat-text"><Md text={r.texto} /></div>}
       {r.descricao && r.descricao !== r.texto && <p className="chat-desc">{r.descricao}</p>}
       {r.linhas.length > 0 && (
         <>

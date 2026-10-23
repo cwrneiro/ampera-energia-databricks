@@ -1,5 +1,31 @@
 # Lakeflow Job ampera_refresh — recent runs and task results
-# captured 2026-10-22 01:25 UTC from workspace profile <profile>
+# captured 2026-10-23 15:18 UTC from workspace profile <profile>
+
+run 100000000000001  SUCCESS  params=[{'default': 'false', 'name': 'train', 'value': 'false'}]  start=2026-10-23 15:05 UTC
+   medallion                      SUCCESS       5.9 min
+   sync_generation_daily          SUCCESS       1.2 min
+   sync_plant_location            SUCCESS       0.4 min
+   sync_reconciliation_ai_review  SUCCESS       0.5 min
+   sync_reconciliation_monthly    SUCCESS       0.4 min
+   train_gate                     SUCCESS       0.0 min
+   eval_ai_decide                 EXCLUDED      0.0 min
+   train_curtailment              EXCLUDED      0.0 min
+   score_curtailment              SUCCESS       4.8 min
+   governance                     SUCCESS       1.1 min
+   sync_curtailment_daily         SUCCESS       0.9 min
+
+run 100000000000003  SUCCESS  params=[{'default': 'false', 'name': 'train', 'value': 'false'}]  start=2026-10-22 01:42 UTC
+   medallion                      SUCCESS       5.6 min
+   sync_generation_daily          SUCCESS       1.0 min
+   sync_plant_location            SUCCESS       0.5 min
+   sync_reconciliation_ai_review  SUCCESS       0.5 min
+   sync_reconciliation_monthly    SUCCESS       0.5 min
+   train_gate                     SUCCESS       0.0 min
+   eval_ai_decide                 EXCLUDED      0.0 min
+   train_curtailment              EXCLUDED      0.0 min
+   score_curtailment              SUCCESS       4.5 min
+   governance                     SUCCESS       1.5 min
+   sync_curtailment_daily         SUCCESS       0.9 min
 
 run 100000000000002  FAILED  params=[{'default': 'false', 'name': 'train', 'value': 'true'}]  start=2026-10-22 01:06 UTC
    medallion                      SUCCESS       5.4 min

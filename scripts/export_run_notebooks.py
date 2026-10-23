@@ -50,8 +50,8 @@ def main(run_id, profile="<profile>"):
     os.makedirs(OUT, exist_ok=True)
     run = cli("jobs", "get-run", run_id, profile=profile)
     for t in run["tasks"]:
-        if "notebook_task" not in t:
-            continue
+        if "notebook_task" not in t or t["state"].get("result_state") in ("EXCLUDED", "SKIPPED", None):
+            continue  # not executed in this run (e.g. train gate off): nothing to export
         html = cli("jobs", "export-run", str(t["run_id"]), "--views-to-export", "CODE", profile=profile)["views"][0]["content"]
         enc = re.search(r"__DATABRICKS_NOTEBOOK_MODEL = '([^']+)'", html).group(1)
         model = json.loads(urllib.parse.unquote(base64.b64decode(enc).decode()))

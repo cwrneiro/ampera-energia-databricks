@@ -1,75 +1,82 @@
-# Ampera — Databricks Demo
+# Ampera Energia Analytics — reconciled generation & curtailment losses for Brazilian renewables
 
-A full-stack Databricks demonstration for **Ampera Energia Analytics** (a fictional Brazilian energy-data firm):
-reconcile power-plant generation from two open Brazilian sources that don't join directly, then
-serve it through an app and a Genie Agent.
+An end-to-end Databricks prototype for **Energy & Utilities**. It is built for a fictional
+Brazilian energy-data firm, Ampera Energia Analytics, and uses **public data only** (ONS, ANEEL
+SIGA, CCEE, Open-Meteo, INMET).
 
-**The story:** Lakeflow Declarative Pipeline medallion → reliable plant reconciliation (one
-`plant_id` per ONS series, CEG or surrogate) → price and weather enrichment → autoscaling Lakebase
-via synced tables → Databricks App (FastAPI + React, PT-BR, map) → Genie Agent.
+**The customer problem.** Ampera sells analytics to Brazilian generators, traders and sector
+associations, and has two problems that block every downstream product:
 
-**Start here:** `ARCHITECTURE.md` (what it builds and how it connects) → `SETUP.md` (deploy it in
-your workspace; `AGENTS.md` for coding agents, `/setup` in Claude Code).
+1. **The data doesn't join.** ONS (the grid operator) publishes hourly generation. ANEEL's SIGA is
+   the registry of record, with capacity, location and the plant's CEG code. The two only partly
+   join. CEG formats differ, ONS mixes plants with wind/solar *complexes* and state totals, and
+   some plants have no usable CEG at all. Without one plant ID, generation can't be tied to a plant.
+2. **Curtailment is invisible in money terms.** ONS increasingly orders wind and solar plants to
+   cut output (*constrained-off*), and in 2025–26 this happened at scale in the Northeast. Owners
+   and traders need **how much energy and how many R$ were lost, per plant**, and an estimate they
+   can trust.
 
-## Status (2026-10-05)
+**What the build delivers.**
+- **One plant ID.** Every ONS series resolves to exactly one `plant_id`. Unmatched energy is
+  **0.03%** of plant-level MWh; the target was under 5%.
+- **A curtailment model.** It estimates each wind/solar plant-hour's unconstrained output, flags
+  curtailment, and values the lost energy at the hourly PLD price: **65.8 TWh, R$ 8.4 bi** over
+  24 months.
+- **Delivery.** Results are served through Lakebase to a PT-BR Databricks App, which includes a
+  Genie chat.
 
-| Unit | Spec | State |
-|---|---|---|
-| Bronze ingestion | 01 | ✓ live |
-| Reconciliation (silver) | 02 | ✓ live — plant-level unmatched 0.59% of MWh |
-| Complexes → member plants | 09 | ✓ live — 96.9% of complex MWh measured, 2.7% estimated |
-| Gold marts + price + weather | 03 | ✓ live — price + weather on all 24 months |
-| Pipeline + refresh job | 04 | ✓ live |
-| Lakebase synced tables | 05 | ✓ live — gold changes reach Lakebase via the refresh job |
-| App | 06 | ✓ deployed — `ampera-app`, 4 PT-BR sheets over Lakebase, Impeccable review: ship |
-| Genie Agent | 07 | ✓ deployed — "Ampera · Geração Elétrica", 4 gold tables, 32 benchmarks |
+## The journey, stage by stage — code and execution evidence
 
-`STATE.md` has the live handoff.
+All evidence is plain text committed in [`evidence/`](evidence/). It covers executed notebooks
+with their outputs, run logs, query results and API transcripts. Captured on 2026-10-22 from
+workspace `<profile>`.
 
-## Data sources
+| Stage | What runs | Code | Execution evidence |
+|---|---|---|---|
+| **Lakeflow — ingest** | Declarative Pipeline `ampera_medallion`. Auto Loader streaming tables ingest 8 public sources (ONS generation, complex members, constrained-off detail; ANEEL SIGA; CCEE PLD; Open-Meteo; INMET). Bronze → silver → gold, with 17 data-quality expectations. Orchestrated by Lakeflow Job `ampera_refresh` | [`src/transformations/`](src/transformations/), [`resources/ampera_medallion.pipeline.yml`](resources/ampera_medallion.pipeline.yml), [`resources/ampera_refresh.job.yml`](resources/ampera_refresh.job.yml) | [`01_pipeline_run.txt`](evidence/01_pipeline_run.txt) (expectations pass/fail per dataset, from `event_log`), [`02_job_runs.txt`](evidence/02_job_runs.txt) (every task's result) |
+| **Unity Catalog — govern** | Schemas `ampera_bronze/silver/gold/gold_lb` with a comment on every table. Group `ampera_analysts` reads gold only. Tags (`ampera_layer`, `ampera_source`, `ampera_ai`, governed `class.geo_coordinates` on coordinates). Model registered in UC. Lineage | [`notebooks/governance.py`](notebooks/governance.py) (last job task) | [`notebooks/governance.ipynb`](evidence/notebooks/governance.ipynb) (grants, tags, full lineage bronze → ML → Lakebase from `system.access.table_lineage`), [`03_medallion_tables.txt`](evidence/03_medallion_tables.txt) (every table, row count, comment) |
+| **Lakebase — operational serving** | Autoscaling Lakebase Postgres `ampera-demo` (0.5–4 CU, scale-to-zero). 5 synced tables (gold → Postgres) refreshed by the job. The app reads only Lakebase | [`scripts/create_synced_tables.sh`](scripts/create_synced_tables.sh), [`app/app.py`](app/app.py) | [`06_lakebase_serving.txt`](evidence/06_lakebase_serving.txt) (sync state, last sync), [`07_app_api.txt`](evidence/07_app_api.txt) (API answers served from Postgres) |
+| **ML — curtailment model** | scikit-learn `HistGradientBoostingRegressor` per technology. It predicts the unconstrained capacity factor from weather (Open-Meteo, plus ONS at-plant measurements where they exist), hour, month and plant history, and is trained only on hours ONS did not flag. Tracked in MLflow, registered in UC as `curtailment_expected_cf@champion`, and batch-scored every refresh | [`notebooks/train_curtailment.py`](notebooks/train_curtailment.py), [`notebooks/score_curtailment.py`](notebooks/score_curtailment.py), [`gold_curtailment_features_hourly.sql`](src/transformations/gold_curtailment_features_hourly.sql) | [`notebooks/train_curtailment.ipynb`](evidence/notebooks/train_curtailment.ipynb) (data, test error vs ONS, Y tuning table, registration), [`notebooks/score_curtailment.ipynb`](evidence/notebooks/score_curtailment.ipynb), [`04_ml_curtailment.txt`](evidence/04_ml_curtailment.txt) |
+| **GenAI — `ai_decide` reconciliation** | Inside the pipeline, `ai_decide` (calibrated choice over 3 SIGA candidates or *nenhum*) places ONS plants the rules can't. It auto-applies at confidence ≥ 0.9; anything less goes to a human review queue in the app. A blind evaluation measures how far to trust it | [`reco_ai.py`](src/transformations/reco_ai.py), [`silver_plant_match_ai.py`](src/transformations/silver_plant_match_ai.py), [`silver_plant_match.py`](src/transformations/silver_plant_match.py), [`notebooks/eval_ai_decide.py`](notebooks/eval_ai_decide.py) | [`notebooks/eval_ai_decide.ipynb`](evidence/notebooks/eval_ai_decide.ipynb) (accuracy, calibration, confusion), [`05_genai_ai_decide.txt`](evidence/05_genai_ai_decide.txt) (every production verdict) |
+| **Genie Agent — natural language** | Genie space over the 5 gold marts. PT-BR instructions, example SQL, join specs and 38 benchmark questions. Deployed by the bundle | [`resources/genie/ampera.geniespace.json`](resources/genie/ampera.geniespace.json) | [`08_genie_conversations.json`](evidence/08_genie_conversations.json) (5 questions → answer text, generated SQL, rows), [`09_tests.txt`](evidence/09_tests.txt) (every curated SQL runs live) |
+| **Databricks App — to the business** | FastAPI + React (PT-BR) with 5 sheets: Overview, Reconciliation (incl. the `ai_decide` review queue), Curtailment, Map, Plant (actual vs expected). A slide-out **Genie chat** runs *on behalf of the signed-in user* (UC grants apply per user) and renders interactive Recharts plots | [`app/`](app/), [`resources/ampera_app.app.yml`](resources/ampera_app.app.yml) | [`07_app_api.txt`](evidence/07_app_api.txt), [`08_genie_conversations.json`](evidence/08_genie_conversations.json) (asked through the deployed app's `/api/genie`) |
 
-- **ONS** — hourly generation per plant ([geracao-usina-2](https://dados.ons.org.br/dataset/geracao-usina-2)),
-  complex → plant mapping (`usina_conjunto`), per-plant measured generation and weather for wind/solar
-  complexes (`restricao_coff_eolica_detail`, `restricao_coff_fotovoltaica_detail`)
-- **ANEEL SIGA** — plant registry ([siga](https://dadosabertos.aneel.gov.br/dataset/siga-sistema-de-informacoes-de-geracao-da-aneel))
-- **CCEE** — hourly PLD (`pld_horario`; browser download, CCEE blocks scripts)
-- **Weather** — Open-Meteo archive (ERA5, free non-commercial tier) and INMET station archives
+Everything is one Declarative Automation Bundle ([`databricks.yml`](databricks.yml)). One job run
+moves data end to end:
+**raw files → bronze → silver (incl. `ai_decide`) → gold → ML scoring → Lakebase → app / Genie.**
 
-## Repo layout
+## Results (from the evidence files)
 
-- `databricks.yml`, `resources/` — Asset Bundle: pipeline `ampera_medallion`, job `ampera_refresh`,
-  app `ampera_app`, Genie space `ampera_genie` (body in `resources/genie/*.geniespace.json`)
-- `app/` — Databricks App: `app.py` (FastAPI, read-only over Lakebase `ampera_gold_lb`), `app.yaml`,
-  `frontend/` (React + Vite + Recharts + MapLibre; built `dist/` is gitignored, synced by the bundle)
-- `src/transformations/` — one dataset per file (`bronze_*`, `silver_*`, `gold_*`); `reco_lib.py`
-  (tested matching reference) and `reco_sql.py` (its Spark-expression mirror)
-- `scripts/fetch_open_meteo.py` — resumable, rate-limited weather fetch
-- `tests/test_reconciliation.py` — runnable matching check; `tests/test_app_api.py` — app API check
-  (totals tie; live part runs when the `PG*` env vars from `app/app.py` are set);
-  `tests/test_genie_space.py` — Genie payload shape + curated SQL (`GENIE_LIVE=1`)
-- `specs/` — `00-overview.md` (goal, scope, **decision log**), `01`–`09` one spec per unit, `08` branding
-- `SUCCESS_CRITERIA.md`, `CLAUDE.md` (working contract), `STATE.md` (handoff), `DEMO_SCRIPT.md` (talk track)
-- `PRODUCT.md` (product record) and `DESIGN.md` (as-built design system) for frontend work;
-  `.impeccable/` holds the app's direction contract and design sidecar
-- `data/` — local raw downloads (gitignored)
+- **Reconciliation.** 967 ONS series. CEG matches cover 910 TWh; the rest are complexes resolved
+  into member plants, state aggregates, 2 fuzzy matches and **2 `ai_decide` matches carrying 5.1
+  TWh**, leaving **0.27 TWh unmatched (0.03%)**. All 24 months of the plant-grain total stay within
+  ±2% of the published total. Total: **1,404.19 TWh**, the same in SQL, the app and Genie.
+- **`ai_decide`, blind test** (200 CEG-matched plants, CEG registry number hidden): 91% accuracy.
+  At the 0.9 cutoff it auto-applies 93 of 200 with **100% precision**, and calibration holds
+  (0.8–0.9 bucket: 30/30). The first production run answered *nenhum* for all 33 unresolved plants.
+  It became useful once the prompt carried evidence per candidate (name similarity, same CEG
+  registry number, same plant type); see [spec 12](specs/12-genai-reconciliation.md).
+- **Curtailment model, test months** (Apr–Sep 2026). Capacity-factor MAE is **0.088 wind / 0.013
+  solar**, better than ONS's own estimate (0.098 / 0.015). The flag ratio Y is tuned for the best
+  recall at precision ≥ 0.8 against ONS's constrained-off flags, so the R$ figure is a conservative
+  "at least". Over 24 months: wind **41.6 TWh / R$ 5.7 bi** lost (16.5% of expected), solar
+  **24.2 TWh / R$ 2.6 bi** (28.2%).
 
-## Run it
+## Reproduce
 
-```bash
-P=<profile>
-databricks bundle deploy -t dev --profile $P              # pipeline + job
-databricks bundle run ampera_refresh -t dev --profile $P   # medallion, then Lakebase syncs
-python3 tests/test_reconciliation.py                      # matching logic check
-python3 tests/test_app_api.py                             # app API check
-GENIE_LIVE=1 python3 tests/test_genie_space.py            # Genie payload + every curated SQL
-(cd app/frontend && npm ci && npm run build)              # app frontend → dist/
-databricks bundle deploy -t dev --profile $P && databricks bundle run ampera_app -t dev --profile $P
-```
+[`SETUP.md`](SETUP.md) takes an empty workspace to a running deployment. The scripts used for this
+build are in [`scripts/`](scripts/) (`bootstrap_workspace.sh` → `run_first_refresh.sh` →
+`deploy_and_refresh.sh`). The evidence is regenerated with `python3 scripts/collect_evidence.py`
+and `python3 scripts/export_run_notebooks.py <job_run_id>`. Raw data is downloaded by the commands
+in SETUP §5 and is not committed. Architecture: [`ARCHITECTURE.md`](ARCHITECTURE.md). Design
+decisions: [`specs/00-overview.md`](specs/00-overview.md) (decision log) and `specs/01`–`15`.
 
-App: `ampera-app` in the workspace (workspace login). Map tiles
-come from OpenFreeMap (free, no key) and load in the viewer's browser.
+## Data sources (all public)
 
-**Workspace:** Databricks CLI profile `<profile>`. Catalog `ampera_catalog`
-(`ampera_bronze` / `ampera_silver` / `ampera_gold` / `ampera_gold_lb`); Lakebase project `ampera-demo`.
+- **ONS** dados abertos: hourly generation per plant (`geracao-usina-2`), complex membership
+  (`usina_conjunto`), wind/solar constrained-off detail per plant (`restricao_coff_*_detail`).
+- **ANEEL SIGA**: generation registry (CEG, capacity, coordinates).
+- **CCEE**: hourly PLD (spot price) per submarket.
+- **Open-Meteo** (ERA5 reanalysis; free tier, non-commercial) and **INMET** station archives.
 
-**Repo:** https://github.com/cwrneiro/ampera-energia-databricks.
+Ampera Energia Analytics is fictional. No customer data is used anywhere in this repository.

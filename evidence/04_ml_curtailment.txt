@@ -1,11 +1,10 @@
 # ML — curtailment model in UC, scoring output and agreement with ONS
-# captured 2026-10-22 01:28 UTC from workspace profile <profile>
+# captured 2026-10-23 15:20 UTC from workspace profile <profile>
 
 {
  "comment": "Expected unconstrained capacity factor (wind/solar) from Open-Meteo weather; flags curtailment where actual < Y x expected. Spec 11. Trained by notebooks/train_curtailment.",
  "created_at": 1792629731360,
  "full_name": "ampera_catalog.ampera_gold.curtailment_expected_cf",
- "owner": "owner@example.com",
  "updated_at": 1792631680468
 }
 

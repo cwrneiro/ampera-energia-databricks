@@ -1,84 +1,47 @@
 # Unity Catalog medallion — tables, row counts and reconciliation results
-# captured 2026-10-22 01:28 UTC from workspace profile <profile>
+# captured 2026-10-23 15:20 UTC from workspace profile <profile>
 
-        schema                                                                                     table               type      rows                                                                                     comment
- ampera_bronze             __materialization_mat_<pipeline-id>_ccee_pld_horario_1            MANAGED     96576     Bronze: raw CCEE hourly PLD (R$/MWh) per submarket, as downloaded + ingestion metadata.
- ampera_bronze                __materialization_mat_<pipeline-id>_inmet_weather_1            MANAGED  13656942  Bronze: raw INMET station hourly CSV lines (metadata + data, all STRING) + ingestion metad
- ampera_bronze          __materialization_mat_<pipeline-id>_ons_conjunto_member_1            MANAGED      2143      Bronze: raw ONS complex-to-member-plant mapping (usina_conjunto) + ingestion metadata.
- ampera_bronze               __materialization_mat_<pipeline-id>_ons_generation_1            MANAGED  12131219      Bronze: raw ONS hourly generation (geracao-usina-2), as-ingested + ingestion metadata.
- ampera_bronze  __materialization_mat_<pipeline-id>_ons_member_generation_solar_1            MANAGED  16697664  Bronze: raw ONS measured 30-min generation per solar complex member (coff detail) + ingest
- ampera_bronze   __materialization_mat_<pipeline-id>_ons_member_generation_wind_1            MANAGED  36391830  Bronze: raw ONS measured 30-min generation per wind complex member (coff detail) + ingesti
- ampera_bronze           __materialization_mat_<pipeline-id>_open_meteo_weather_1            MANAGED     11256  Bronze: raw Open-Meteo ERA5 hourly weather per plant grid cell and month (API JSON as retu
- ampera_bronze                  __materialization_mat_<pipeline-id>_siga_plants_1            MANAGED     25045            Bronze: raw ANEEL SIGA plant registry (all columns STRING) + ingestion metadata.
- ampera_bronze                                                                          ccee_pld_horario    STREAMING_TABLE     96576     Bronze: raw CCEE hourly PLD (R$/MWh) per submarket, as downloaded + ingestion metadata.
- ampera_bronze                                            event_log_<pipeline-id>            MANAGED      1036                                                                                            
- ampera_bronze                                                                             inmet_weather    STREAMING_TABLE  13656942  Bronze: raw INMET station hourly CSV lines (metadata + data, all STRING) + ingestion metad
- ampera_bronze                                                                       ons_conjunto_member    STREAMING_TABLE      2143      Bronze: raw ONS complex-to-member-plant mapping (usina_conjunto) + ingestion metadata.
- ampera_bronze                                                                            ons_generation    STREAMING_TABLE  12131219      Bronze: raw ONS hourly generation (geracao-usina-2), as-ingested + ingestion metadata.
- ampera_bronze                                                               ons_member_generation_solar    STREAMING_TABLE  16697664  Bronze: raw ONS measured 30-min generation per solar complex member (coff detail) + ingest
- ampera_bronze                                                                ons_member_generation_wind    STREAMING_TABLE  36391830  Bronze: raw ONS measured 30-min generation per wind complex member (coff detail) + ingesti
- ampera_bronze                                                                        open_meteo_weather    STREAMING_TABLE     11256  Bronze: raw Open-Meteo ERA5 hourly weather per plant grid cell and month (API JSON as retu
- ampera_bronze                                                                               siga_plants    STREAMING_TABLE     25045            Bronze: raw ANEEL SIGA plant registry (all columns STRING) + ingestion metadata.
-   ampera_gold  __materialization_mat_<pipeline-id>_curtailment_features_hourly_1            MANAGED  27628133  Gold: wind/solar plant-hours with capacity factor, Open-Meteo weather, PLD and the ONS cur
-   ampera_gold       __materialization_mat_<pipeline-id>_fact_generation_hourly_1            MANAGED  35094136  Gold: hourly MWh per plant (complexes split into member plants; is_estimated marks the cap
-   ampera_gold             __materialization_mat_<pipeline-id>_generation_daily_1            MANAGED   1458248  Gold: daily MWh per plant with CEG, UF, submercado, fonte, conjunto; mwh_estimado = estima
-   ampera_gold               __materialization_mat_<pipeline-id>_plant_location_1            MANAGED      2292  Gold: one row per plant_id — name, UF, lat/lon (SIGA), capacity, fonte, conjunto, total an
-   ampera_gold     __materialization_mat_<pipeline-id>_reconciliation_ai_review_1            MANAGED        33  Gold (GenAI): ai_decide verdicts per ONS plant (candidates A/B/C, probabilities, applied o
-   ampera_gold       __materialization_mat_<pipeline-id>_reconciliation_monthly_1            MANAGED       331  Gold: monthly MWh and plant count per match_method, for grao publicado (ONS as published) 
-   ampera_gold                                                                         curtailment_daily            MANAGED   1096523  Gold (ML): daily curtailment per wind/solar plant — expected vs actual MWh, curtailed hour
-   ampera_gold                                                               curtailment_features_hourly  MATERIALIZED_VIEW  26316437  Gold: wind/solar plant-hours with capacity factor, Open-Meteo weather, PLD and the ONS cur
-   ampera_gold                                                                        curtailment_hourly            MANAGED  26316437  Gold (ML): hourly expected vs actual MWh per wind/solar plant; restrito_modelo = model cur
-   ampera_gold                                                                    fact_generation_hourly  MATERIALIZED_VIEW  35094136  Gold: hourly MWh per plant (complexes split into member plants; is_estimated marks the cap
-   ampera_gold                                                                          generation_daily  MATERIALIZED_VIEW   1458248  Gold: daily MWh per plant with CEG, UF, submercado, fonte, conjunto; mwh_estimado = estima
-   ampera_gold                                                                            plant_location  MATERIALIZED_VIEW      2292  Gold: one row per plant_id — name, UF, lat/lon (SIGA), capacity, fonte, conjunto, total an
-   ampera_gold                                                                  reconciliation_ai_review  MATERIALIZED_VIEW        33  Gold (GenAI): ai_decide verdicts per ONS plant (candidates A/B/C, probabilities, applied o
-   ampera_gold                                                                    reconciliation_monthly  MATERIALIZED_VIEW       331  Gold: monthly MWh and plant count per match_method, for grao publicado (ONS as published) 
-ampera_gold_lb                                                                         curtailment_daily            FOREIGN   1096523                                                 Database table synced from another UC table
-ampera_gold_lb                                            event_log_<synced-table-pipeline-id>            MANAGED        27                                                                                            
-ampera_gold_lb                                            event_log_<synced-table-pipeline-id>            MANAGED        27                                                                                            
-ampera_gold_lb                                            event_log_<synced-table-pipeline-id>            MANAGED        27                                                                                            
-ampera_gold_lb                                            event_log_<synced-table-pipeline-id>            MANAGED        27                                                                                            
-ampera_gold_lb                                            event_log_<synced-table-pipeline-id>            MANAGED        27                                                                                            
-ampera_gold_lb                                                                          generation_daily            FOREIGN   1458248                                                 Database table synced from another UC table
-ampera_gold_lb                                                                            plant_location            FOREIGN      2292                                                 Database table synced from another UC table
-ampera_gold_lb                                                                  reconciliation_ai_review            FOREIGN        33                                                 Database table synced from another UC table
-ampera_gold_lb                                                                    reconciliation_monthly            FOREIGN       331                                                 Database table synced from another UC table
- ampera_silver              __materialization_mat_<pipeline-id>_conjunto_member_1            MANAGED      2143    Silver: complex (conjunto_key) -> member plant_id with validity dates and SIGA capacity.
- ampera_silver     __materialization_mat_<pipeline-id>_curtailment_label_hourly_1            MANAGED  26544677  Silver: ONS constrained-off flag (restrito_ons) and ONS estimated MWh per wind/solar plant
- ampera_silver                    __materialization_mat_<pipeline-id>_dim_plant_1            MANAGED      2292          Silver: one row per plant_id (SIGA registry attrs where linked, else ONS-sourced).
- ampera_silver                   __materialization_mat_<pipeline-id>_generation_1            MANAGED  12131219          Silver: cleaned ONS hourly generation (MWh) with resolved plant_id + match method.
- ampera_silver           __materialization_mat_<pipeline-id>_generation_balance_1            MANAGED        24      Silver check: monthly published vs plant-grain MWh, and measured/estimated member MWh.
- ampera_silver             __materialization_mat_<pipeline-id>_generation_plant_1            MANAGED  35094136     Silver: hourly MWh per plant_id; complexes split into members (measured, or estimated).
- ampera_silver   __materialization_mat_<pipeline-id>_generation_plant_key_check_1            MANAGED         0     Silver check: duplicated (plant_id, ons_key, ts) in generation_plant — must stay empty.
- ampera_silver                    __materialization_mat_<pipeline-id>_ons_plant_1            MANAGED       967            Silver: one row per ONS plant (id_ons) with normalized name/CEG/fuel match keys.
- ampera_silver          __materialization_mat_<pipeline-id>_plant_inmet_station_1            MANAGED       291  Silver: nearest INMET station (<= 50 km) for located plants that have no ONS at-plant weat
- ampera_silver                  __materialization_mat_<pipeline-id>_plant_match_1            MANAGED       967  Silver: id_ons -> plant_id with match_method (override/ceg/fuzzy/ai_decide/unmatched) + co
- ampera_silver               __materialization_mat_<pipeline-id>_plant_match_ai_1            MANAGED        33  Silver (GenAI): ai_decide verdict (A/B/C/nenhum + calibrated probabilities) for ONS plants
- ampera_silver            __materialization_mat_<pipeline-id>_plant_match_check_1            MANAGED         0     Silver check: duplicated series or unapplied override in plant_match — must stay empty.
- ampera_silver             __materialization_mat_<pipeline-id>_price_pld_hourly_1            MANAGED     96576                Silver: hourly PLD (R$/MWh) per submercado (ONS subsystem code), local time.
- ampera_silver                   __materialization_mat_<pipeline-id>_siga_plant_1            MANAGED     25042        Silver: cleaned SIGA plant registry, one row per normalized CEG, with lat/long + MW.
- ampera_silver          __materialization_mat_<pipeline-id>_weather_cell_hourly_1            MANAGED   8216880  Silver: hourly Open-Meteo (ERA5) weather per 0.25° plant cell, local time; radiation align
- ampera_silver         __materialization_mat_<pipeline-id>_weather_inmet_hourly_1            MANAGED  13640760  Silver: INMET hourly weather per station, local time; radiation kJ/m² -> W/m², aligned to 
- ampera_silver       __materialization_mat_<pipeline-id>_weather_plant_measured_1            MANAGED  24866196  Silver: hourly wind speed / irradiance measured at the plant by ONS (complex members), inv
- ampera_silver                                                                            ai_decide_eval            MANAGED       200  Silver (GenAI eval): blind ai_decide answers on CEG-matched ONS plants with the CEG hidden
- ampera_silver                                                                           conjunto_member  MATERIALIZED_VIEW      2143    Silver: complex (conjunto_key) -> member plant_id with validity dates and SIGA capacity.
- ampera_silver                                                                  curtailment_label_hourly  MATERIALIZED_VIEW  26544677  Silver: ONS constrained-off flag (restrito_ons) and ONS estimated MWh per wind/solar plant
- ampera_silver                                                                                 dim_plant  MATERIALIZED_VIEW      2292          Silver: one row per plant_id (SIGA registry attrs where linked, else ONS-sourced).
- ampera_silver                                                                                generation  MATERIALIZED_VIEW  12131219          Silver: cleaned ONS hourly generation (MWh) with resolved plant_id + match method.
- ampera_silver                                                                        generation_balance  MATERIALIZED_VIEW        24      Silver check: monthly published vs plant-grain MWh, and measured/estimated member MWh.
- ampera_silver                                                                          generation_plant  MATERIALIZED_VIEW  35094136     Silver: hourly MWh per plant_id; complexes split into members (measured, or estimated).
- ampera_silver                                                                generation_plant_key_check  MATERIALIZED_VIEW         0     Silver check: duplicated (plant_id, ons_key, ts) in generation_plant — must stay empty.
- ampera_silver                                                                                 ons_plant  MATERIALIZED_VIEW       967            Silver: one row per ONS plant (id_ons) with normalized name/CEG/fuel match keys.
- ampera_silver                                                                       plant_inmet_station  MATERIALIZED_VIEW       291  Silver: nearest INMET station (<= 50 km) for located plants that have no ONS at-plant weat
- ampera_silver                                                                               plant_match  MATERIALIZED_VIEW       967  Silver: id_ons -> plant_id with match_method (override/ceg/fuzzy/ai_decide/unmatched) + co
- ampera_silver                                                                            plant_match_ai  MATERIALIZED_VIEW        33  Silver (GenAI): ai_decide verdict (A/B/C/nenhum + calibrated probabilities) for ONS plants
- ampera_silver                                                                         plant_match_check  MATERIALIZED_VIEW         0     Silver check: duplicated series or unapplied override in plant_match — must stay empty.
- ampera_silver                                                                      plant_match_override            MANAGED         0                                 Manual reconciliation overrides; newest row per ons_id wins
- ampera_silver                                                                          price_pld_hourly  MATERIALIZED_VIEW     96576                Silver: hourly PLD (R$/MWh) per submercado (ONS subsystem code), local time.
- ampera_silver                                                                                siga_plant  MATERIALIZED_VIEW     25042        Silver: cleaned SIGA plant registry, one row per normalized CEG, with lat/long + MW.
- ampera_silver                                                                       weather_cell_hourly  MATERIALIZED_VIEW   8216880  Silver: hourly Open-Meteo (ERA5) weather per 0.25° plant cell, local time; radiation align
- ampera_silver                                                                      weather_inmet_hourly  MATERIALIZED_VIEW  13640760  Silver: INMET hourly weather per station, local time; radiation kJ/m² -> W/m², aligned to 
- ampera_silver                                                                    weather_plant_measured  MATERIALIZED_VIEW  24866196  Silver: hourly wind speed / irradiance measured at the plant by ONS (complex members), inv
+        schema                        table               type      rows                                                                                     comment
+ ampera_bronze             ccee_pld_horario    STREAMING_TABLE     96576     Bronze: raw CCEE hourly PLD (R$/MWh) per submarket, as downloaded + ingestion metadata.
+ ampera_bronze                inmet_weather    STREAMING_TABLE  13656942  Bronze: raw INMET station hourly CSV lines (metadata + data, all STRING) + ingestion metad
+ ampera_bronze          ons_conjunto_member    STREAMING_TABLE      2143      Bronze: raw ONS complex-to-member-plant mapping (usina_conjunto) + ingestion metadata.
+ ampera_bronze               ons_generation    STREAMING_TABLE  12131219      Bronze: raw ONS hourly generation (geracao-usina-2), as-ingested + ingestion metadata.
+ ampera_bronze  ons_member_generation_solar    STREAMING_TABLE  16697664  Bronze: raw ONS measured 30-min generation per solar complex member (coff detail) + ingest
+ ampera_bronze   ons_member_generation_wind    STREAMING_TABLE  36391830  Bronze: raw ONS measured 30-min generation per wind complex member (coff detail) + ingesti
+ ampera_bronze           open_meteo_weather    STREAMING_TABLE     11256  Bronze: raw Open-Meteo ERA5 hourly weather per plant grid cell and month (API JSON as retu
+ ampera_bronze                  siga_plants    STREAMING_TABLE     25045            Bronze: raw ANEEL SIGA plant registry (all columns STRING) + ingestion metadata.
+   ampera_gold            curtailment_daily            MANAGED   1096523  Gold (ML): daily curtailment per wind/solar plant — expected vs actual MWh, curtailed hour
+   ampera_gold  curtailment_features_hourly  MATERIALIZED_VIEW  26316437  Gold: wind/solar plant-hours with capacity factor, Open-Meteo weather, PLD and the ONS cur
+   ampera_gold           curtailment_hourly            MANAGED  26316437  Gold (ML): hourly expected vs actual MWh per wind/solar plant; restrito_modelo = model cur
+   ampera_gold       fact_generation_hourly  MATERIALIZED_VIEW  35094136  Gold: hourly MWh per plant (complexes split into member plants; is_estimated marks the cap
+   ampera_gold             generation_daily  MATERIALIZED_VIEW   1458248  Gold: daily MWh per plant with CEG, UF, submercado, fonte, conjunto; mwh_estimado = estima
+   ampera_gold               plant_location  MATERIALIZED_VIEW      2292  Gold: one row per plant_id — name, UF, lat/lon (SIGA), capacity, fonte, conjunto, total an
+   ampera_gold     reconciliation_ai_review  MATERIALIZED_VIEW        33  Gold (GenAI): ai_decide verdicts per ONS plant (candidates A/B/C, probabilities, applied o
+   ampera_gold       reconciliation_monthly  MATERIALIZED_VIEW       331  Gold: monthly MWh and plant count per match_method, for grao publicado (ONS as published) 
+ampera_gold_lb            curtailment_daily            FOREIGN   1096523                                                 Database table synced from another UC table
+ampera_gold_lb             generation_daily            FOREIGN   1458248                                                 Database table synced from another UC table
+ampera_gold_lb               plant_location            FOREIGN      2292                                                 Database table synced from another UC table
+ampera_gold_lb     reconciliation_ai_review            FOREIGN        33                                                 Database table synced from another UC table
+ampera_gold_lb       reconciliation_monthly            FOREIGN       331                                                 Database table synced from another UC table
+ ampera_silver               ai_decide_eval            MANAGED       200  Silver (GenAI eval): blind ai_decide answers on CEG-matched ONS plants with the CEG hidden
+ ampera_silver              conjunto_member  MATERIALIZED_VIEW      2143    Silver: complex (conjunto_key) -> member plant_id with validity dates and SIGA capacity.
+ ampera_silver     curtailment_label_hourly  MATERIALIZED_VIEW  26544677  Silver: ONS constrained-off flag (restrito_ons) and ONS estimated MWh per wind/solar plant
+ ampera_silver                    dim_plant  MATERIALIZED_VIEW      2292          Silver: one row per plant_id (SIGA registry attrs where linked, else ONS-sourced).
+ ampera_silver                   generation  MATERIALIZED_VIEW  12131219          Silver: cleaned ONS hourly generation (MWh) with resolved plant_id + match method.
+ ampera_silver           generation_balance  MATERIALIZED_VIEW        24      Silver check: monthly published vs plant-grain MWh, and measured/estimated member MWh.
+ ampera_silver             generation_plant  MATERIALIZED_VIEW  35094136     Silver: hourly MWh per plant_id; complexes split into members (measured, or estimated).
+ ampera_silver   generation_plant_key_check  MATERIALIZED_VIEW         0     Silver check: duplicated (plant_id, ons_key, ts) in generation_plant — must stay empty.
+ ampera_silver                    ons_plant  MATERIALIZED_VIEW       967            Silver: one row per ONS plant (id_ons) with normalized name/CEG/fuel match keys.
+ ampera_silver          plant_inmet_station  MATERIALIZED_VIEW       291  Silver: nearest INMET station (<= 50 km) for located plants that have no ONS at-plant weat
+ ampera_silver                  plant_match  MATERIALIZED_VIEW       967  Silver: id_ons -> plant_id with match_method (override/ceg/fuzzy/ai_decide/unmatched) + co
+ ampera_silver               plant_match_ai  MATERIALIZED_VIEW        33  Silver (GenAI): ai_decide verdict (A/B/C/nenhum + calibrated probabilities) for ONS plants
+ ampera_silver            plant_match_check  MATERIALIZED_VIEW         0     Silver check: duplicated series or unapplied override in plant_match — must stay empty.
+ ampera_silver         plant_match_override            MANAGED         0                                 Manual reconciliation overrides; newest row per ons_id wins
+ ampera_silver             price_pld_hourly  MATERIALIZED_VIEW     96576                Silver: hourly PLD (R$/MWh) per submercado (ONS subsystem code), local time.
+ ampera_silver                   siga_plant  MATERIALIZED_VIEW     25042        Silver: cleaned SIGA plant registry, one row per normalized CEG, with lat/long + MW.
+ ampera_silver          weather_cell_hourly  MATERIALIZED_VIEW   8216880  Silver: hourly Open-Meteo (ERA5) weather per 0.25° plant cell, local time; radiation align
+ ampera_silver         weather_inmet_hourly  MATERIALIZED_VIEW  13640760  Silver: INMET hourly weather per station, local time; radiation kJ/m² -> W/m², aligned to 
+ ampera_silver       weather_plant_measured  MATERIALIZED_VIEW  24866196  Silver: hourly wind speed / irradiance measured at the plant by ONS (complex members), inv
 
 -- reconciliation: every ONS series -> one plant_id (SUCCESS #1)
 SELECT match_method, count(*) AS ons_series, round(sum(g.mwh) / 1e6, 2) AS twh

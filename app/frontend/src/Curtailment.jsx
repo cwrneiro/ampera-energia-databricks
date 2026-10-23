@@ -54,7 +54,8 @@ export default function Curtailment({ f }) {
   const margin = d && months.length > 0 && (
     <>
       <Block title="Energia perdida no período">
-        <p className="total"><span className="num">{fmt.gwh(tot.perd)}</span> GWh</p>
+        {/* TWh once the loss is that large (65,8 TWh reads faster than 65.827,4 GWh) */}
+        <p className="total">{tot.perd >= 1e6 ? <><span className="num">{fmt.twh(tot.perd)}</span> TWh</> : <><span className="num">{fmt.gwh(tot.perd)}</span> GWh</>}</p>
         <p className="total-sub">{fmt.reais(tot.rs)} ao PLD horário · {fmt.pct2(tot.perd / tot.esp)} do que o modelo esperava gerar</p>
         <WholeBar parts={present.map((x) => ({ ...x, v: tot[x.id], hatch: true }))} label="Parte de cada fonte na energia perdida" />
       </Block>
@@ -72,7 +73,7 @@ export default function Curtailment({ f }) {
       </Block>
       <Block title="Notas">
         <ol className="notes">
-          <li>O modelo (<b>curtailment_expected_cf</b>, Unity Catalog) estima quanto cada usina geraria sem restrição, a partir do clima Open-Meteo, da hora e do histórico da usina.</li>
+          <li>O modelo (<b>curtailment_expected_cf</b>, Unity Catalog) estima quanto cada usina geraria sem restrição, a partir do clima Open-Meteo, da medição do ONS na usina (quando existe), da hora e do histórico da usina.</li>
           <li>Hora restrita: esperado ≥ 10% da capacidade e geração abaixo de uma fração do esperado, calibrada contra as restrições que o ONS publica.</li>
           <li>Perda = esperado − gerado nas horas restritas, valorada ao PLD da hora: valor <em className="tag tag--est">estimado</em> pelo modelo (hachurado).</li>
         </ol>
@@ -84,7 +85,7 @@ export default function Curtailment({ f }) {
   const below = usinas.length > 0 && (
     <div className="board-wrap board-wrap--top">
       <h2>Usinas com maior perda</h2>
-      <table className="board board--rank">
+      <table className="board board--rank board--curt">
         <thead><tr><th className="num">#</th><th>Usina · CEG</th><th>UF</th><th className="num">Energia perdida</th>
           <th className="num">R$ perdidos</th><th className="num">Horas restritas<br /><small>modelo · ONS</small></th></tr></thead>
         <tbody>

@@ -105,7 +105,8 @@ export default function Plant({ id, plant }) {
             <dt>Energia perdida</dt><dd className="num">{fmt.energia(ct.perd)}</dd>
             <dt>R$ perdidos</dt><dd className="num">{fmt.reais(ct.rs)}</dd>
             <dt>Do esperado</dt><dd className="num">{fmt.pct2(ct.esp ? ct.perd / ct.esp : null)}</dd>
-            <dt>Horas restritas</dt><dd className="num">{fmt.int(ct.hm)} modelo · {ct.ho == null ? "sem registro ONS" : `${fmt.int(ct.ho)} ONS`}</dd>
+            <dt>Horas restritas, modelo</dt><dd className="num">{fmt.int(ct.hm)}</dd>
+            <dt>Horas restritas, ONS</dt><dd className="num">{ct.ho == null ? "sem registro" : fmt.int(ct.ho)}</dd>
           </dl>
         </Block>
       )}
@@ -156,7 +157,7 @@ export default function Plant({ id, plant }) {
           {ct && (
             <Panel title="Gerada × esperada sem restrição, MWh"
                    legend={<><Key cor={f?.cor}>gerada</Key><Key cor={MUTED} dash>esperada (modelo)</Key><Key cor={f?.cor} hatch>perdida (curtailment)</Key></>}
-                   note="Esperada: modelo curtailment_expected_cf (clima Open-Meteo + histórico da usina). Perdida: esperada − gerada nas horas restritas.">
+                   note="Esperada: modelo curtailment_expected_cf (clima Open-Meteo, medição do ONS na usina quando existe, e histórico da usina). Perdida: esperada − gerada nas horas restritas.">
               <ResponsiveContainer width="100%" height={220}>
                 <ComposedChart {...sync}>
                   <defs>

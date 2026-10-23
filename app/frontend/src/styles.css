@@ -68,6 +68,7 @@ a.index-cell:hover { background: #f7f6fb; }
 .index-hint { font-size: 0.75rem; color: var(--ink-2); line-height: 1.3; }
 .index-cell.is-off { color: var(--ink-3); cursor: default; }
 .index-cell.is-off .index-hint { color: var(--ink-3); }
+.nm-curto { display: none; }
 
 /* ---------- filters ---------- */
 .filters-toggle { display: none; }
@@ -215,7 +216,8 @@ main { max-width: 1600px; margin: 0 auto; padding: 18px 32px 56px; }
 .board tr.sum td { font-weight: 800; border-bottom: 0; border-top: 1px solid var(--rule); }
 .board--rank tbody tr { cursor: pointer; transition: background-color 0.15s var(--ease); }
 .board--rank tbody tr:hover { background: #f7f6fb; }
-.board .name span { font-weight: 700; display: block; }
+.board .name > span { font-weight: 700; display: block; }
+.board .name .sw--dot { margin-right: 8px; }
 .board .name small { display: block; color: var(--ink-2); font-size: 0.78125rem; font-variant-numeric: tabular-nums; }
 .board .share { min-width: 6.5rem; }
 .sharebar {
@@ -379,7 +381,7 @@ table.board > tbody > tr > td:first-child .sw { margin-right: 4px; }
   .below { order: 3; }
   .margin > :nth-child(n + 3) { order: 4; }
   .top { padding: 12px 16px; }
-  .index { grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; }
+  .index { grid-template-columns: repeat(5, minmax(0, 1fr)); width: 100%; }
   .index-hint { display: none; }
   .index-cell { padding: 10px 2px; text-align: center; justify-content: center; min-width: 0; }
   .index-name { font-size: 0.78rem; line-height: 1.2; letter-spacing: -0.01em; overflow-wrap: anywhere; }
@@ -442,7 +444,27 @@ table.board > tbody > tr > td:first-child .sw { margin-right: 4px; }
   .board th:last-child { display: none; }
   .board--rank td:nth-child(5) { display: none; }
   .total .num { font-size: 2.5rem; }
+  /* five index cells on a phone: short names, never broken mid-word */
+  .nm { display: none; }
+  .nm-curto { display: inline; }
+  .index-name { overflow-wrap: normal; }
+  /* curtailment board: keep #, usina, energia, R$ (no bar); drop UF and hours */
+  .board--curt th:nth-child(3), .board--curt td:nth-child(3), .board--curt td:nth-child(6) { display: none; }
+  .board--curt th:nth-child(5), .board--curt td:nth-child(5) { display: table-cell; }
+  .board--curt .sharebar { display: none; }
+  .cands { min-width: 0; }
+  .board td, .board th { padding-left: 6px; padding-right: 6px; }
+  .board .name small { overflow-wrap: anywhere; }
+  /* ai_decide queue: one stacked block per plant */
+  .board--ai thead { display: none; }
+  .board--ai, .board--ai tbody, .board--ai tr, .board--ai td { display: block; width: 100%; }
+  .board--ai tr { padding: 10px 0; border-bottom: 1px solid var(--rule); }
+  .board--ai td { border: 0; padding: 3px 0; text-align: left; }
+  .board--ai td.num::before { color: var(--ink-2); font-weight: 600; }
+  .board--ai td:nth-child(3)::before { content: "Confiança "; }
+  .board--ai td:nth-child(5)::before { content: "Energia "; }
 }
+.board-wrap, .ai-review { overflow-x: auto; }
 
 /* ---------- Curtailment sheet + ai_decide review (spec 14) ---------- */
 .board-wrap--top { margin-top: 30px; }
@@ -496,7 +518,11 @@ table.board > tbody > tr > td:first-child .sw { margin-right: 4px; }
 .chat-turn { display: flex; flex-direction: column; gap: 10px; }
 .chat-q { margin: 0; align-self: flex-end; max-width: 85%; padding: 8px 12px; border-radius: 4px; background: var(--tint); font-weight: 700; color: #2a0b4a; }
 .chat-a { display: flex; flex-direction: column; gap: 10px; }
-.chat-text { margin: 0; white-space: pre-wrap; }
+.chat-text p { margin: 0 0 8px; }
+.chat-text ul { margin: 0 0 8px; padding-left: 1.2rem; }
+.chat-text li { margin: 2px 0; }
+.chat-text b { font-weight: 800; }
+.chat-actions .link-btn { white-space: nowrap; }
 .chat-desc { margin: 0; font-size: 0.8125rem; color: var(--ink-2); }
 .chat-figures { display: flex; flex-wrap: wrap; gap: 8px 32px; margin: 0; }
 .chat-figures dt { font-size: 0.8125rem; font-weight: 700; color: var(--ink-2); }

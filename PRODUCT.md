@@ -32,7 +32,9 @@ Read-only data app (Databricks App, workspace auth) over Lakebase; daily grain. 
 
 ## Capabilities and Constraints
 
-- Pages: Visão geral, Reconciliação, Mapa, Usina (plant detail).
+- Pages: Visão geral, Reconciliação (incl. the `ai_decide` review queue), Curtailment (energy lost to
+  constraints, modeled), Mapa, Usina (plant detail with actual vs expected). A slide-out Genie chat
+  ("Pergunte ao Genie") answers in PT-BR on every page, on behalf of the signed-in user.
 - Terms: CEG, conjunto, UF, fonte (EOL, SOL, HID, THERM, NUC, OTHER), submercado, PLD (R$/MWh),
   "estimado" (capacity-weighted member estimate), grão publicado vs usina.
 - Measured irradiance (ONS, likely panel plane) is shown apart from modeled (horizontal);

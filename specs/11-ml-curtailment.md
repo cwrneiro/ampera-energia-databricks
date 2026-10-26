@@ -24,6 +24,11 @@ plants for which ONS publishes no curtailment flag. Decisions #29–#30 (00-over
   rewarded flagging every shortfall because ONS flags ~40% of hours). Stored as model-version tags
   (`y_eol`, `y_sol`) — frozen with the version, read by scoring.
 - **Valuation:** MWh lost = expected − actual on flagged hours; R$ lost = MWh lost × hourly PLD.
+- **One definition:** the flag, lost energy (never negative), valuation and the Y rule (best recall
+  at precision ≥ 0.8, else max precision) live in `src/curtailment_lib.py`, imported by the train
+  (pandas) and score (Spark) notebooks (the flag and valuation run as-is on Spark Columns; lost energy
+  is mirrored there with `F.when`/`F.greatest`); `python3 tests/test_curtailment.py` checks a worked example
+  (cf_exp 0.5, cf 0.2, Y 0.65, 10 MW, PLD 100 → flagged, 3.0 MWh, R$ 300).
 - **Runs:** `notebooks/train_curtailment` (job param `train=true`) and `score_curtailment` (every
   refresh) in `ampera_refresh`, between the medallion and the Lakebase syncs (serverless SDP can't
   run Python UDFs). Scoring writes `gold.curtailment_hourly` (lakehouse/Genie) and

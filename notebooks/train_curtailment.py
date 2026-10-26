@@ -27,12 +27,13 @@ CAT = dbutils.widgets.get("catalog")  # noqa: F821
 FEAT = f"{CAT}.ampera_gold.curtailment_features_hourly"
 MODEL = f"{CAT}.ampera_gold.curtailment_expected_cf"
 SPLIT = "2026-04-01"        # train < SPLIT <= test (18 / 6 months)
-MIN_EXPECTED_CF = 0.10      # spec 11: only judge hours where the plant should produce >= 10% of capacity
-PRECISION_FLOOR = 0.80      # spec 11 (user decision 2026-10-22): best recall with precision >= 0.8 -> conservative R$
 SAMPLE_ROWS = 1_500_000     # per technology, training sample cap (driver memory)
 print(FEAT, MODEL)
 
 # COMMAND ----------
+
+import os
+import sys
 
 import mlflow
 import sklearn
@@ -42,6 +43,10 @@ from pyspark.sql import functions as F
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.metrics import mean_absolute_error, precision_recall_fscore_support
 
+sys.path.append(os.path.abspath("../src"))
+import curtailment_lib as C  # noqa: E402  flag rule, Y selection (tests/test_curtailment.py)
+
+MIN_EXPECTED_CF, PRECISION_FLOOR = C.MIN_EXPECTED_CF, C.PRECISION_FLOOR
 mlflow.set_registry_uri("databricks-uc")
 UFS = sorted(r.uf for r in spark.table(FEAT).select("uf").distinct().collect())  # noqa: F821
 WEATHER = {"EOL": "vento_100m_ms", "SOL": "irradiancia_wm2"}                       # Open-Meteo, every plant
@@ -125,18 +130,12 @@ rows = []
 for fonte, te in test.items():
     judge = te[te["cf_esperado"] >= MIN_EXPECTED_CF]
     for Y in grid:
-        pred = judge["fator_capacidade"] < Y * judge["cf_esperado"]
+        pred = C.flagged(judge["cf_esperado"], judge["fator_capacidade"], Y)
         p, r, f1, _ = precision_recall_fscore_support(judge["restrito_ons"], pred, average="binary", zero_division=0)
         rows.append({"fonte": fonte, "Y": Y, "precision": round(p, 3), "recall": round(r, 3), "f1": round(f1, 3)})
 tune = pd.DataFrame(rows)
 
-
-def choose(t):
-    ok = t[t["precision"] >= PRECISION_FLOOR]
-    return ok.loc[ok["recall"].idxmax()] if len(ok) else t.loc[t["precision"].idxmax()]
-
-
-best = pd.DataFrame([choose(t) for _, t in tune.groupby("fonte")]).set_index("fonte")
+best = pd.DataFrame([C.choose_y(t.to_dict("records")) for _, t in tune.groupby("fonte")]).set_index("fonte")
 print(tune.pivot(index="Y", columns="fonte", values=["precision", "recall", "f1"]).to_string())
 print("\nchosen:\n", best.to_string())
 Y_BY_FONTE = best["Y"].to_dict()

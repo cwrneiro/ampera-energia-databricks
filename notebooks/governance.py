@@ -3,7 +3,8 @@
 # MAGIC # Unity Catalog governance (spec 13)
 # MAGIC
 # MAGIC Declares, idempotently, on every refresh:
-# MAGIC 1. **Access** — group `ampera_analysts` reads the gold marts only (no bronze/silver, no writes).
+# MAGIC 1. **Access** — group `ampera_analysts` reads the gold marts only (no bronze/silver, no writes);
+# MAGIC    asserted after applying, so the task fails if the access model drifts.
 # MAGIC 2. **Tags** — every schema and table carries `ampera_layer`, `ampera_domain` and its upstream
 # MAGIC    `ampera_source`; ML/GenAI outputs carry `ampera_ai`; plant coordinates carry the governed tag
 # MAGIC    `class.geo_coordinates`. Keys are namespaced (`ampera_*`) so they never collide with governed tag policies such as `layer`, `domain`, `source`
@@ -44,6 +45,21 @@ for q in [f"GRANT USE CATALOG ON CATALOG {CAT} TO `{GRP}`",
     sql(q)
     print("ok:", q)
 
+# The access model is asserted, not just applied: the job fails if it drifts (spec 13).
+def schema_privs(schema):
+    return {r.ActionType for r in sql(f"SHOW GRANTS `{GRP}` ON SCHEMA {schema}").collect()
+            if r.Principal == GRP and r.ObjectType == "SCHEMA"}
+
+
+gold = schema_privs(S["gold"])
+assert {"USE SCHEMA", "SELECT"} <= gold and "MODIFY" not in gold, f"{GRP} on {S['gold']}: {gold}"
+for k in ("bronze", "silver"):
+    assert not schema_privs(S[k]), f"{GRP} must have nothing on {S[k]}: {schema_privs(S[k])}"
+leaks = sql(f"""SELECT table_schema, table_name, privilege_type FROM {CAT}.information_schema.table_privileges
+                WHERE grantee = '{GRP}' AND table_schema IN ('ampera_bronze', 'ampera_silver')""").collect()
+assert not leaks, f"{GRP} has table grants in bronze/silver: {leaks[:5]}"
+print(f"asserted: {GRP} reads {S['gold']} ({sorted(gold)}), nothing on bronze/silver")
+
 # COMMAND ----------
 
 # MAGIC %md ## 2. Tags
@@ -59,7 +75,7 @@ SOURCE = {  # table -> upstream public source(s)
     "ons_member_generation_solar": "ONS", "siga_plants": "ANEEL SIGA", "ccee_pld_horario": "CCEE",
     "open_meteo_weather": "Open-Meteo", "inmet_weather": "INMET",
 }
-AI = {"plant_match_ai": "genai:ai_decide", "ai_decide_eval": "genai:ai_decide",
+AI = {"ai_decide_verdict": "genai:ai_decide", "ai_decide_verdict_new": "genai:ai_decide", "ai_decide_eval": "genai:ai_decide",
       "curtailment_hourly": "ml:curtailment_expected_cf", "curtailment_daily": "ml:curtailment_expected_cf"}
 tables = sql(f"""SELECT table_schema, table_name FROM {CAT}.information_schema.tables
                  WHERE table_schema IN ('ampera_bronze', 'ampera_silver', 'ampera_gold')

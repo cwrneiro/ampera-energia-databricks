@@ -11,7 +11,9 @@ came from. Decision #34.
   decision #28) with schemas `ampera_bronze / ampera_silver / ampera_gold / ampera_gold_lb`.
 - **Access:** group `ampera_analysts` gets `USE CATALOG` + `USE SCHEMA, SELECT` on `ampera_gold`
   only; bronze/silver revoked. The app's Genie chat runs on behalf of the user, so these grants
-  decide what each person can ask about.
+  decide what each person can ask about. After applying them the task **asserts** them: `USE SCHEMA` + `SELECT`
+  (and no `MODIFY`) on gold, no schema grant on bronze/silver and no table grant in either — so the
+  job fails if the access model drifts.
 - **Tags:** schema and table tags `ampera_layer`, `ampera_domain=energia`, `ampera_source` (ONS, ANEEL
   SIGA, CCEE, Open-Meteo, INMET, derived), `ampera_ai` on ML/GenAI outputs — namespaced because
   `layer`/`domain`/`source`/`project` may already be governed tag policies in a metastore; governed tag `class.geo_coordinates` on

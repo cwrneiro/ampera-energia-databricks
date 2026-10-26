@@ -23,9 +23,15 @@ MODEL = f"{CAT}.ampera_gold.curtailment_expected_cf"
 
 # COMMAND ----------
 
+import os
+import sys
+
 import mlflow
 from mlflow import MlflowClient
 from pyspark.sql import functions as F
+
+sys.path.append(os.path.abspath("../src"))
+import curtailment_lib as C  # noqa: E402  flag + valuation rules (tests/test_curtailment.py)
 
 mlflow.set_registry_uri("databricks-uc")
 mv = MlflowClient().get_model_version_by_alias(MODEL, "champion")
@@ -43,10 +49,10 @@ f = spark.table(FEAT)  # noqa: F821
 y = F.when(F.col("fonte") == "EOL", F.lit(Y["EOL"])).otherwise(F.lit(Y["SOL"]))
 s = (f.withColumn("cf_esperado", expected_cf(*cols))
       .withColumn("mwh_esperado", F.col("cf_esperado") * F.col("capacity_mw"))
-      .withColumn("restrito_modelo", (F.col("cf_esperado") >= MIN_CF) & (F.col("fator_capacidade") < y * F.col("cf_esperado")))
+      .withColumn("restrito_modelo", C.flagged(F.col("cf_esperado"), F.col("fator_capacidade"), y, MIN_CF))
       .withColumn("mwh_restrito", F.when(F.col("restrito_modelo"), F.greatest(F.col("mwh_esperado") - F.col("mwh"), F.lit(0.0)))
-                                   .otherwise(F.lit(0.0)))
-      .withColumn("valor_rs_perdido", F.col("mwh_restrito") * F.col("pld_rs_mwh"))
+                                   .otherwise(F.lit(0.0)))  # = C.lost_mwh
+      .withColumn("valor_rs_perdido", C.value_rs(F.col("mwh_restrito"), F.col("pld_rs_mwh")))
       .select("ts", "gen_date", "plant_id", "nome", "uf", "submercado", "fonte", "conjunto_key", "capacity_mw",
               "mwh", "mwh_esperado", "restrito_modelo", "restrito_ons", "mwh_estimado_ons", "mwh_restrito",
               "pld_rs_mwh", "valor_rs_perdido", F.lit(int(mv.version)).alias("model_version")))

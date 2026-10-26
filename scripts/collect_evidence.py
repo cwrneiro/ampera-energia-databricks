@@ -9,9 +9,11 @@ import os
 import subprocess
 import sys
 
-P = sys.argv[1] if len(sys.argv) > 1 else "<profile>"
-CAT, WH, LB = "ampera_catalog", "<warehouse-id>", "ampera-demo"
+P = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("DATABRICKS_CONFIG_PROFILE", "DEFAULT")
 ROOT = os.path.join(os.path.dirname(__file__), "..")
+_V = json.loads(subprocess.run(["databricks", "bundle", "validate", "-p", P, "-o", "json"], cwd=ROOT,
+                               capture_output=True, text=True, check=True).stdout)["variables"]  # from targets/<target>.yml
+CAT, WH, LB = (_V[k]["value"] for k in ("catalog", "warehouse_id", "lakebase_project"))
 EV = os.path.join(ROOT, "evidence")
 
 
@@ -179,7 +181,7 @@ def lakebase_and_app():
 
 
 def tests():
-    env = {**os.environ, "DATABRICKS_CONFIG_PROFILE": P, "DATABRICKS_WAREHOUSE_ID": WH, "GENIE_LIVE": "1"}
+    env = {**os.environ, "DATABRICKS_CONFIG_PROFILE": P, "DATABRICKS_WAREHOUSE_ID": WH, "CATALOG": CAT, "GENIE_LIVE": "1"}
     body = ""
     for t in ("tests/test_reconciliation.py", "tests/test_genie_space.py"):
         r = subprocess.run([sys.executable, t], cwd=ROOT, capture_output=True, text=True, env=env)

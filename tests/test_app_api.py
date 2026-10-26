@@ -8,7 +8,7 @@ import sys
 from datetime import date
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "app"))
-os.environ.setdefault("DATABRICKS_CONFIG_PROFILE", "<profile>")
+os.environ.setdefault("DATABRICKS_CONFIG_PROFILE", "DEFAULT")
 import app as A  # noqa: E402
 
 

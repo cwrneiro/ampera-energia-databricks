@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # One-time workspace bootstrap for the dev target (SETUP.md §2–§6 for this repo's defaults):
 # Lakebase project, the analysts group, first bundle deploy and the first medallion run.
-# Usage: scripts/bootstrap_workspace.sh [profile]   (default <profile>). Idempotent-ish: reruns skip what exists.
+# Usage: scripts/bootstrap_workspace.sh [profile]   (default $DATABRICKS_CONFIG_PROFILE, else DEFAULT). Idempotent-ish: reruns skip what exists.
 set -uo pipefail
-P=${1:-<profile>}
-LB=ampera-demo
+P=${1:-${DATABRICKS_CONFIG_PROFILE:-DEFAULT}}
 cd "$(dirname "$0")/.."
+bv() { databricks bundle validate -p "$P" -o json | jq -r ".variables.$1.value"; }  # values come from targets/<target>.yml
+LB=$(bv lakebase_project)
 
 echo "== Lakebase project $LB"
 databricks postgres get-project projects/$LB -p "$P" >/dev/null 2>&1 \

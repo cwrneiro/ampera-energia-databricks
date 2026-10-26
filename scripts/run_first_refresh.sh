@@ -3,7 +3,7 @@
 # (medallion incl. ai_decide -> train + blind eval -> score -> governance; the sync tasks fail until
 # the synced tables exist), then create the synced tables. Usage: scripts/run_first_refresh.sh [profile]
 set -uo pipefail
-P=${1:-<profile>}
+P=${1:-${DATABRICKS_CONFIG_PROFILE:-DEFAULT}}
 cd "$(dirname "$0")/.."
 (cd app/frontend && npm run build >/dev/null) && echo "frontend built"
 databricks bundle deploy -p "$P"

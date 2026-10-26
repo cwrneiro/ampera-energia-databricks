@@ -44,3 +44,8 @@ handoff/
 
 # Per-environment bundle overlays (workspace-specific); the .example is the template
 targets/*.yml
+targets/*.geniespace.json
+
+# Local agent working files: session handoff note and workspace-specific agent instructions
+STATE.md
+CLAUDE.local.md

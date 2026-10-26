@@ -46,7 +46,7 @@ def to_ipynb(model, meta):
                          "databricks_job_run": meta}}
 
 
-def main(run_id, profile="<profile>"):
+def main(run_id, profile=os.environ.get("DATABRICKS_CONFIG_PROFILE", "DEFAULT")):
     os.makedirs(OUT, exist_ok=True)
     run = cli("jobs", "get-run", run_id, profile=profile)
     for t in run["tasks"]:

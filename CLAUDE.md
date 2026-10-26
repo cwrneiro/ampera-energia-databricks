@@ -16,8 +16,9 @@ never auto-run setup. Setup rules for every agent: `AGENTS.md`.
 
 ## Databricks
 
-- Workspace is the CLI profile **`<profile>`** — always pass `--profile <profile>`.
-  Never auto-select another profile.
+- The workspace's CLI profile is named in `CLAUDE.local.md` (gitignored, workspace-specific) — always
+  pass it with `--profile`. Never auto-select another profile. Workspace values (catalog, warehouse,
+  synced-table pipeline ids) live in the gitignored `targets/<target>.yml`, never in tracked files.
 - Route Databricks work through the Databricks skills: load `databricks-core` first, then the
   matching product skill (databricks-pipelines, databricks-lakebase, databricks-apps,
   databricks-genie-agents, etc.).
@@ -48,11 +49,12 @@ never auto-run setup. Setup rules for every agent: `AGENTS.md`.
 
 ## Session continuity contract
 
-STATE.md is the handoff note a fresh session reads after `/clear`.
+STATE.md is the handoff note a fresh session reads after `/clear`. It is local (gitignored), never
+published.
 
 - At the start of every session, if STATE.md was not already injected into context, read it before
   doing anything else.
-- Before finishing any work chunk, update STATE.md and commit it together with the work.
+- Before finishing any work chunk, update STATE.md (it is not committed).
 - STATE.md is a pointer, not a journal: keep it under half a page; history lives in `git log` and
   `specs/`.
 - Enforcement: a `Stop` hook blocks ending a turn when tracked changes are newer than STATE.md on

@@ -50,6 +50,77 @@ def test_cold_compute_drains_pool_then_503():
     assert len(connects) == 4  # first try used a pooled conn; the 4 retries each opened a fresh one
 
 
+class Req:  # the only part of a FastAPI Request the Genie handler reads
+    def __init__(self, token=None):
+        self.headers = {"x-forwarded-access-token": token} if token else {}
+
+
+def _status(fn):
+    try:
+        fn()
+    except A.HTTPException as e:
+        return e.status_code, e.detail
+    raise AssertionError("expected an HTTPException")
+
+
+def test_genie_runs_as_the_signed_in_user():
+    # Spec 14: inside Databricks Apps Genie only ever runs with the user's forwarded token, so UC
+    # grants apply per user; locally (no DATABRICKS_APP_NAME) the developer's CLI profile is used.
+    os.environ.pop("DATABRICKS_APP_NAME", None)
+    w = A._genie_client(Req("user-token"))
+    assert w is not A._ws and w.config.token == "user-token"
+    assert A._genie_client(Req()) is A._ws
+    os.environ["DATABRICKS_APP_NAME"] = "ampera-app"
+    try:
+        assert _status(lambda: A._genie_client(Req())) == (401, "Autorização do usuário não concedida")
+        assert A._genie_client(Req("user-token")).config.token == "user-token"
+    finally:
+        del os.environ["DATABRICKS_APP_NAME"]
+
+
+def test_genie_errors_are_typed():
+    # A UC permission error is the user's to see (403), not a 500; a failure fetching the query
+    # result comes back as a readable 502 too.
+    from types import SimpleNamespace as NS
+    from databricks.sdk.errors import PermissionDenied, Unauthenticated
+
+    def raises(e):
+        def f(*_, **__):
+            raise e
+        return f
+    msg = NS(conversation_id="c", id="m", error=None,
+             attachments=[NS(text=None, suggested_questions=None, attachment_id="a", query=NS(query="SELECT 1", description=None))])
+    cases = [
+        (NS(start_conversation_and_wait=raises(PermissionDenied("no SELECT on table"))), 403),
+        (NS(start_conversation_and_wait=raises(Unauthenticated("token expired"))), 401),
+        (NS(start_conversation_and_wait=lambda *_, **__: msg,
+            get_message_attachment_query_result=raises(RuntimeError("statement failed"))), 502),
+    ]
+    real, os.environ["GENIE_SPACE_ID"] = A._genie_client, "space"
+    try:
+        for genie, code in cases:
+            A._genie_client = lambda _r, g=genie: NS(genie=g)
+            st, detail = _status(lambda: A.genie({"pergunta": "oi"}, Req("t")))
+            assert st == code and detail, (st, detail, code)
+    finally:
+        A._genie_client = real
+
+
+def test_plant_loads_before_curtailment_is_synced():
+    # Spec 14: the curtailment synced table appears only after the first scored refresh; the Usina
+    # sheet must still load, with an empty curtailment panel, instead of a 500.
+    def fake(sql, params=()):
+        if "curtailment_daily" in sql:
+            raise A.psycopg.errors.UndefinedTable('relation "ampera_gold_lb.curtailment_daily" does not exist')
+        return [{"plant_id": "X.1"}] if "plant_location" in sql else [{"dia": "2026-01-01", "mwh": 1.0}]
+    real, A.query = A.query, fake
+    try:
+        r = A._plant.__wrapped__("X.1", 0)
+    finally:
+        A.query = real
+    assert r["curtailment"] == [] and r["usina"] == {"plant_id": "X.1"} and len(r["dias"]) == 1
+
+
 def test_totals_tie_live():
     if not os.environ.get("PGHOST"):
         print("skip live check (PGHOST unset)")

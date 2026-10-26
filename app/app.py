@@ -14,6 +14,7 @@ from pathlib import Path
 
 import psycopg
 from databricks.sdk import WorkspaceClient
+from databricks.sdk.errors import PermissionDenied, Unauthenticated
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -199,9 +200,12 @@ def _plant(plant_id, _b):
                vento_100m_ms_modelo, irradiancia_wm2_modelo, temp_c_modelo, precip_mm_modelo,
                vento_ms_medido, irradiancia_wm2_medida, fonte_medicao
         FROM ampera_gold_lb.generation_daily WHERE plant_id = %s ORDER BY dia""", (plant_id,))
-    curt = query("""
-        SELECT dia, mwh_esperado, mwh_restrito, valor_rs_perdido, horas_restritas_modelo, horas_restritas_ons
-        FROM ampera_gold_lb.curtailment_daily WHERE plant_id = %s ORDER BY dia""", (plant_id,))
+    try:
+        curt = query("""
+            SELECT dia, mwh_esperado, mwh_restrito, valor_rs_perdido, horas_restritas_modelo, horas_restritas_ons
+            FROM ampera_gold_lb.curtailment_daily WHERE plant_id = %s ORDER BY dia""", (plant_id,))
+    except psycopg.errors.UndefinedTable:  # not synced yet (first refresh): empty panel, not a 500
+        curt = []
     return {"usina": info[0], "dias": days, "curtailment": curt}
 
 
@@ -237,16 +241,22 @@ def reconciliation_ai():
 
 @lru_cache(maxsize=4)
 def _reconciliation_ai(_b):
-    return query("SELECT * FROM ampera_gold_lb.reconciliation_ai_review ORDER BY ai_accepted, mwh_total DESC NULLS LAST")
+    return query("SELECT * FROM ampera_gold_lb.reconciliation_ai_review ORDER BY mwh_total DESC NULLS LAST")
 
 
 # --- Genie chat, on behalf of the signed-in user (spec 14) ------------------------------------
 
 def _genie_client(request: Request) -> WorkspaceClient:
     # Databricks Apps forwards the user's token when user authorization (scope dashboards.genie) is on:
-    # Genie then runs as that user, so Unity Catalog grants apply per user. Local dev: the CLI profile.
+    # Genie then runs as that user, so Unity Catalog grants apply per user. Inside Apps
+    # (DATABRICKS_APP_NAME is set by the runtime) a missing token is refused, never the app's service
+    # principal. Local dev: the CLI profile.
     tok = request.headers.get("x-forwarded-access-token")
-    return WorkspaceClient(host=_ws.config.host, token=tok, auth_type="pat") if tok else _ws
+    if tok:
+        return WorkspaceClient(host=_ws.config.host, token=tok, auth_type="pat")
+    if os.environ.get("DATABRICKS_APP_NAME"):
+        raise HTTPException(401, "Autorização do usuário não concedida")
+    return _ws
 
 
 GENIE_WAIT = timedelta(seconds=110)
@@ -261,8 +271,16 @@ def genie(body: dict, request: Request):
     try:
         m = (w.genie.create_message_and_wait(space, body["conversa"], q, timeout=GENIE_WAIT) if body.get("conversa")
              else w.genie.start_conversation_and_wait(space, q, timeout=GENIE_WAIT))
-    except Exception as e:  # permission/UC errors are the user's to see, not a 500
-        raise HTTPException(403 if "PERMISSION" in str(e).upper() else 502, str(e)[:400])
+        return _answer(w, space, m)
+    except PermissionDenied as e:  # UC grants: the user's to see, not a 500
+        raise HTTPException(403, str(e)[:400])
+    except Unauthenticated as e:
+        raise HTTPException(401, str(e)[:400])
+    except Exception as e:  # Genie failed or timed out, incl. fetching the query result
+        raise HTTPException(502, str(e)[:400] or type(e).__name__)
+
+
+def _answer(w: WorkspaceClient, space: str, m) -> dict:
     out = {"conversa": m.conversation_id, "mensagem": m.id, "texto": None, "sql": None,
            "descricao": None, "colunas": [], "linhas": [], "sugestoes": []}
     for a in m.attachments or []:

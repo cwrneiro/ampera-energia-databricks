@@ -87,19 +87,24 @@ function Plot({ r }) {
     const monthly = linhas.every((l) => String(l[spec.x]).slice(8, 10) === "01");  // first-of-month series
     const dfmt = (v) => (monthly ? fmt.mes(String(v).slice(0, 10)) : fmt.data(String(v).slice(0, 10)));
     let data, series;
+    // Series keys are synthetic (s0, s1, …): Recharts reads a dataKey with dots ("Conj. São Roque") as a path.
     if (spec.by >= 0) {  // long format (date, category, value) -> one line per category, top 6
       const y = spec.ys[0], m = new Map(), tot = {};
+      linhas.forEach((l) => { const k = l[spec.by] ?? "—"; tot[k] = (tot[k] || 0) + (n(l[y]) || 0); });
+      const top = Object.keys(tot).sort((a, b) => tot[b] - tot[a]).slice(0, 6);
+      const key = Object.fromEntries(top.map((k, i) => [k, `s${i}`]));
       linhas.forEach((l) => {
-        const k = l[spec.by] ?? "—", x = l[spec.x];
+        const s = key[l[spec.by] ?? "—"], x = l[spec.x];
         const row = m.get(x) || { x };
-        row[k] = n(l[y]); m.set(x, row); tot[k] = (tot[k] || 0) + (n(l[y]) || 0);
+        if (s) row[s] = n(l[y]);
+        m.set(x, row);
       });
       data = [...m.values()].sort((a, b) => String(a.x).localeCompare(String(b.x)));
-      series = Object.keys(tot).sort((a, b) => tot[b] - tot[a]).slice(0, 6).map((k, i) => ({ key: k, nome: k, cor: FONTE_BY_NAME[String(k).toLowerCase()]?.cor || RAMP[i] }));
+      series = top.map((k, i) => ({ key: `s${i}`, nome: k, cor: FONTE_BY_NAME[String(k).toLowerCase()]?.cor || RAMP[i] }));
     } else {
-      data = linhas.map((l) => Object.fromEntries([["x", l[spec.x]], ...spec.ys.map((i) => [cols[i].nome, n(l[i])])]))
+      data = linhas.map((l) => Object.fromEntries([["x", l[spec.x]], ...spec.ys.map((i, j) => [`s${j}`, n(l[i])])]))
         .sort((a, b) => String(a.x).localeCompare(String(b.x)));
-      series = spec.ys.map((i, j) => ({ key: cols[i].nome, nome: cols[i].nome, cor: RAMP[j] }));
+      series = spec.ys.map((i, j) => ({ key: `s${j}`, nome: cols[i].nome, cor: RAMP[j] }));
     }
     return (
       <ResponsiveContainer width="100%" height={220}>
@@ -115,7 +120,7 @@ function Plot({ r }) {
     );
   }
   if (spec.kind === "bar") {
-    const data = linhas.slice(0, 15).map((l) => Object.fromEntries([["x", l[spec.x] ?? "—"], ...spec.ys.map((i) => [cols[i].nome, n(l[i])])]));
+    const data = linhas.slice(0, 15).map((l) => Object.fromEntries([["x", l[spec.x] ?? "—"], ...spec.ys.map((i, j) => [`s${j}`, n(l[i])])]));
     const fonteCor = (x) => FONTE_BY_NAME[String(x).toLowerCase()]?.cor;
     const h = Math.max(140, data.length * 26 + 30);
     return (
@@ -128,7 +133,7 @@ function Plot({ r }) {
           <Tooltip content={<Tip />} cursor={{ fill: "rgba(84,23,144,0.06)" }} />
           {spec.ys.length > 1 && <Legend wrapperStyle={{ fontSize: 12 }} />}
           {spec.ys.map((i, j) => (
-            <Bar key={i} dataKey={cols[i].nome} name={cols[i].nome} fill={RAMP[j]} maxBarSize={18} isAnimationActive={false}
+            <Bar key={i} dataKey={`s${j}`} name={cols[i].nome} fill={RAMP[j]} maxBarSize={18} isAnimationActive={false}
                  shape={(p) => <rect x={p.x} y={p.y} width={Math.max(p.width, 0)} height={p.height} rx={2} fill={(j === 0 && fonteCor(p.payload.x)) || RAMP[j]} />} />
           ))}
         </BarChart>
@@ -198,6 +203,7 @@ export default function Chat() {
   const [txt, setTxt] = useState("");
   const [busy, setBusy] = useState(false);
   const input = useRef(null), log = useRef(null), btn = useRef(null);
+  const gen = useRef(0);  // bumped by "Nova conversa": a reply for an earlier conversation is dropped
 
   useEffect(() => { if (open) input.current?.focus(); }, [open]);
   const [scrolled, setScrolled] = useState(false);  // label shows at the top, collapses to the icon so it never covers the side notes
@@ -219,18 +225,20 @@ export default function Chat() {
     if (!pergunta || busy) return;
     setTxt(""); setBusy(true);
     setMsgs((m) => [...m, { q: pergunta }]);
+    const g = gen.current;
     try {
       const r = await apiPost("genie", { pergunta, conversa });
+      if (g !== gen.current) return;
       setConversa(r.conversa);
       setMsgs((m) => m.map((x, i) => (i === m.length - 1 ? { ...x, r } : x)));
     } catch (e) {
+      if (g !== gen.current) return;
       setMsgs((m) => m.map((x, i) => (i === m.length - 1 ? { ...x, erro: e.message } : x)));
     } finally {
-      setBusy(false);
-      input.current?.focus();
+      if (g === gen.current) { setBusy(false); input.current?.focus(); }
     }
   };
-  const novo = () => { setMsgs([]); setConversa(null); input.current?.focus(); };
+  const novo = () => { gen.current += 1; setMsgs([]); setConversa(null); setBusy(false); input.current?.focus(); };
   const last = msgs.at(-1)?.r?.sugestoes || [];
 
   return (
@@ -242,7 +250,7 @@ export default function Chat() {
         </svg>
         <span className="chat-label">Pergunte ao Genie</span>
       </button>
-      <aside id="chat" className={"chat" + (open ? " is-open" : "")} aria-label="Chat com o Genie" aria-hidden={!open} inert={!open ? "" : undefined}>
+      <aside id="chat" className={"chat" + (open ? " is-open" : "")} aria-label="Chat com o Genie" aria-hidden={!open} inert={!open}>
         <header className="chat-head">
           <div>
             <h2>Pergunte aos dados</h2>

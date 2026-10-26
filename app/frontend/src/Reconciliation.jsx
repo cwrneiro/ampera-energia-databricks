@@ -21,17 +21,27 @@ function Tip({ active, payload, label }) {
 }
 
 // ai_decide verdicts (spec 12): applied matches and the human review queue, with each candidate's
-// probability — the probabilities are the explanation (no generated rationale).
+// probability — the probabilities are the explanation (no generated rationale). The state is what the
+// pipeline did (final match_method), not ai_decide's confidence: a plant the fuzzy rung or an override
+// placed is resolved, and only "revisar" rows count as work left and MWh at stake.
+const STATE = { ai_decide: "aplicada", override: "manual", fuzzy: "fuzzy" };
+const STATE_TAG = { aplicada: ["Aplicada", "state--ok"], manual: ["Resolvida · manual", "state--ok"], fuzzy: ["Resolvida · fuzzy", "state--ok"], revisar: ["Revisar", ""] };
+const stateOf = (r) => STATE[r.match_method] || "revisar";
+const StateTag = ({ r }) => { const [l, cls] = STATE_TAG[stateOf(r)]; return <span className={`state ${cls}`}>{l}</span>; };
+
 function AiReview() {
   const q = useApi("reconciliation/ai");
   const [view, setView] = useState("revisar");
   const all = q.data || [];
-  const inView = all.filter((r) => view === "todas" || (view === "aplicadas") === r.ai_accepted);
+  const inView = all.filter((r) => view === "todas" || stateOf(r) === (view === "aplicadas" ? "aplicada" : "revisar"));
   const rows = inView.filter((r) => r.mwh_total > 0);  // retired registry entries with no generation change no number
   const hidden = inView.length - rows.length;
-  const n = { aplicadas: all.filter((r) => r.ai_accepted).length, revisar: all.filter((r) => !r.ai_accepted).length, todas: all.length };
-  const stake = all.filter((r) => !r.ai_accepted).reduce((a, r) => a + (r.mwh_total || 0), 0);
+  const count = (st) => all.filter((r) => stateOf(r) === st).length;
+  const n = { aplicadas: count("aplicada"), revisar: count("revisar"), todas: all.length };
+  const stake = all.filter((r) => stateOf(r) === "revisar").reduce((a, r) => a + (r.mwh_total || 0), 0);
   const cand = (r, k) => ({ id: r[`${k}_id`], nome: r[`${k}_nome`], mun: r[`${k}_municipio`], p: r[`ai_prob_${k}`], k: k.toUpperCase() });
+  // Resolved rows highlight the plant the pipeline used; open ones, ai_decide's pick.
+  const picked = (r, c) => (stateOf(r) === "revisar" ? r.ai_choice === c.k : c.id != null && c.id === r.plant_id);
   return (
     <section className="ai-review">
       <div className="ai-head">
@@ -39,7 +49,7 @@ function AiReview() {
           <h2>Decisões da IA para usinas sem CEG</h2>
           <p className="lede">Para cada usina do ONS cujo CEG não liga à SIGA, a função <b>ai_decide</b> escolhe entre os 3 candidatos da SIGA
             de nome mais parecido na mesma UF, ou nenhum, com probabilidades calibradas. Com confiança ≥ 90% a escolha entra na
-            reconciliação; abaixo disso a usina fica na fila de revisão{q.data ? ` (${fmt.energia(stake)} em jogo)` : ""}.</p>
+            reconciliação; abaixo disso a usina fica na fila de revisão{q.data ? ` (${fmt.energia(stake)} em jogo)` : ""}, a menos que o nome aproximado ou um ajuste manual já a tenha resolvido.</p>
         </div>
         <div className="seg-ctl" role="radiogroup" aria-label="Decisões">
           {[["revisar", "Fila de revisão"], ["aplicadas", "Aplicadas"], ["todas", "Todas"]].map(([k, l]) => (
@@ -57,7 +67,7 @@ function AiReview() {
                 <td>
                   <ul className="cands">
                     {["a", "b", "c"].map((k) => cand(r, k)).filter((c) => c.id).concat([{ k: "nenhum", nome: "Nenhum destes", p: r.ai_prob_nenhum }]).map((c) => (
-                      <li key={c.k} className={r.ai_choice === c.k || (c.k === "nenhum" && r.ai_choice === "nenhum") ? "is-pick" : ""}>
+                      <li key={c.k} className={picked(r, c) ? "is-pick" : ""}>
                         <span className="cand-bar" style={{ "--w": c.p || 0 }} aria-hidden="true" />
                         <span className="cand-name">{c.nome}{c.id && <small>{c.id}{c.mun ? ` · ${c.mun}` : ""}</small>}</span>
                         <span className="num">{fmt.pct(c.p)}</span>
@@ -66,7 +76,7 @@ function AiReview() {
                   </ul>
                 </td>
                 <td className="num">{fmt.pct(r.ai_confidence)}</td>
-                <td>{r.ai_accepted ? <span className="state state--ok">Aplicada</span> : <span className="state">Revisar</span>}</td>
+                <td><StateTag r={r} /></td>
                 <td className="num">{fmt.energia(r.mwh_total)}</td>
               </tr>
             ))}

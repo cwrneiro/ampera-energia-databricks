@@ -75,7 +75,9 @@ export async function api(path, params = {}) {
 export async function apiPost(path, body) {
   const r = await fetch(`/api/${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(r.status === 403 ? "Sem permissão para estes dados no Unity Catalog." : j.detail || `Erro ${r.status}.`);
+  if (!r.ok) throw new Error(r.status === 403 ? "Sem permissão para estes dados no Unity Catalog."
+    : r.status === 401 ? "Autorização do usuário não concedida. Entre de novo no app para o Genie responder com as suas permissões."
+    : j.detail || `Erro ${r.status}.`);
   return j;
 }
 

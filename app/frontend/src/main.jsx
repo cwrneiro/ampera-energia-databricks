@@ -22,6 +22,8 @@ function useRoute() {
   return { page, id: id && decodeURIComponent(id) };
 }
 
+const CURT_FONTES = ["EOL", "SOL"];
+
 const SHEETS = [
   { page: "", nome: "Visão geral", curto: "Geral", hint: "geração por fonte, CEG e conjunto" },
   { page: "reconciliacao", nome: "Reconciliação", curto: "Reconc.", hint: "como o ONS liga à ANEEL" },
@@ -71,6 +73,7 @@ function Filters({ f, set, meta, plants, show, slim }) {
   useEffect(() => setTxt(current ? plantLabel(current) : ""), [f.usina]); // eslint-disable-line react-hooks/exhaustive-deps
   const any = f.uf || f.fonte || f.conjunto || f.usina || (meta && (f.de !== meta.de || f.ate !== meta.ate));
   const upd = (k) => (e) => set({ ...f, [k]: e.target.value || null });
+  const fontes = show.fontes ? FONTES.filter((x) => show.fontes.includes(x.id)) : FONTES;
   // Phones: filters fold behind one disclosure so the sheet reaches the first screen.
   const narrow = useMemo(() => matchMedia("(max-width: 520px)"), []);
   const [open, setOpen] = useState(!narrow.matches);
@@ -79,7 +82,7 @@ function Filters({ f, set, meta, plants, show, slim }) {
     narrow.addEventListener("change", on);
     return () => narrow.removeEventListener("change", on);
   }, [narrow]);
-  const n = [f.uf, f.fonte, f.conjunto, f.usina].filter(Boolean).length;
+  const n = [f.uf, fontes.some((x) => x.id === f.fonte), f.conjunto, f.usina].filter(Boolean).length;
   const clear = () => set({ de: meta?.de, ate: meta?.ate });
   // Map sheet's filter menu: closes on a click outside it or Esc, like any menu.
   const pop = useRef(null);
@@ -110,9 +113,9 @@ function Filters({ f, set, meta, plants, show, slim }) {
         </select>
       </label>
       <label>Fonte
-        <select value={f.fonte || ""} onChange={upd("fonte")}>
+        <select value={fontes.some((x) => x.id === f.fonte) ? f.fonte : ""} onChange={upd("fonte")}>
           <option value="">Todas</option>
-          {FONTES.map((x) => <option key={x.id} value={x.id}>{x.nome}</option>)}
+          {fontes.map((x) => <option key={x.id} value={x.id}>{x.nome}</option>)}
         </select>
       </label>
       {show.conjunto && (
@@ -178,7 +181,9 @@ function App() {
   useEffect(() => { if (page === "usina" && id) setLastPlant(id); }, [page, id]);
   const byId = useMemo(() => Object.fromEntries(plants.map((p) => [p.plant_id, p])), [plants]);
 
-  const show = page === "" ? { periodo: true, conjunto: true, usina: true } : page === "curtailment" ? { periodo: true } : null;
+  // Curtailment covers wind and solar only: a fonte picked elsewhere (e.g. HID) reads as Todas there.
+  const show = page === "" ? { periodo: true, conjunto: true, usina: true } : page === "curtailment" ? { periodo: true, fontes: CURT_FONTES } : null;
+  const fc = { ...f, fonte: CURT_FONTES.includes(f.fonte) ? f.fonte : null };
   const ready = meta.data && plantsQ.data && f.de;
 
   return (
@@ -195,7 +200,7 @@ function App() {
                     retry={() => { meta.retry(); plantsQ.retry(); }} />
           </div>
         ) : page === "reconciliacao" ? <Reconciliation />
-          : page === "curtailment" ? <Curtailment f={f} />
+          : page === "curtailment" ? <Curtailment f={fc} />
           : page === "mapa" ? <Suspense fallback={<div className="sheet sheet--boot"><Status loading /></div>}><MapSheet f={f} plants={plants}
               filters={<Filters f={f} set={setF} meta={meta.data} plants={plants} show={{ conjunto: true }} slim />} /></Suspense>
           : page === "usina" && id ? <Plant id={id} plant={byId[id]} />

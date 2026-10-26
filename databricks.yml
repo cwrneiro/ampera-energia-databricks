@@ -3,7 +3,7 @@ bundle:
 
 include:
   - resources/*.yml
-  - targets/*.yml        # per-environment overlays: target, host and the environment-specific variables (SETUP.md)
+  - targets/*.yml        # the dev overlay: host + workspace-specific variables (template: targets/dev.yml.example)
 
 sync:
   include:

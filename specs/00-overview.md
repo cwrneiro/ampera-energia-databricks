@@ -56,7 +56,7 @@ multi-tenant; price/generation forecasting; history beyond the 24-month window.
 | 20 | Lakebase | Project `ampera-demo` (PG 17, autoscale 0.5–4 CU, scale-to-zero after 20 min); SNAPSHOT synced tables in `ampera_catalog.ampera_gold_lb` (Postgres schema `ampera_gold_lb`); refresh job after the pipeline — spec 05 |
 | 21 | App shape | 4 pages (Visão geral, Reconciliação, Mapa, Usina); MapLibre GL + OpenFreeMap `positron` tiles; Recharts; `psycopg[binary]`; React/Vite built locally, `dist` shipped by the bundle (2026-10-02) — spec 06 |
 | 22 | Genie Agent | Raw gold tables (all 4, no Metric View) + SQL snippets; PT-BR surfaces; ~12 checked chat benchmarks; managed as a bundle `genie_spaces` resource (2026-10-02) — spec 07 |
-| 23–26 | Handoff | SETUP.md + AGENTS.md + `/setup`; additive `targets/<target>.yml`; cheap validation; catalog parameterized (2026-10-09) — spec 10 |
+| 23–26 | Handoff | ~~SETUP.md + AGENTS.md + `/setup`; additive `targets/<target>.yml`; cheap validation (2026-10-09) — spec 10~~ **Removed 2026-10-26**: customer deployment is out of scope; reproduce = numbered scripts in README, one `targets/dev.yml.example` overlay. The parameterized catalog stays. |
 | 27 | Purpose | End-to-end demo for fictional **Ampera Energia Analytics** (public data only) |
 | 28 | Workspace | `<profile>`; schemas `ampera_*` inside `ampera_catalog` (existing catalog; the bundle never runs CREATE CATALOG) |
 | 29 | ML problem | Curtailment detection: expected unconstrained CF from weather; labels = ONS constrained-off flags already in bronze — spec 11 |

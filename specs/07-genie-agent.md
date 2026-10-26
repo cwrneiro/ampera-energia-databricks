@@ -10,7 +10,7 @@ especially "geração por CEG" and "por conjunto" — and get correct SQL-backed
 - **Space:** "Ampera · Geração Elétrica", id (set on deploy), warehouse
   `<warehouse-id>` (`var.warehouse_id`). Bundle resource `resources/ampera_genie.genie_space.yml`;
   body in `resources/genie/ampera.geniespace.json` (catalog name is literal there, not `${var.catalog}`;
-  other targets deploy a catalog-substituted copy, SETUP §3).
+  `scripts/deploy_and_refresh.sh` deploys a catalog-substituted copy, `targets/dev.geniespace.json`).
 - **Sources:** all four gold tables, raw (no Metric View): `generation_daily` (default grain),
   `plant_location` (capacity, municipality), `reconciliation_monthly`, `fact_generation_hourly` (hourly
   profiles only). Join specs: both facts → `plant_location` on `plant_id` (many-to-one).

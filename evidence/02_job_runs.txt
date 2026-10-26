@@ -1,7 +1,55 @@
 # Lakeflow Job ampera_refresh — recent runs and task results
-# captured 2026-10-23 15:18 UTC from workspace profile <profile>
+# captured 2026-10-26 21:03 UTC from workspace profile <profile>
 
-run 100000000000001  SUCCESS  params=[{'default': 'false', 'name': 'train', 'value': 'false'}]  start=2026-10-23 15:05 UTC
+run 100000000000004  SUCCESS  params=[{'default': 'false', 'name': 'train', 'value': 'false'}]  start=2026-10-26 20:54 UTC
+   medallion                      SUCCESS       1.9 min
+   adjudicate_ai                  SUCCESS       0.6 min
+   train_gate                     SUCCESS       0.0 min
+   eval_ai_decide                 EXCLUDED      0.0 min
+   train_curtailment              EXCLUDED      0.0 min
+   new_verdicts_gate              SUCCESS       0.0 min
+   medallion_rerun                EXCLUDED      0.0 min
+   score_curtailment              SUCCESS       4.6 min
+   sync_generation_daily          SUCCESS       0.4 min
+   sync_plant_location            SUCCESS       0.4 min
+   sync_reconciliation_ai_review  SUCCESS       0.4 min
+   sync_reconciliation_monthly    SUCCESS       0.4 min
+   governance                     SUCCESS       1.2 min
+   sync_curtailment_daily         SUCCESS       0.7 min
+
+run 100000000000006  SUCCESS  params=[{'default': 'false', 'name': 'train', 'value': 'false'}]  start=2026-10-26 20:34 UTC
+   medallion                      SUCCESS       5.9 min
+   adjudicate_ai                  SUCCESS       1.0 min
+   train_gate                     SUCCESS       0.0 min
+   eval_ai_decide                 EXCLUDED      0.0 min
+   train_curtailment              EXCLUDED      0.0 min
+   new_verdicts_gate              SUCCESS       0.0 min
+   medallion_rerun                SUCCESS       5.6 min
+   score_curtailment              SUCCESS       4.4 min
+   sync_generation_daily          SUCCESS       1.0 min
+   sync_plant_location            SUCCESS       0.5 min
+   sync_reconciliation_ai_review  SUCCESS       0.5 min
+   sync_reconciliation_monthly    SUCCESS       0.5 min
+   governance                     SUCCESS       1.2 min
+   sync_curtailment_daily         SUCCESS       0.9 min
+
+run 100000000000001  FAILED  params=[{'default': 'false', 'name': 'train', 'value': 'false'}]  start=2026-10-26 20:15 UTC
+   medallion                      FAILED       13.3 min
+   adjudicate_ai                  UPSTREAM_FAILED    0.0 min
+   train_gate                     UPSTREAM_FAILED    0.0 min
+   new_verdicts_gate              UPSTREAM_FAILED    0.0 min
+   eval_ai_decide                 UPSTREAM_FAILED    0.0 min
+   train_curtailment              UPSTREAM_FAILED    0.0 min
+   medallion_rerun                UPSTREAM_FAILED    0.0 min
+   score_curtailment              UPSTREAM_FAILED    0.0 min
+   sync_generation_daily          UPSTREAM_FAILED    0.0 min
+   sync_plant_location            UPSTREAM_FAILED    0.0 min
+   sync_reconciliation_ai_review  UPSTREAM_FAILED    0.0 min
+   sync_reconciliation_monthly    UPSTREAM_FAILED    0.0 min
+   governance                     UPSTREAM_FAILED    0.0 min
+   sync_curtailment_daily         UPSTREAM_FAILED    0.0 min
+
+run 100000000000003  SUCCESS  params=[{'default': 'false', 'name': 'train', 'value': 'false'}]  start=2026-10-23 15:05 UTC
    medallion                      SUCCESS       5.9 min
    sync_generation_daily          SUCCESS       1.2 min
    sync_plant_location            SUCCESS       0.4 min
@@ -14,7 +62,7 @@ run 100000000000001  SUCCESS  params=[{'default': 'false', 'name': 'train', 'val
    governance                     SUCCESS       1.1 min
    sync_curtailment_daily         SUCCESS       0.9 min
 
-run 100000000000003  SUCCESS  params=[{'default': 'false', 'name': 'train', 'value': 'false'}]  start=2026-10-22 01:42 UTC
+run 100000000000007  SUCCESS  params=[{'default': 'false', 'name': 'train', 'value': 'false'}]  start=2026-10-22 01:42 UTC
    medallion                      SUCCESS       5.6 min
    sync_generation_daily          SUCCESS       1.0 min
    sync_plant_location            SUCCESS       0.5 min
@@ -26,32 +74,4 @@ run 100000000000003  SUCCESS  params=[{'default': 'false', 'name': 'train', 'val
    score_curtailment              SUCCESS       4.5 min
    governance                     SUCCESS       1.5 min
    sync_curtailment_daily         SUCCESS       0.9 min
-
-run 100000000000002  FAILED  params=[{'default': 'false', 'name': 'train', 'value': 'true'}]  start=2026-10-22 01:06 UTC
-   medallion                      SUCCESS       5.4 min
-   sync_generation_daily          SUCCESS       1.0 min
-   sync_plant_location            SUCCESS       0.5 min
-   sync_reconciliation_ai_review  SUCCESS       0.5 min
-   sync_reconciliation_monthly    SUCCESS       0.5 min
-   train_gate                     SUCCESS       0.0 min
-   eval_ai_decide                 SUCCESS       1.1 min
-   train_curtailment              SUCCESS       3.2 min
-   score_curtailment              SUCCESS       4.1 min
-   governance                     FAILED        0.2 min
-   sync_curtailment_daily         SUCCESS       0.9 min
-   governance                     FAILED        0.4 min
-
-run 10000000000004  FAILED  params=[{'default': 'false', 'name': 'train', 'value': 'true'}]  start=2026-10-22 00:33 UTC
-   medallion                      SUCCESS       5.9 min
-   sync_generation_daily          FAILED        0.0 min
-   sync_plant_location            FAILED        0.0 min
-   sync_reconciliation_ai_review  FAILED        0.0 min
-   sync_reconciliation_monthly    FAILED        0.0 min
-   train_gate                     SUCCESS       0.0 min
-   eval_ai_decide                 SUCCESS       0.9 min
-   train_curtailment              SUCCESS       3.0 min
-   score_curtailment              SUCCESS       4.0 min
-   governance                     FAILED        0.2 min
-   sync_curtailment_daily         FAILED        0.0 min
-   governance                     FAILED        0.5 min
 

@@ -38,11 +38,10 @@ data/
 .impeccable/questions/
 .impeccable/mocks/
 
-# Per-customer setup state and runbook (written by /setup)
-handoff/
+# Isaac Review output
 .isaac/
 
-# Per-environment bundle overlays (workspace-specific); the .example is the template
+# Workspace bundle overlay (targets/dev.yml) and its Genie payload; targets/dev.yml.example is the template
 targets/*.yml
 targets/*.geniespace.json
 

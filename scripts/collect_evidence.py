@@ -127,7 +127,10 @@ def ml_genai():
     body = section(f"""SELECT nom_usina, uf, tipo, ai_choice, ai_confidence, ai_accepted, a_nome, ai_prob_a, b_nome, ai_prob_b,
              c_nome, ai_prob_c, ai_prob_nenhum, match_method, plant_id
       FROM {CAT}.ampera_gold.reconciliation_ai_review ORDER BY ai_accepted DESC, ai_confidence DESC""",
-                   "every ai_decide verdict in production (applied at confidence >= 0.9, else review queue)")
+                   "every ai_decide verdict in production (applied at confidence >= 0.9 unless an earlier rung placed it; else review queue)")
+    body += section(f"""SELECT count(*) AS verdicts, count(DISTINCT ons_key) AS ons_plants, count(DISTINCT prompt_hash) AS prompts,
+             min(decided_at) AS first_decided, max(decided_at) AS last_decided
+      FROM {CAT}.ampera_silver.ai_decide_verdict""", "durable verdict store: each plant asked once per candidate set and prompt")
     body += section(f"""SELECT truth, ai_choice, count(*) AS n FROM {CAT}.ampera_silver.ai_decide_eval GROUP BY ALL ORDER BY ALL""",
                     "blind eval (CEG registry number hidden), confusion")
     write("05_genai_ai_decide.txt", "GenAI — ai_decide reconciliation verdicts and blind evaluation", body)
@@ -183,10 +186,10 @@ def lakebase_and_app():
 def tests():
     env = {**os.environ, "DATABRICKS_CONFIG_PROFILE": P, "DATABRICKS_WAREHOUSE_ID": WH, "CATALOG": CAT, "GENIE_LIVE": "1"}
     body = ""
-    for t in ("tests/test_reconciliation.py", "tests/test_genie_space.py"):
+    for t in ("tests/test_reconciliation.py", "tests/test_curtailment.py", "tests/test_app_api.py", "tests/test_genie_space.py"):
         r = subprocess.run([sys.executable, t], cwd=ROOT, capture_output=True, text=True, env=env)
         body += f"$ python3 {t}\n{r.stdout}{r.stderr}exit={r.returncode}\n\n"
-    write("09_tests.txt", "Runnable checks — reconciliation logic and Genie benchmark SQL (live)", body)
+    write("09_tests.txt", "Runnable checks — reconciliation and curtailment logic, app API, Genie benchmark SQL (live)", body)
 
 
 if __name__ == "__main__":

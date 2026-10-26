@@ -37,7 +37,7 @@ workspace `<profile>`.
 | **Unity Catalog — govern** | Schemas `ampera_bronze/silver/gold/gold_lb` with a comment on every table. Group `ampera_analysts` reads gold only. Tags (`ampera_layer`, `ampera_source`, `ampera_ai`, governed `class.geo_coordinates` on coordinates). Model registered in UC. Lineage | [`notebooks/governance.py`](notebooks/governance.py) (last job task) | [`notebooks/governance.ipynb`](evidence/notebooks/governance.ipynb) (grants, tags, full lineage bronze → ML → Lakebase from `system.access.table_lineage`), [`03_medallion_tables.txt`](evidence/03_medallion_tables.txt) (every table, row count, comment) |
 | **Lakebase — operational serving** | Autoscaling Lakebase Postgres `ampera-demo` (0.5–4 CU, scale-to-zero). 5 synced tables (gold → Postgres) refreshed by the job. The app reads only Lakebase | [`scripts/create_synced_tables.sh`](scripts/create_synced_tables.sh), [`app/app.py`](app/app.py) | [`06_lakebase_serving.txt`](evidence/06_lakebase_serving.txt) (sync state, last sync), [`07_app_api.txt`](evidence/07_app_api.txt) (API answers served from Postgres) |
 | **ML — curtailment model** | scikit-learn `HistGradientBoostingRegressor` per technology. It predicts the unconstrained capacity factor from weather (Open-Meteo, plus ONS at-plant measurements where they exist), hour, month and plant history, and is trained only on hours ONS did not flag. Tracked in MLflow, registered in UC as `curtailment_expected_cf@champion`, and batch-scored every refresh | [`notebooks/train_curtailment.py`](notebooks/train_curtailment.py), [`notebooks/score_curtailment.py`](notebooks/score_curtailment.py), [`gold_curtailment_features_hourly.sql`](src/transformations/gold_curtailment_features_hourly.sql) | [`notebooks/train_curtailment.ipynb`](evidence/notebooks/train_curtailment.ipynb) (data, test error vs ONS, Y tuning table, registration), [`notebooks/score_curtailment.ipynb`](evidence/notebooks/score_curtailment.ipynb), [`04_ml_curtailment.txt`](evidence/04_ml_curtailment.txt) |
-| **GenAI — `ai_decide` reconciliation** | Inside the pipeline, `ai_decide` (calibrated choice over 3 SIGA candidates or *nenhum*) places ONS plants the rules can't. It auto-applies at confidence ≥ 0.9; anything less goes to a human review queue in the app. A blind evaluation measures how far to trust it | [`reco_ai.py`](src/transformations/reco_ai.py), [`silver_plant_match_ai.py`](src/transformations/silver_plant_match_ai.py), [`silver_plant_match.py`](src/transformations/silver_plant_match.py), [`notebooks/eval_ai_decide.py`](notebooks/eval_ai_decide.py) | [`notebooks/eval_ai_decide.ipynb`](evidence/notebooks/eval_ai_decide.ipynb) (accuracy, calibration, confusion), [`05_genai_ai_decide.txt`](evidence/05_genai_ai_decide.txt) (every production verdict) |
+| **GenAI — `ai_decide` reconciliation** | `ai_decide` (calibrated choice over 3 SIGA candidates or *nenhum*) places ONS plants the rules can't. It is asked once per plant, candidate set and prompt, and the verdict is kept, so refreshes are deterministic and don't re-bill. It auto-applies at confidence ≥ 0.9; anything less goes to a human review queue in the app. A blind evaluation measures how far to trust it | [`reco_ai.py`](src/transformations/reco_ai.py), [`notebooks/adjudicate_ai.py`](notebooks/adjudicate_ai.py), [`silver_ai_verdict.py`](src/transformations/silver_ai_verdict.py), [`silver_plant_match.py`](src/transformations/silver_plant_match.py), [`notebooks/eval_ai_decide.py`](notebooks/eval_ai_decide.py) | [`notebooks/adjudicate_ai.ipynb`](evidence/notebooks/adjudicate_ai.ipynb) (verdicts asked / on file), [`notebooks/eval_ai_decide.ipynb`](evidence/notebooks/eval_ai_decide.ipynb) (accuracy, calibration, confusion), [`05_genai_ai_decide.txt`](evidence/05_genai_ai_decide.txt) (every production verdict) |
 | **Genie Agent — natural language** | Genie space over the 5 gold marts. PT-BR instructions, example SQL, join specs and 38 benchmark questions. Deployed by the bundle | [`resources/genie/ampera.geniespace.json`](resources/genie/ampera.geniespace.json) | [`08_genie_conversations.json`](evidence/08_genie_conversations.json) (5 questions → answer text, generated SQL, rows), [`09_tests.txt`](evidence/09_tests.txt) (every curated SQL runs live) |
 | **Databricks App — to the business** | FastAPI + React (PT-BR) with 5 sheets: Overview, Reconciliation (incl. the `ai_decide` review queue), Curtailment, Map, Plant (actual vs expected). A slide-out **Genie chat** runs *on behalf of the signed-in user* (UC grants apply per user) and renders interactive Recharts plots | [`app/`](app/), [`resources/ampera_app.app.yml`](resources/ampera_app.app.yml) | [`07_app_api.txt`](evidence/07_app_api.txt), [`08_genie_conversations.json`](evidence/08_genie_conversations.json) (asked through the deployed app's `/api/genie`) |
 
@@ -64,12 +64,37 @@ moves data end to end:
 
 ## Reproduce
 
-[`SETUP.md`](SETUP.md) takes an empty workspace to a running deployment. The scripts used for this
-build are in [`scripts/`](scripts/) (`bootstrap_workspace.sh` → `run_first_refresh.sh` →
-`deploy_and_refresh.sh`). The evidence is regenerated with `python3 scripts/collect_evidence.py`
-and `python3 scripts/export_run_notebooks.py <job_run_id>`. Raw data is downloaded by the commands
-in SETUP §5 and is not committed. Architecture: [`ARCHITECTURE.md`](ARCHITECTURE.md). Design
-decisions: [`specs/00-overview.md`](specs/00-overview.md) (decision log) and `specs/01`–`15`.
+Needs the Databricks CLI ≥ 0.294, `jq`, Python 3.11+ (`databricks-sdk`, `psycopg` for the app test),
+Node 20+, `curl` and `unzip`; a workspace with Unity Catalog, serverless compute, Lakebase
+Autoscaling, Databricks Apps and Genie; and an existing catalog you can create schemas in. Every
+script takes the CLI profile as its last argument (default `$DATABRICKS_CONFIG_PROFILE`).
+
+1. `cp targets/dev.yml.example targets/dev.yml` and fill the workspace host, catalog and warehouse.
+2. `scripts/bootstrap_workspace.sh <profile>`: Unity Catalog schemas, the raw volume, the empty
+   override and ai_decide verdict tables, the Lakebase project and the `ampera_analysts` group.
+3. `scripts/land_raw_data.sh <profile>`: ONS, ANEEL SIGA, INMET and an Open-Meteo seed into the volume.
+   It ends by printing the one manual step: the CCEE PLD download (CCEE blocks scripted clients).
+4. `scripts/run_first_refresh.sh <profile>`: first deploy and medallion run, the refresh job with a
+   model retrain, then the Lakebase synced tables. Paste the printed `sync_pipeline_*` ids into
+   `targets/dev.yml`.
+5. `scripts/deploy_and_refresh.sh false <profile>`: deploy, start the app, grant its service
+   principal read on `ampera_gold_lb`, run the refresh job.
+6. Full weather history (resumable; about 3 daily runs on the free tier), then refresh:
+   ```bash
+   databricks experimental aitools tools query -w <warehouse-id> -p <profile> -o json \
+     "SELECT round(lat*4)/4 AS lat, round(lon*4)/4 AS lon, count(*) plants FROM <catalog>.ampera_silver.dim_plant
+      WHERE lat IS NOT NULL GROUP BY 1,2" > data/raw/open_meteo/cells.json
+   python3 scripts/fetch_open_meteo.py
+   databricks fs cp -r --overwrite data/raw/open_meteo/raw dbfs:/Volumes/<catalog>/ampera_bronze/raw/open_meteo -p <profile>
+   databricks bundle run ampera_refresh -p <profile>
+   ```
+7. Tests: `python3 tests/test_reconciliation.py`, `python3 tests/test_curtailment.py`,
+   `python3 tests/test_genie_space.py`, `DATABRICKS_CONFIG_PROFILE=<profile> python3 tests/test_app_api.py`.
+
+The evidence is regenerated with `python3 scripts/collect_evidence.py` and
+`python3 scripts/export_run_notebooks.py <job_run_id>`. Raw data is not committed. Architecture:
+[`ARCHITECTURE.md`](ARCHITECTURE.md). Design decisions: [`specs/00-overview.md`](specs/00-overview.md)
+(decision log) and `specs/01`–`15`.
 
 ## Data sources (all public)
 

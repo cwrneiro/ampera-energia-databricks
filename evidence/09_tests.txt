@@ -1,13 +1,34 @@
-# Runnable checks — reconciliation logic and Genie benchmark SQL (live)
-# captured 2026-10-23 15:25 UTC from workspace profile <profile>
+# Runnable checks — reconciliation and curtailment logic, app API, Genie benchmark SQL (live)
+# captured 2026-10-26 21:09 UTC from workspace profile <profile>
 
 $ python3 tests/test_reconciliation.py
+ok test_ai_accept
 ok test_fuel_class
 ok test_name_sim_crosses_threshold
 ok test_normalize_ceg
 ok test_normalize_name
 ok test_numbered_plants_never_fuzzy_match
+ok test_verdict_key
 ALL PASS
+exit=0
+
+$ python3 tests/test_curtailment.py
+ok test_choose_y
+ok test_lost_energy_never_negative
+ok test_low_expected_output_is_never_judged
+ok test_worked_example
+ALL PASS
+exit=0
+
+$ python3 tests/test_app_api.py
+ok test_where
+ok test_grain
+ok test_cold_compute_drains_pool_then_503
+ok test_genie_runs_as_the_signed_in_user
+ok test_genie_errors_are_typed
+ok test_plant_loads_before_curtailment_is_synced
+skip live check (PGHOST unset)
+ok test_totals_tie_live
 exit=0
 
 $ python3 tests/test_genie_space.py

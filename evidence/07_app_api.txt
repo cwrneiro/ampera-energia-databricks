@@ -1,14 +1,14 @@
 # Databricks App — deployed app, API responses read from Lakebase
-# captured 2026-10-23 15:20 UTC from workspace profile <profile>
+# captured 2026-10-26 21:06 UTC from workspace profile <profile>
 
 app ampera-app  status=RUNNING  compute=ACTIVE  user_api_scopes=['dashboards.genie', 'iam.access-control:read', 'iam.current-user:read']
 resources=[{"name": "postgres", "postgres": {"branch": "projects/ampera-demo/branches/production", "database": "projects/ampera-demo/branches/production/databases/databricks-postgres", "permission": "CAN_CONNECT_AND_CREATE"}}, {"genie_space": {"name": "Ampera · Geração Elétrica", "permission": "CAN_RUN", "space_id": "<genie-space-id>"}, "name": "genie"}]
 
 GET /api/meta -> {"de": "2024-10-01", "ate": "2026-09-30"}
 
-GET /api/overview -> kpis {"mwh": 1404190183.3386645, "mwh_estimado": 7822578.613026092, "valor_rs": 297071553097.3691, "pld_capturado": 211.56076763835412, "n_usinas": 2292}
-   fontes [{"fonte": "EOL", "mwh": 223551772.9592246, "pld_medio": 190.57875114672828, "pld_capturado": 199.7756856003007, "n_usinas": 1111}, {"fonte": "HID", "mwh": 817453126.7921085, "pld_medio": 217.00733678582915, "pld_capturado": 223.61857935079837, "n_usinas": 252}, {"fonte": "NUC", "mwh": 29346101.767000042, "pld_medio": 219.67460502283066, "pld_capturado": 219.7047658139026, "n_usinas": 2}, {"fonte": "OTHER", "mwh": 25980923.152388748, "pld_medio": 205.79503983025114, "pld_capturado": 221.58670462791176, "n_usinas": 46}, {"fonte": "SOL", "mwh": 189182524.50843605, "pld_medio": 200.42417734231344, "pld_capturado": 154.73823959706758, "n_usinas": 672}, {"fonte": "THERM", "mwh": 118675734.15950648, "pld_medio": 205.88595844950876, "pld_capturado": 237.07762434887857, "n_usinas": 209}]
-   top plants [{"plant_id": "UHE.PH.PR.001161-4.1", "nome": "Itaipu (Parte Brasileira)", "uf": "PR", "mwh": 96562614.22341643, "mwh_estimado": 0.0}, {"plant_id": "UHE.PH.PA.030354-2.1", "nome": "Belo Monte", "uf": "PA", "mwh": 57231031.22375223, "mwh_estimado": 0.0}, {"plant_id": "UHE.PH.PA.002889-4.1", "nome": "Tucuruí", "uf": "PA", "mwh": 54297234.607690476, "mwh_estimado": 0.0}]
+GET /api/overview -> kpis {"mwh": 1404190183.3386657, "mwh_estimado": 7822578.613026084, "valor_rs": 297071553097.36884, "pld_capturado": 211.56076763835378, "n_usinas": 2292}
+   fontes [{"fonte": "EOL", "mwh": 223551772.9592269, "pld_medio": 190.5787511467481, "pld_capturado": 199.77568560029735, "n_usinas": 1111}, {"fonte": "HID", "mwh": 817453126.7921073, "pld_medio": 217.00733678582114, "pld_capturado": 223.6185793507986, "n_usinas": 252}, {"fonte": "NUC", "mwh": 29346101.76700002, "pld_medio": 219.6746050228307, "pld_capturado": 219.7047658139028, "n_usinas": 2}, {"fonte": "OTHER", "mwh": 25980923.15238875, "pld_medio": 205.79503983025123, "pld_capturado": 221.5867046279117, "n_usinas": 46}, {"fonte": "SOL", "mwh": 189182524.5084364, "pld_medio": 200.42417734231597, "pld_capturado": 154.73823959706743, "n_usinas": 672}, {"fonte": "THERM", "mwh": 118675734.15950643, "pld_medio": 205.8859584495083, "pld_capturado": 237.07762434887897, "n_usinas": 209}]
+   top plants [{"plant_id": "UHE.PH.PR.001161-4.1", "nome": "Itaipu (Parte Brasileira)", "uf": "PR", "mwh": 96562614.22341643, "mwh_estimado": 0.0}, {"plant_id": "UHE.PH.PA.030354-2.1", "nome": "Belo Monte", "uf": "PA", "mwh": 57231031.22375225, "mwh_estimado": 0.0}, {"plant_id": "UHE.PH.PA.002889-4.1", "nome": "Tucuruí", "uf": "PA", "mwh": 54297234.60769047, "mwh_estimado": 0.0}]
 
 GET /api/curtailment -> 48 month×fonte rows; top plants:
 [
@@ -18,9 +18,9 @@ GET /api/curtailment -> 48 month×fonte rows; top plants:
   "uf": "CE",
   "fonte": "EOL",
   "capacidade_mw": 57.0,
-  "mwh": 256880.11,
-  "mwh_restrito": 166077.4863164473,
-  "valor_rs_perdido": 27304285.731208183,
+  "mwh": 256880.11000000002,
+  "mwh_restrito": 166077.48631644723,
+  "valor_rs_perdido": 27304285.73120818,
   "horas_modelo": 7895,
   "horas_ons": 8570
  },
@@ -30,9 +30,9 @@ GET /api/curtailment -> 48 month×fonte rows; top plants:
   "uf": "RN",
   "fonte": "EOL",
   "capacidade_mw": 100.65,
-  "mwh": 216917.8075,
-  "mwh_restrito": 159764.39147465903,
-  "valor_rs_perdido": 26720012.23893691,
+  "mwh": 216917.80749999997,
+  "mwh_restrito": 159764.39147465897,
+  "valor_rs_perdido": 26720012.238936897,
   "horas_modelo": 6381,
   "horas_ons": 10025
  },
@@ -42,7 +42,7 @@ GET /api/curtailment -> 48 month×fonte rows; top plants:
   "uf": "RN",
   "fonte": "EOL",
   "capacidade_mw": 42.0,
-  "mwh": 241924.64449999994,
+  "mwh": 241924.64450000005,
   "mwh_restrito": 154547.84208766575,
   "valor_rs_perdido": 25363584.588243186,
   "horas_modelo": 7631,
@@ -54,9 +54,9 @@ GET /api/curtailment -> 48 month×fonte rows; top plants:
   "uf": "RN",
   "fonte": "EOL",
   "capacidade_mw": 42.0,
-  "mwh": 221250.9929999999,
-  "mwh_restrito": 142824.19618721094,
-  "valor_rs_perdido": 23004763.92504195,
+  "mwh": 221250.99299999996,
+  "mwh_restrito": 142824.1961872109,
+  "valor_rs_perdido": 23004763.92504196,
   "horas_modelo": 7620,
   "horas_ons": 11121
  },
@@ -66,8 +66,8 @@ GET /api/curtailment -> 48 month×fonte rows; top plants:
   "uf": "RN",
   "fonte": "EOL",
   "capacidade_mw": 67.2,
-  "mwh": 590645.9095,
-  "mwh_restrito": 151782.47549489784,
+  "mwh": 590645.9094999998,
+  "mwh_restrito": 151782.47549489778,
   "valor_rs_perdido": 22148695.572342142,
   "horas_modelo": 4958,
   "horas_ons": 11166

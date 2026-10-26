@@ -1,5 +1,5 @@
 # ML — curtailment model in UC, scoring output and agreement with ONS
-# captured 2026-10-23 15:20 UTC from workspace profile <profile>
+# captured 2026-10-26 21:05 UTC from workspace profile <profile>
 
 {
  "comment": "Expected unconstrained capacity factor (wind/solar) from Open-Meteo weather; flags curtailment where actual < Y x expected. Spec 11. Trained by notebooks/train_curtailment.",

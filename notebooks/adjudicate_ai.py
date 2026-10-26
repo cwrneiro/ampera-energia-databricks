@@ -47,6 +47,7 @@ if n:
     # the next run re-asks only that plant — and this task fails so it doesn't land as "unmatched" silently.
     (reco_ai.decide(new).withColumn("decided_at", F.current_timestamp())
      .write.mode("overwrite").option("overwriteSchema", "true").saveAsTable(NEW))
+    spark.sql(f"COMMENT ON TABLE {NEW} IS 'Silver (GenAI): staging for the latest adjudication run (answers checked, then MERGEd into ai_decide_verdict). Spec 12.'")  # noqa: F821
     spark.sql(f"""MERGE INTO {V} t USING (SELECT * FROM {NEW} WHERE ai_error IS NULL AND ai_choice IS NOT NULL) s
                   ON t.ons_key = s.ons_key AND t.cand_hash = s.cand_hash AND t.prompt_hash = s.prompt_hash
                   WHEN NOT MATCHED THEN INSERT *""")  # noqa: F821

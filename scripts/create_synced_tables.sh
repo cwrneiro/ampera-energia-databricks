@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 # Create the Lakebase synced tables the app reads (SNAPSHOT) and print their pipeline ids for
-# databricks.yml (sync_pipeline_*). SETUP.md §6.2. Usage: scripts/create_synced_tables.sh [profile]
-set -uo pipefail
+# targets/dev.yml (sync_pipeline_*). Spec 05. Usage: scripts/create_synced_tables.sh [profile]
+set -euo pipefail
 P=${1:-${DATABRICKS_CONFIG_PROFILE:-DEFAULT}}
 cd "$(dirname "$0")/.."
-bv() { databricks bundle validate -p "$P" -o json | jq -r ".variables.$1.value"; }  # values come from targets/<target>.yml
+bv() {  # bundle variable from targets/dev.yml; an empty value aborts (never write grants/payloads against "")
+  local v; v=$(databricks bundle validate -p "$P" -o json | jq -r ".variables.$1.value // empty")
+  [ -n "$v" ] || { echo "bundle validate returned no value for '$1' — fill targets/dev.yml" >&2; exit 1; }
+  echo "$v"
+}
 CAT=$(bv catalog); LB=$(bv lakebase_project)
 sync() {  # <table> <primary key as a JSON array>
   databricks postgres get-synced-table synced_tables/$CAT.ampera_gold_lb.$1 -p "$P" >/dev/null 2>&1 || \

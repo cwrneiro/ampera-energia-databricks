@@ -1,5 +1,5 @@
 # Unity Catalog medallion — tables, row counts and reconciliation results
-# captured 2026-10-23 15:20 UTC from workspace profile <profile>
+# captured 2026-10-26 21:17 UTC from workspace profile <profile>
 
         schema                        table               type      rows                                                                                     comment
  ampera_bronze             ccee_pld_horario    STREAMING_TABLE     96576     Bronze: raw CCEE hourly PLD (R$/MWh) per submarket, as downloaded + ingestion metadata.
@@ -24,6 +24,8 @@ ampera_gold_lb               plant_location            FOREIGN      2292        
 ampera_gold_lb     reconciliation_ai_review            FOREIGN        33                                                 Database table synced from another UC table
 ampera_gold_lb       reconciliation_monthly            FOREIGN       331                                                 Database table synced from another UC table
  ampera_silver               ai_decide_eval            MANAGED       200  Silver (GenAI eval): blind ai_decide answers on CEG-matched ONS plants with the CEG hidden
+ ampera_silver            ai_decide_verdict            MANAGED        33  Silver (GenAI): durable ai_decide verdicts, one per ONS plant x candidate set x prompt (no
+ ampera_silver        ai_decide_verdict_new            MANAGED        33                                                                                            
  ampera_silver              conjunto_member  MATERIALIZED_VIEW      2143    Silver: complex (conjunto_key) -> member plant_id with validity dates and SIGA capacity.
  ampera_silver     curtailment_label_hourly  MATERIALIZED_VIEW  26544677  Silver: ONS constrained-off flag (restrito_ons) and ONS estimated MWh per wind/solar plant
  ampera_silver                    dim_plant  MATERIALIZED_VIEW      2292          Silver: one row per plant_id (SIGA registry attrs where linked, else ONS-sourced).
@@ -34,7 +36,7 @@ ampera_gold_lb       reconciliation_monthly            FOREIGN       331        
  ampera_silver                    ons_plant  MATERIALIZED_VIEW       967            Silver: one row per ONS plant (id_ons) with normalized name/CEG/fuel match keys.
  ampera_silver          plant_inmet_station  MATERIALIZED_VIEW       291  Silver: nearest INMET station (<= 50 km) for located plants that have no ONS at-plant weat
  ampera_silver                  plant_match  MATERIALIZED_VIEW       967  Silver: id_ons -> plant_id with match_method (override/ceg/fuzzy/ai_decide/unmatched) + co
- ampera_silver               plant_match_ai  MATERIALIZED_VIEW        33  Silver (GenAI): ai_decide verdict (A/B/C/nenhum + calibrated probabilities) for ONS plants
+ ampera_silver         plant_match_ai_check  MATERIALIZED_VIEW         2  Silver check: ai_decide matches vs their verdict and CEG link — every row must pass the ex
  ampera_silver            plant_match_check  MATERIALIZED_VIEW         0     Silver check: duplicated series or unapplied override in plant_match — must stay empty.
  ampera_silver         plant_match_override            MANAGED         0                                 Manual reconciliation overrides; newest row per ons_id wins
  ampera_silver             price_pld_hourly  MATERIALIZED_VIEW     96576                Silver: hourly PLD (R$/MWh) per submercado (ONS subsystem code), local time.

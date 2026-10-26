@@ -1,10 +1,10 @@
 # Lakebase — synced tables (gold -> Postgres) and project
-# captured 2026-10-23 15:20 UTC from workspace profile <profile>
+# captured 2026-10-26 21:05 UTC from workspace profile <profile>
 
-generation_daily           source=ampera_gold.generation_daily  pipeline=<synced-table-pipeline-id>  state=SYNCED_TABLE_ONLINE_NO_PENDING_UPDATE  last_sync={"delta_commit_time": "1970-01-01T00:00:00Z", "delta_commit_version": 10}
-plant_location             source=ampera_gold.plant_location  pipeline=<synced-table-pipeline-id>  state=SYNCED_TABLE_ONLINE_NO_PENDING_UPDATE  last_sync={"delta_commit_time": "1970-01-01T00:00:00Z", "delta_commit_version": 7}
-reconciliation_monthly     source=ampera_gold.reconciliation_monthly  pipeline=<synced-table-pipeline-id>  state=SYNCED_TABLE_ONLINE_NO_PENDING_UPDATE  last_sync={"delta_commit_time": "1970-01-01T00:00:00Z", "delta_commit_version": 7}
-reconciliation_ai_review   source=ampera_gold.reconciliation_ai_review  pipeline=<synced-table-pipeline-id>  state=SYNCED_TABLE_ONLINE_NO_PENDING_UPDATE  last_sync={"delta_commit_time": "1970-01-01T00:00:00Z", "delta_commit_version": 7}
-curtailment_daily          source=ampera_gold.curtailment_daily  pipeline=<synced-table-pipeline-id>  state=SYNCED_TABLE_ONLINE_NO_PENDING_UPDATE  last_sync={"delta_commit_time": "2026-10-23T15:16:30Z", "delta_commit_version": 15}
+generation_daily           source=ampera_gold.generation_daily  pipeline=<synced-table-pipeline-id>  state=SYNCED_TABLE_ONLINE_NO_PENDING_UPDATE  last_sync={"delta_commit_time": "1970-01-01T00:00:00Z", "delta_commit_version": 12}
+plant_location             source=ampera_gold.plant_location  pipeline=<synced-table-pipeline-id>  state=SYNCED_TABLE_ONLINE_NO_PENDING_UPDATE  last_sync={"delta_commit_time": "1970-01-01T00:00:00Z", "delta_commit_version": 9}
+reconciliation_monthly     source=ampera_gold.reconciliation_monthly  pipeline=<synced-table-pipeline-id>  state=SYNCED_TABLE_ONLINE_NO_PENDING_UPDATE  last_sync={"delta_commit_time": "1970-01-01T00:00:00Z", "delta_commit_version": 9}
+reconciliation_ai_review   source=ampera_gold.reconciliation_ai_review  pipeline=<synced-table-pipeline-id>  state=SYNCED_TABLE_ONLINE_NO_PENDING_UPDATE  last_sync={"delta_commit_time": "1970-01-01T00:00:00Z", "delta_commit_version": 9}
+curtailment_daily          source=ampera_gold.curtailment_daily  pipeline=<synced-table-pipeline-id>  state=SYNCED_TABLE_ONLINE_NO_PENDING_UPDATE  last_sync={"delta_commit_time": "2026-10-26T21:01:09Z", "delta_commit_version": 23}
 
 Lakebase project ampera-demo: pg_version=17  default endpoint settings={'autoscaling_limit_max_cu': 1, 'autoscaling_limit_min_cu': 1, 'suspend_timeout_duration': '86400s'}

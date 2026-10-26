@@ -8,12 +8,6 @@ Genie Agent.
 Read `specs/00-overview.md` for the goal and decision log, and `SUCCESS_CRITERIA.md` for the bar.
 Work proceeds **one small spec at a time** (`specs/01..08`).
 
-## First interaction: configured?
-
-If `targets/` has no `*.yml` (only `customer.yml.example`), say one line — "Not configured for your
-workspace yet — run `/setup` (or follow SETUP.md)." — and carry on with the request. Never block,
-never auto-run setup. Setup rules for every agent: `AGENTS.md`.
-
 ## Databricks
 
 - The workspace's CLI profile is named in `CLAUDE.local.md` (gitignored, workspace-specific) — always
@@ -65,3 +59,17 @@ published.
 
 - End commit messages with: `Co-authored-by: Isaac <no-reply@databricks.com>`
 - End PR descriptions with: `This pull request and its description were written by Isaac.`
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues for `cwrneiro/ampera-energia-databricks` (via `gh`). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default five-label vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.

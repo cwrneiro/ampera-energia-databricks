@@ -4,11 +4,26 @@ Used by the silver pipeline files as UDFs. The whole point of normalize_ceg is t
 SIGA CEG codes do NOT join raw (0% overlap) but ~92.5% after normalizing the trailing unit
 segment. See specs/02-reconciliation-silver.md and tests/test_reconciliation.py.
 """
+import hashlib
 import re
 import unicodedata
 
 THRESHOLD = 0.82  # fuzzy accept bar; tune on real unmatched-MWh (spec 02)
 AI_CUTOFF = 0.9  # ai_decide accept bar (confidence); calibrated by notebooks/eval_ai_decide (spec 12)
+AI_CHOICES = ("A", "B", "C")  # ai_decide labels that name a candidate; "nenhum" never does
+
+# Durable ai_decide verdicts (plain Delta, outside the pipeline): one row per ONS plant x candidate set x
+# prompt, written by notebooks/adjudicate_ai, read by the pipeline. A required input like
+# plant_match_override: scripts/bootstrap_workspace.sh creates it empty (a pipeline can't test whether a
+# table exists). TRUNCATE it to force a full re-adjudication. Spec 12.
+VERDICT = "ampera_silver.ai_decide_verdict"
+VERDICT_DDL = ", ".join(
+    ["ons_key STRING", "nom_usina STRING", "uf STRING", "fuel_raw STRING", "ceg_raw STRING"]
+    + [f"{p}_{c}" for p in "abc" for c in ("id STRING", "nome STRING", "uf STRING", "tipo STRING", "municipio STRING",
+                                           "capacidade_mw DOUBLE", "sim DOUBLE")]
+    + ["cand_hash STRING", "prompt_hash STRING", "ai_choice STRING", "ai_confidence DOUBLE", "ai_prob_a DOUBLE",
+       "ai_prob_b DOUBLE", "ai_prob_c DOUBLE", "ai_prob_nenhum DOUBLE", "ai_error STRING", "ai_plant_id STRING",
+       "ai_accepted BOOLEAN", "decided_at TIMESTAMP"])
 
 # Portuguese accent map (uppercase) — mirrored by reco_sql for the Spark `translate` expression.
 ACCENTED = "ÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇÑ"
@@ -105,3 +120,23 @@ def name_sim(a, b):
         return 0.0
     m = max(len(a), len(b))
     return 1.0 - _levenshtein(a, b) / m if m else 0.0
+
+
+def ai_accept(choice, confidence, plant_id):
+    """ai_decide verdict is applied: it names a real candidate (plant_id = the chosen slot's SIGA id) at or
+    above AI_CUTOFF. Mirrors reco_sql.ai_accept_col."""
+    return choice in AI_CHOICES and plant_id is not None and confidence is not None and confidence >= AI_CUTOFF
+
+
+def sha256(s):
+    return hashlib.sha256(s.encode()).hexdigest()
+
+
+def cand_hash(ids):
+    """Hash of the A/B/C candidate ids in order (missing -> ''). Mirrors reco_sql.cand_hash_col."""
+    return sha256("|".join(i or "" for i in ids))
+
+
+def verdict_key(ons_key, ids, prompt):
+    """A stored ai_decide verdict is reused only for the same plant, candidates and prompt (spec 12)."""
+    return ons_key, cand_hash(ids), sha256(prompt)

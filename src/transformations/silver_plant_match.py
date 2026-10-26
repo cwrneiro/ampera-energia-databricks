@@ -1,6 +1,6 @@
 # Silver (CORE): resolve each ONS plant to one plant_id via the matching ladder.
 # override -> CEG(normalized) -> fuzzy(name sim within UF+fuel >= THRESHOLD) -> ai_decide
-# (confidence >= AI_CUTOFF, silver_plant_match_ai) -> surrogate hash.
+# (accepted verdict, silver_ai_verdict) -> surrogate hash.
 # Spec: specs/02-reconciliation-silver.md
 from pyspark import pipelines as dp
 from pyspark.sql import functions as F
@@ -44,8 +44,8 @@ def plant_match():
             .select("ons_key", F.col("f_plant_id").alias("fuzzy_plant_id"),
                     F.col("sim").alias("fuzzy_sim")))
 
-    # Step 3 — GenAI: ai_decide verdict for plants the rules couldn't place (spec 12).
-    ai = (spark.read.table("ampera_silver.plant_match_ai")  # noqa: F821
+    # Step 3 — GenAI: accepted ai_decide verdict for plants the rules couldn't place (spec 12).
+    ai = (spark.read.table("ai_verdict")  # noqa: F821
           .filter("ai_accepted").select("ons_key", "ai_plant_id", "ai_confidence"))
 
     m = ceg.join(best, "ons_key", "left").join(ai, "ons_key", "left")

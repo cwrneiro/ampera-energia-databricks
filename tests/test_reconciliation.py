@@ -54,6 +54,27 @@ def test_numbered_plants_never_fuzzy_match():
     assert R.numerals_match(R.normalize_name("Balbina"), R.normalize_name("UHE Balbina"))  # no numerals
 
 
+def test_ai_accept():
+    # The one acceptance rule the pipeline and the blind eval share (spec 12): a real candidate at or
+    # above the cutoff; "nenhum" or a missing confidence is never applied.
+    assert R.ai_accept("A", 0.95, "X.1")
+    assert not R.ai_accept("A", 0.89, "X.1")
+    assert not R.ai_accept("nenhum", 0.99, None)
+    assert not R.ai_accept("B", None, "Y.1")
+    assert not R.ai_accept(None, 0.99, None)
+    assert not R.ai_accept("C", 0.99, None)  # chose a slot with no candidate (fewer than 3 in the UF)
+
+
+def test_verdict_key():
+    # A stored verdict is reused only for the same plant, candidate set and prompt (spec 12).
+    k = R.verdict_key("ONS-1", ["X.1", "Y.1", None], "prompt v1")
+    assert k == R.verdict_key("ONS-1", ["X.1", "Y.1", None], "prompt v1")
+    assert k[0] == "ONS-1"
+    assert k != R.verdict_key("ONS-1", ["X.1", "Z.1", None], "prompt v1")   # a candidate changed
+    assert k != R.verdict_key("ONS-1", ["X.1", "Y.1", None], "prompt v2")   # the prompt changed
+    assert k != R.verdict_key("ONS-1", ["Y.1", "X.1", None], "prompt v1")   # A/B/C order is part of the question
+
+
 if __name__ == "__main__":
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):

@@ -1,6 +1,7 @@
 -- Gold: the ai_decide review queue for the app's Reconciliação sheet — every ONS plant ai_decide was
--- asked about, its three SIGA candidates with probabilities, whether the pipeline applied the answer
--- (confidence >= AI_CUTOFF) and how much generation rides on it. Synced to Lakebase.
+-- asked about (its verdict for today's candidates, ai_verdict), its three SIGA candidates with
+-- probabilities, the plant's final match_method / plant_id (the app's state comes from these) and how
+-- much generation rides on it. Synced to Lakebase.
 -- Spec: specs/12-genai-reconciliation.md
 CREATE OR REFRESH MATERIALIZED VIEW ampera_gold.reconciliation_ai_review
   COMMENT 'Gold (GenAI): ai_decide verdicts per ONS plant (candidates A/B/C, probabilities, applied or queued for review) with the MWh at stake.'
@@ -20,6 +21,6 @@ AS SELECT
   m.match_method,
   m.plant_id,
   g.mwh_total
-FROM ampera_silver.plant_match_ai a
+FROM ai_verdict a
 JOIN ampera_silver.plant_match m USING (ons_key)
 LEFT JOIN (SELECT ons_key, sum(mwh) AS mwh_total FROM ampera_silver.generation GROUP BY ons_key) g USING (ons_key);

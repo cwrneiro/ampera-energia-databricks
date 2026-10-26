@@ -48,3 +48,13 @@ def numerals_col(name_norm_col):
     """Sorted numeral tokens of an already-normalized name (mirrors reco_lib.numerals)."""
     toks = F.split(name_norm_col, " ")
     return F.array_sort(F.filter(toks, lambda t: t.rlike(R.NUMERAL_RE)))
+
+
+def ai_accept_col(choice, confidence, plant_id):
+    """ai_decide verdict is applied (mirrors reco_lib.ai_accept); NULL -> False."""
+    return F.coalesce(choice.isin(*R.AI_CHOICES) & plant_id.isNotNull() & (confidence >= R.AI_CUTOFF), F.lit(False))
+
+
+def cand_hash_col(*ids):
+    """sha256 of the candidate ids joined by '|', missing -> '' (mirrors reco_lib.cand_hash)."""
+    return F.sha2(F.concat_ws("|", *[F.coalesce(F.col(c), F.lit("")) for c in ids]), 256)

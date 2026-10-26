@@ -1,4 +1,5 @@
-# Refresh the whole demo: medallion pipeline (bronze -> silver -> gold, incl. ai_decide), then the ML
+# Refresh the whole demo: medallion pipeline (bronze -> silver -> gold), then ai_decide adjudication of
+# plants with no stored verdict (and a second pipeline pass only when it wrote new verdicts), then the ML
 # step (optional retrain + ai_decide blind eval, always score), then re-snapshot the Lakebase synced
 # tables the app reads, then re-apply UC governance. Spec: specs/04, 05, 11, 12, 13
 resources:
@@ -17,6 +18,18 @@ resources:
         - task_key: medallion
           pipeline_task:
             pipeline_id: ${resources.pipelines.ampera_medallion.id}
+        - task_key: adjudicate_ai       # ai_decide only for (plant, candidates, prompt) keys not on file
+          depends_on: [{task_key: medallion}]
+          notebook_task:
+            notebook_path: ../notebooks/adjudicate_ai.py
+            base_parameters: {catalog: "${var.catalog}"}
+        - task_key: new_verdicts_gate
+          depends_on: [{task_key: adjudicate_ai}]
+          condition_task: {op: GREATER_THAN, left: "{{tasks.adjudicate_ai.values.new_verdicts}}", right: "0"}
+        - task_key: medallion_rerun     # applies the new verdicts in the same refresh; skipped at steady state
+          depends_on: [{task_key: new_verdicts_gate, outcome: "true"}]
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.ampera_medallion.id}
         - task_key: train_gate
           depends_on: [{task_key: medallion}]
           condition_task: {op: EQUAL_TO, left: "{{job.parameters.train}}", right: "true"}
@@ -31,25 +44,29 @@ resources:
             notebook_path: ../notebooks/eval_ai_decide.py
             base_parameters: {catalog: "${var.catalog}"}
         - task_key: score_curtailment
-          depends_on: [{task_key: medallion}, {task_key: train_curtailment}]
-          run_if: NONE_FAILED         # runs whether or not train was skipped
+          depends_on: [{task_key: medallion}, {task_key: adjudicate_ai}, {task_key: medallion_rerun}, {task_key: train_curtailment}]
+          run_if: NONE_FAILED         # runs whether or not train / the re-run were skipped
           notebook_task:
             notebook_path: ../notebooks/score_curtailment.py
             base_parameters: {catalog: "${var.catalog}"}
         - task_key: sync_generation_daily
-          depends_on: [{task_key: medallion}]
+          depends_on: [{task_key: medallion}, {task_key: adjudicate_ai}, {task_key: medallion_rerun}]
+          run_if: NONE_FAILED         # the re-run may be skipped
           pipeline_task:
             pipeline_id: ${var.sync_pipeline_generation_daily}
         - task_key: sync_plant_location
-          depends_on: [{task_key: medallion}]
+          depends_on: [{task_key: medallion}, {task_key: adjudicate_ai}, {task_key: medallion_rerun}]
+          run_if: NONE_FAILED         # the re-run may be skipped
           pipeline_task:
             pipeline_id: ${var.sync_pipeline_plant_location}
         - task_key: sync_reconciliation_monthly
-          depends_on: [{task_key: medallion}]
+          depends_on: [{task_key: medallion}, {task_key: adjudicate_ai}, {task_key: medallion_rerun}]
+          run_if: NONE_FAILED         # the re-run may be skipped
           pipeline_task:
             pipeline_id: ${var.sync_pipeline_reconciliation_monthly}
         - task_key: sync_reconciliation_ai_review
-          depends_on: [{task_key: medallion}]
+          depends_on: [{task_key: medallion}, {task_key: adjudicate_ai}, {task_key: medallion_rerun}]
+          run_if: NONE_FAILED         # the re-run may be skipped
           pipeline_task:
             pipeline_id: ${var.sync_pipeline_reconciliation_ai_review}
         - task_key: sync_curtailment_daily

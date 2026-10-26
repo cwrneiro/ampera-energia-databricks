@@ -11,9 +11,11 @@ with data-quality expectations on the reconciliation output, and one job keeps L
   serverless, triggered, SQL + Python files in `src/transformations/` (one dataset per file:
   `bronze_*`, `silver_*`, `gold_*`). Publishes to `ampera_bronze` by default; silver/gold use
   `schema.table` names resolved against the pipeline catalog (`var.catalog`), and bronze volume
-  paths use `${catalog}` from the pipeline `configuration` (spec 10).
-- **Job `ampera_refresh`** (`resources/ampera_refresh.job.yml`): medallion pipeline,
-  then the three Lakebase synced-table pipelines (ids are bundle variables in `databricks.yml`).
+  paths use `${catalog}` from the pipeline `configuration`.
+- **Job `ampera_refresh`** (`resources/ampera_refresh.job.yml`): medallion pipeline →
+  `adjudicate_ai` (ai_decide for plants with no stored verdict, spec 12) → `medallion_rerun` only when
+  it wrote new verdicts → ML scoring (spec 11) → the Lakebase synced-table pipelines (ids are bundle
+  variables in `targets/dev.yml`; they run when nothing upstream failed, re-run or not) → governance.
   Daily 06:00 BRT, **paused**; unpause when the demo needs fresh data.
 
 ## Expectations (approach: fail on correctness, warn on quality)
@@ -22,6 +24,7 @@ with data-quality expectations on the reconciliation output, and one job keeps L
 |---|---|---|
 | `plant_id` not null | plant_match, generation, generation_plant | fail |
 | one row per (plant_id, ons_key, hour) | generation_plant_key_check | fail |
+| ai_decide rows: accepted verdict, same plant, CEG doesn't link | plant_match_ai_check | fail |
 | monthly plant total within ±2% of published; no NULL month | generation_balance | warn |
 | MWh ≥ 0 | generation, generation_plant | warn |
 | PLD in range, known submarket | price_pld_hourly | warn |

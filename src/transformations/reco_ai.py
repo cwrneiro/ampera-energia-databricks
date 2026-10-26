@@ -1,5 +1,6 @@
-# ai_decide reconciliation helpers (no pipeline decorators): used by silver_plant_match_ai and by the
-# blind eval notebook (notebooks/eval_ai_decide). Spec: specs/12-genai-reconciliation.md
+# ai_decide reconciliation helpers (no pipeline decorators): used by the adjudication notebook
+# (notebooks/adjudicate_ai), the pipeline's ai_verdict view and the blind eval (notebooks/eval_ai_decide).
+# Spec: specs/12-genai-reconciliation.md
 from pyspark.sql import functions as F
 from pyspark.sql.window import Window
 import reco_lib as R
@@ -13,6 +14,30 @@ QUESTIONS = """{"match": {"type": "choice",
   "criteria": {"A": "Candidate A is the same plant as state.ons", "B": "Candidate B is the same plant as state.ons",
                "C": "Candidate C is the same plant as state.ons", "nenhum": "None of the candidates is the same plant as state.ons"}}}"""
 CEG_NUM = r"([0-9]{6}-[0-9])"  # CEG = TYPE.FUEL.UF.NNNNNN-D.SS; NNNNNN-D survives re-registration
+PROMPT_HASH = R.sha256(QUESTIONS)  # part of the verdict key: a prompt change re-asks every plant
+
+def unlinked_plants(ons, siga):
+    """ONS plant-grain series whose CEG doesn't link to SIGA: the ones ai_decide is asked about."""
+    return ons.filter("ons_grain = 'plant'").join(siga.select(F.col("plant_id").alias("ceg_norm")), "ceg_norm", "left_anti")
+
+
+def with_verdict_key(cands):
+    """Adds the verdict key columns (mirrors reco_lib.verdict_key): candidate-set hash + prompt hash."""
+    return (cands.withColumn("cand_hash", S.cand_hash_col("a_id", "b_id", "c_id"))
+                 .withColumn("prompt_hash", F.lit(PROMPT_HASH)))
+
+
+VERDICT_KEY = ["ons_key", "cand_hash", "prompt_hash"]
+
+
+def current_keys(ons, siga):
+    """Verdict key of every plant ai_decide should have answered for today's data (candidates + prompt)."""
+    return with_verdict_key(candidates(unlinked_plants(ons, siga), siga)).select(*VERDICT_KEY)
+
+
+def accepted():
+    """The shared acceptance rule (reco_lib.ai_accept)."""
+    return S.ai_accept_col(F.col("ai_choice"), F.col("ai_confidence"), F.col("ai_plant_id"))
 
 
 def _cand(prefix):
@@ -66,8 +91,7 @@ def decide(df):
           .withColumn("ai_plant_id", F.when(F.col("ai_choice") == "A", F.col("a_id"))
                                       .when(F.col("ai_choice") == "B", F.col("b_id"))
                                       .when(F.col("ai_choice") == "C", F.col("c_id")))
-          .withColumn("ai_accepted", F.coalesce(F.col("ai_plant_id").isNotNull()
-                                                & (F.col("ai_confidence") >= R.AI_CUTOFF), F.lit(False)))
+          .withColumn("ai_accepted", accepted())
           .drop("_r", "_ons_num", "_ons_tipo"))
     return r
 

@@ -88,11 +88,11 @@ show(res.filter(~ok).select("nom_usina", "uf", "truth", "ai_choice", F.round("ai
 
 # COMMAND ----------
 
-# MAGIC %md ## Production run: what the pipeline decided (`ampera_silver.plant_match_ai`)
+# MAGIC %md ## Production run: what the pipeline decided (`ampera_gold.reconciliation_ai_review`)
 
 # COMMAND ----------
 
 show(spark.sql(f"""SELECT ai_choice, ai_accepted, count(*) AS ons_plants, round(avg(ai_confidence), 3) AS mean_conf
-                   FROM {CAT}.ampera_silver.plant_match_ai GROUP BY ALL ORDER BY ALL"""))
+                   FROM {CAT}.ampera_gold.reconciliation_ai_review GROUP BY ALL ORDER BY ALL"""))
 show(spark.sql(f"""SELECT match_method, count(*) AS ons_series FROM {CAT}.ampera_silver.plant_match
                    GROUP BY ALL ORDER BY ons_series DESC"""))

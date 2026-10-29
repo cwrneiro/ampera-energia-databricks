@@ -1,0 +1,33 @@
+# GenAI — grounded curtailment narratives (ai_query), logged per plant x facts x prompt
+# captured 2026-10-28 11:50 UTC from workspace profile <profile>
+
+-- narrative log: one row per plant x facts hash x prompt hash
+SELECT count(*) AS logged, count_if(grounded) AS grounded, count(DISTINCT plant_id) AS plants,
+             count(DISTINCT prompt_hash) AS prompts, count(DISTINCT model_version) AS model_versions,
+             min(gerado_em) AS first_generated, max(gerado_em) AS last_generated
+      FROM ampera_catalog.ampera_gold.curtailment_narrative_log
+
+         first_generated  grounded            last_generated  logged  model_versions  plants  prompts
+2026-10-27T21:40:54.607Z      3196  2026-10-27T23:27:30.155Z    3196               2    1598        1
+
+-- served: one grounded narrative per plant, for the current facts
+SELECT count(*) AS served FROM ampera_catalog.ampera_gold.curtailment_narrative
+
+served
+  1598
+
+-- top 3 plants by R$ lost: narrative and the facts it was written from
+SELECT n.nome, n.uf, n.narrativa, n.fatos_json FROM ampera_catalog.ampera_gold.curtailment_narrative n
+      JOIN (SELECT plant_id, sum(valor_rs_perdido) AS rs FROM ampera_catalog.ampera_gold.curtailment_daily GROUP BY 1) d USING (plant_id)
+      ORDER BY d.rs DESC LIMIT 3
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   fatos_json                                                                                                                                                                                                                                                                                                                                                                             narrativa            nome  uf
+{"capacidade":"57,0 MW","energia_perdida":"166,1 GWh","fonte":"eólica","horas_restritas_modelo":"7.895","horas_restritas_ons":"8.570","limite_inferior":"o modelo marca uma hora como restrita com 80% de precisão frente às marcações do ONS, então a perda real é maior","parcela_do_esperado":"37,5%","periodo":"out/2024 a set/2026","piores_meses":[{"energia_perdida":"17,5 GWh","mes":"out/2025","valor_perdido":"R$ 3,62 milhões"},{"energia_perdida":"14,1 GWh","mes":"set/2025","valor_perdido":"R$ 3,03 milhões"},{"energia_perdida":"12,1 GWh","mes":"ago/2025","valor_perdido":"R$ 2,87 milhões"}],"pld_medio_da_energia_perdida":"R$ 164/MWh","ranking":"1ª de 90 usinas eólicas em CE por R$ perdido","submercado":"NE","uf":"CE","usina":"Canoa Quebrada","valor_perdido":"R$ 27,30 milhões"}  A eólica Canoa Quebrada (CE) perdeu 166,1 GWh por curtailment entre out/2024 e set/2026, um valor perdido de R$ 27,30 milhões, o maior entre 90 usinas eólicas em CE. A perda se concentrou em out/2025 (17,5 GWh), set/2025 (14,1 GWh) e ago/2025 (12,1 GWh). Esse valor é um limite inferior: o modelo tem 80% de precisão frente às marcações do ONS, então a perda real é maior.  Canoa Quebrada  CE
+ {"capacidade":"100,7 MW","energia_perdida":"159,8 GWh","fonte":"eólica","horas_restritas_modelo":"6.381","horas_restritas_ons":"10.025","limite_inferior":"o modelo marca uma hora como restrita com 80% de precisão frente às marcações do ONS, então a perda real é maior","parcela_do_esperado":"41,1%","periodo":"out/2024 a set/2026","piores_meses":[{"energia_perdida":"18,9 GWh","mes":"out/2025","valor_perdido":"R$ 3,90 milhões"},{"energia_perdida":"14,2 GWh","mes":"nov/2025","valor_perdido":"R$ 3,36 milhões"},{"energia_perdida":"12,5 GWh","mes":"set/2025","valor_perdido":"R$ 2,56 milhões"}],"pld_medio_da_energia_perdida":"R$ 167/MWh","ranking":"1ª de 307 usinas eólicas em RN por R$ perdido","submercado":"NE","uf":"RN","usina":"Alegria II","valor_perdido":"R$ 26,72 milhões"}          A usina eólica Alegria II (RN) perdeu 159,8 GWh por curtailment entre out/2024 e set/2026, o equivalente a R$ 26,72 milhões, e lidera o ranking das eólicas do RN por valor perdido. A perda se concentrou em out/2025 (18,9 GWh), nov/2025 (14,2 GWh) e set/2025 (12,5 GWh). Esse valor é um limite inferior, pois o modelo tem 80% de precisão frente às marcações do ONS.      Alegria II  RN
+    {"capacidade":"42,0 MW","energia_perdida":"154,5 GWh","fonte":"eólica","horas_restritas_modelo":"7.631","horas_restritas_ons":"11.121","limite_inferior":"o modelo marca uma hora como restrita com 80% de precisão frente às marcações do ONS, então a perda real é maior","parcela_do_esperado":"38,3%","periodo":"out/2024 a set/2026","piores_meses":[{"energia_perdida":"18,2 GWh","mes":"out/2025","valor_perdido":"R$ 3,74 milhões"},{"energia_perdida":"14,9 GWh","mes":"set/2025","valor_perdido":"R$ 3,28 milhões"},{"energia_perdida":"11,1 GWh","mes":"ago/2025","valor_perdido":"R$ 2,52 milhões"}],"pld_medio_da_energia_perdida":"R$ 164/MWh","ranking":"2ª de 307 usinas eólicas em RN por R$ perdido","submercado":"NE","uf":"RN","usina":"Cumaru I","valor_perdido":"R$ 25,36 milhões"}               A usina eólica Cumaru I (RN) perdeu ao menos 154,5 GWh por curtailment entre out/2024 e set/2026, o equivalente a R$ 25,36 milhões. Esse valor é um limite inferior: o modelo tem 80% de precisão frente às marcações do ONS, então a perda real é maior. As perdas se concentraram em out/2025 (18,2 GWh, R$ 3,74 milhões), set/2025 (14,9 GWh) e ago/2025 (11,1 GWh).        Cumaru I  RN
+
+-- rejected by the grounding check (cited a number not in the facts; never served)
+SELECT plant_id, narrativa FROM ampera_catalog.ampera_gold.curtailment_narrative_log WHERE NOT grounded LIMIT 5
+
+(no rows)
+

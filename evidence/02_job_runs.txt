@@ -1,77 +1,135 @@
 # Lakeflow Job ampera_refresh — recent runs and task results
-# captured 2026-10-26 21:03 UTC from workspace profile <profile>
+# captured 2026-10-28 11:47 UTC from workspace profile <profile>
 
-run 100000000000004  SUCCESS  params=[{'default': 'false', 'name': 'train', 'value': 'false'}]  start=2026-10-26 20:54 UTC
-   medallion                      SUCCESS       1.9 min
+run 100000000000001  SUCCESS  params=[{'default': 'false', 'name': 'train'}, {'default': 'false', 'name': 'force_drift'}]  start=2026-10-28 11:38 UTC
+   client_access                  DISABLED      0.0 min
+   sync_client_plant_access       DISABLED      0.0 min
+   sync_reconciliation_ai_review  DISABLED      0.0 min
+   adjudicate_ai                  DISABLED      0.0 min
+   medallion_rerun                DISABLED      0.0 min
+   new_verdicts_gate              DISABLED      0.0 min
+   eval_ai_decide                 DISABLED      0.0 min
+   medallion                      DISABLED      0.0 min
+   score_curtailment              SUCCESS       4.7 min
+   sync_generation_daily          DISABLED      0.0 min
+   sync_plant_location            DISABLED      0.0 min
+   sync_reconciliation_monthly    DISABLED      0.0 min
+   train_curtailment              DISABLED      0.0 min
+   train_gate                     DISABLED      0.0 min
+   monitor_curtailment            SUCCESS       0.5 min
+   drift_gate                     DISABLED      0.0 min
+   retrain_challenger             DISABLED      0.0 min
+   promote_curtailment            DISABLED      0.0 min
+   promoted_gate                  DISABLED      0.0 min
+   rescore_curtailment            DISABLED      0.0 min
+   narrate_curtailment            SUCCESS       0.8 min
+   sync_curtailment_daily         SUCCESS       0.9 min
+   governance                     SUCCESS       1.5 min
+   sync_curtailment_narrative     SUCCESS       0.5 min
+
+run 100000000000002  SUCCESS  params=[{'default': 'false', 'name': 'train'}, {'default': 'false', 'name': 'force_drift', 'value': 'true'}]  start=2026-10-27 22:59 UTC
+   medallion                      SUCCESS       2.7 min
    adjudicate_ai                  SUCCESS       0.6 min
+   client_access                  SUCCESS       0.7 min
    train_gate                     SUCCESS       0.0 min
    eval_ai_decide                 EXCLUDED      0.0 min
    train_curtailment              EXCLUDED      0.0 min
    new_verdicts_gate              SUCCESS       0.0 min
    medallion_rerun                EXCLUDED      0.0 min
-   score_curtailment              SUCCESS       4.6 min
-   sync_generation_daily          SUCCESS       0.4 min
+   score_curtailment              SUCCESS       4.7 min
+   sync_generation_daily          SUCCESS       1.0 min
    sync_plant_location            SUCCESS       0.4 min
    sync_reconciliation_ai_review  SUCCESS       0.4 min
    sync_reconciliation_monthly    SUCCESS       0.4 min
-   governance                     SUCCESS       1.2 min
-   sync_curtailment_daily         SUCCESS       0.7 min
+   sync_client_plant_access       SUCCESS       0.5 min
+   monitor_curtailment            SUCCESS       0.5 min
+   drift_gate                     SUCCESS       0.0 min
+   retrain_challenger             SUCCESS       2.4 min
+   promote_curtailment            SUCCESS       2.5 min
+   promoted_gate                  SUCCESS       0.0 min
+   rescore_curtailment            SUCCESS       4.0 min
+   narrate_curtailment            SUCCESS      11.1 min
+   sync_curtailment_daily         SUCCESS       0.9 min
+   governance                     SUCCESS       1.5 min
+   sync_curtailment_narrative     SUCCESS       0.5 min
 
-run 100000000000006  SUCCESS  params=[{'default': 'false', 'name': 'train', 'value': 'false'}]  start=2026-10-26 20:34 UTC
-   medallion                      SUCCESS       5.9 min
-   adjudicate_ai                  SUCCESS       1.0 min
+run 100000000000003  SUCCESS  params=[{'default': 'false', 'name': 'train', 'value': 'false'}, {'default': 'false', 'name': 'force_drift'}]  start=2026-10-27 22:09 UTC
+   medallion                      SUCCESS       2.5 min
+   adjudicate_ai                  SUCCESS       0.6 min
+   client_access                  SUCCESS       0.7 min
    train_gate                     SUCCESS       0.0 min
    eval_ai_decide                 EXCLUDED      0.0 min
    train_curtailment              EXCLUDED      0.0 min
    new_verdicts_gate              SUCCESS       0.0 min
-   medallion_rerun                SUCCESS       5.6 min
-   score_curtailment              SUCCESS       4.4 min
+   medallion_rerun                EXCLUDED      0.0 min
+   score_curtailment              SUCCESS       4.7 min
    sync_generation_daily          SUCCESS       1.0 min
    sync_plant_location            SUCCESS       0.5 min
-   sync_reconciliation_ai_review  SUCCESS       0.5 min
-   sync_reconciliation_monthly    SUCCESS       0.5 min
-   governance                     SUCCESS       1.2 min
-   sync_curtailment_daily         SUCCESS       0.9 min
-
-run 100000000000001  FAILED  params=[{'default': 'false', 'name': 'train', 'value': 'false'}]  start=2026-10-26 20:15 UTC
-   medallion                      FAILED       13.3 min
-   adjudicate_ai                  UPSTREAM_FAILED    0.0 min
-   train_gate                     UPSTREAM_FAILED    0.0 min
-   new_verdicts_gate              UPSTREAM_FAILED    0.0 min
-   eval_ai_decide                 UPSTREAM_FAILED    0.0 min
-   train_curtailment              UPSTREAM_FAILED    0.0 min
-   medallion_rerun                UPSTREAM_FAILED    0.0 min
-   score_curtailment              UPSTREAM_FAILED    0.0 min
-   sync_generation_daily          UPSTREAM_FAILED    0.0 min
-   sync_plant_location            UPSTREAM_FAILED    0.0 min
-   sync_reconciliation_ai_review  UPSTREAM_FAILED    0.0 min
-   sync_reconciliation_monthly    UPSTREAM_FAILED    0.0 min
-   governance                     UPSTREAM_FAILED    0.0 min
-   sync_curtailment_daily         UPSTREAM_FAILED    0.0 min
-
-run 100000000000003  SUCCESS  params=[{'default': 'false', 'name': 'train', 'value': 'false'}]  start=2026-10-23 15:05 UTC
-   medallion                      SUCCESS       5.9 min
-   sync_generation_daily          SUCCESS       1.2 min
-   sync_plant_location            SUCCESS       0.4 min
-   sync_reconciliation_ai_review  SUCCESS       0.5 min
+   sync_reconciliation_ai_review  SUCCESS       0.4 min
    sync_reconciliation_monthly    SUCCESS       0.4 min
-   train_gate                     SUCCESS       0.0 min
-   eval_ai_decide                 EXCLUDED      0.0 min
-   train_curtailment              EXCLUDED      0.0 min
-   score_curtailment              SUCCESS       4.8 min
-   governance                     SUCCESS       1.1 min
+   sync_client_plant_access       SUCCESS       0.5 min
+   monitor_curtailment            SUCCESS       0.6 min
+   drift_gate                     SUCCESS       0.0 min
+   retrain_challenger             EXCLUDED      0.0 min
+   promote_curtailment            EXCLUDED      0.0 min
+   promoted_gate                  EXCLUDED      0.0 min
+   rescore_curtailment            EXCLUDED      0.0 min
+   narrate_curtailment            SUCCESS       0.5 min
    sync_curtailment_daily         SUCCESS       0.9 min
+   governance                     SUCCESS       1.7 min
+   sync_curtailment_narrative     SUCCESS       0.5 min
 
-run 100000000000007  SUCCESS  params=[{'default': 'false', 'name': 'train', 'value': 'false'}]  start=2026-10-22 01:42 UTC
-   medallion                      SUCCESS       5.6 min
-   sync_generation_daily          SUCCESS       1.0 min
-   sync_plant_location            SUCCESS       0.5 min
-   sync_reconciliation_ai_review  SUCCESS       0.5 min
-   sync_reconciliation_monthly    SUCCESS       0.5 min
-   train_gate                     SUCCESS       0.0 min
-   eval_ai_decide                 EXCLUDED      0.0 min
-   train_curtailment              EXCLUDED      0.0 min
-   score_curtailment              SUCCESS       4.5 min
-   governance                     SUCCESS       1.5 min
-   sync_curtailment_daily         SUCCESS       0.9 min
+run 100000000000004  SUCCESS  params=[{'default': 'false', 'name': 'train'}, {'default': 'false', 'name': 'force_drift'}]  start=2026-10-27 22:04 UTC
+   client_access                  DISABLED      0.0 min
+   sync_client_plant_access       DISABLED      0.0 min
+   sync_reconciliation_ai_review  DISABLED      0.0 min
+   adjudicate_ai                  DISABLED      0.0 min
+   medallion_rerun                DISABLED      0.0 min
+   new_verdicts_gate              DISABLED      0.0 min
+   eval_ai_decide                 DISABLED      0.0 min
+   governance                     SUCCESS       1.9 min
+   medallion                      DISABLED      0.0 min
+   score_curtailment              DISABLED      0.0 min
+   sync_curtailment_daily         DISABLED      0.0 min
+   sync_generation_daily          DISABLED      0.0 min
+   sync_plant_location            DISABLED      0.0 min
+   sync_reconciliation_monthly    DISABLED      0.0 min
+   train_curtailment              DISABLED      0.0 min
+   train_gate                     DISABLED      0.0 min
+   drift_gate                     DISABLED      0.0 min
+   monitor_curtailment            DISABLED      0.0 min
+   promote_curtailment            DISABLED      0.0 min
+   promoted_gate                  DISABLED      0.0 min
+   rescore_curtailment            DISABLED      0.0 min
+   retrain_challenger             DISABLED      0.0 min
+   narrate_curtailment            DISABLED      0.0 min
+   sync_curtailment_narrative     DISABLED      0.0 min
+
+run 100000000000005  FAILED  params=[{'default': 'false', 'name': 'train'}, {'default': 'false', 'name': 'force_drift'}]  start=2026-10-27 21:56 UTC
+   sync_reconciliation_ai_review  DISABLED      0.0 min
+   client_access                  DISABLED      0.0 min
+   sync_client_plant_access       DISABLED      0.0 min
+   eval_ai_decide                 DISABLED      0.0 min
+   governance                     FAILED        0.5 min
+   medallion                      DISABLED      0.0 min
+   score_curtailment              DISABLED      0.0 min
+   sync_curtailment_daily         DISABLED      0.0 min
+   sync_generation_daily          DISABLED      0.0 min
+   sync_plant_location            DISABLED      0.0 min
+   sync_reconciliation_monthly    DISABLED      0.0 min
+   train_curtailment              DISABLED      0.0 min
+   train_gate                     DISABLED      0.0 min
+   drift_gate                     DISABLED      0.0 min
+   monitor_curtailment            DISABLED      0.0 min
+   promote_curtailment            DISABLED      0.0 min
+   promoted_gate                  DISABLED      0.0 min
+   rescore_curtailment            DISABLED      0.0 min
+   retrain_challenger             DISABLED      0.0 min
+   adjudicate_ai                  DISABLED      0.0 min
+   medallion_rerun                DISABLED      0.0 min
+   new_verdicts_gate              DISABLED      0.0 min
+   narrate_curtailment            DISABLED      0.0 min
+   sync_curtailment_narrative     DISABLED      0.0 min
+   governance                     FAILED        0.2 min
+   governance                     FAILED        3.3 min
 

@@ -1,13 +1,14 @@
-# ML — curtailment model in UC, scoring output and agreement with ONS
-# captured 2026-10-26 21:05 UTC from workspace profile <profile>
+# ML — curtailment model in UC, scoring output, agreement with ONS, drift checks
+# captured 2026-10-28 11:49 UTC from workspace profile <profile>
 
 {
- "comment": "Expected unconstrained capacity factor (wind/solar) from Open-Meteo weather; flags curtailment where actual < Y x expected. Spec 11. Trained by notebooks/train_curtailment.",
+ "comment": "Expected unconstrained capacity factor (wind/solar) from Open-Meteo weather; flags curtailment where actual < Y x expected. Spec 11, 18. Trained by notebooks/train_curtailment.",
  "created_at": 1792629731360,
  "full_name": "ampera_catalog.ampera_gold.curtailment_expected_cf",
- "updated_at": 1792631680468
+ "updated_at": 1793187463076
 }
 
+version 3  status=READY  run_id=<mlflow-run-id>  created=1793142609291
 version 2  status=READY  run_id=<mlflow-run-id>  created=1792631677360
 version 1  status=READY  run_id=<mlflow-run-id>  created=1792629731837
 
@@ -53,4 +54,23 @@ SELECT dia, round(mwh, 1) AS mwh, round(mwh_esperado, 1) AS mwh_expected, horas_
 2026-08-12       18     19  200.8         524.2     299.5  34682.0
 2026-08-13       12     19  448.0         842.6     377.7  53627.0
 2026-08-14       13     17  314.8         661.9     319.9  37116.0
+
+-- drift check log (spec 18): champion vs ONS on the trailing 3 labeled months; challenger comparisons
+SELECT checked_at, kind, model_version, fonte, window_from, window_to, precision, recall,
+             mae_model, mae_ons, flagged, labeled_hours, drift, decision
+      FROM ampera_catalog.ampera_gold.curtailment_model_monitor ORDER BY checked_at DESC, kind, fonte LIMIT 24
+
+              checked_at                                                                                                                                                                                   decision  drift  flagged  fonte        kind  labeled_hours  mae_model  mae_ons  model_version  precision  recall  window_from   window_to
+2026-10-28T11:43:22.546Z                                                                                                                                                                                         ok  false   693424    EOL       check        2296776     0.0944   0.1045              2     0.8609  0.5032   2026-07-01  2026-09-30
+2026-10-28T11:43:22.546Z                                                                                                                                                                                         ok  false   417513    SOL       check        1185312     0.0119   0.0134              2     0.8516  0.8319   2026-07-01  2026-09-30
+2026-10-28T11:37:49.005Z  manual rollback to v2: v3 (Y tuned on 3 months) flags less precisely over all labeled months (v2 0.763 EOL / 0.763 SOL); promotion rule now also requires no loss of all-months precision         4913145    EOL    rollback       18095861                                  3     0.7116  0.4756   2024-10-01  2026-09-30
+2026-10-28T11:37:49.005Z  manual rollback to v2: v3 (Y tuned on 3 months) flags less precisely over all labeled months (v2 0.763 EOL / 0.763 SOL); promotion rule now also requires no loss of all-months precision         2515994    SOL    rollback        7310328                                  3     0.7687   0.803   2024-10-01  2026-09-30
+2026-10-27T23:12:39.297Z                                                                                                                                                                        promoted v3 over v2          829301    EOL  challenger        2296776     0.0922   0.1045              3     0.8199  0.5732   2026-07-01  2026-09-30
+2026-10-27T23:12:39.297Z                                                                                                                                                                        promoted v3 over v2          411840    SOL  challenger        1185312     0.0111   0.0134              3     0.8579  0.8266   2026-07-01  2026-09-30
+2026-10-27T23:12:39.297Z                                                                                                                                                                        promoted v3 over v2          693424    EOL    champion        2296776     0.0944   0.1045              2     0.8609  0.5032   2026-07-01  2026-09-30
+2026-10-27T23:12:39.297Z                                                                                                                                                                        promoted v3 over v2          417513    SOL    champion        1185312     0.0119   0.0134              2     0.8516  0.8319   2026-07-01  2026-09-30
+2026-10-27T23:07:43.128Z                                                                                                                                                                                         ok  false   693424    EOL       check        2296776     0.0944   0.1045              2     0.8609  0.5032   2026-07-01  2026-09-30
+2026-10-27T23:07:43.128Z                                                                                                                                                                                         ok  false   417513    SOL       check        1185312     0.0119   0.0134              2     0.8516  0.8319   2026-07-01  2026-09-30
+2026-10-27T22:17:22.415Z                                                                                                                                                                                         ok  false   693424    EOL       check        2296776     0.0944   0.1045              2     0.8609  0.5032   2026-07-01  2026-09-30
+2026-10-27T22:17:22.415Z                                                                                                                                                                                         ok  false   417513    SOL       check        1185312     0.0119   0.0134              2     0.8516  0.8319   2026-07-01  2026-09-30
 

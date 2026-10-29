@@ -1,5 +1,5 @@
 # Lakeflow Declarative Pipeline — latest update, flows and expectations
-# captured 2026-10-26 21:03 UTC from workspace profile <profile>
+# captured 2026-10-28 11:47 UTC from workspace profile <profile>
 
 pipeline ampera_medallion <pipeline-id>
 latest update <pipeline-update-id> state=COMPLETED cause=JOB_TASK
@@ -50,12 +50,14 @@ ampera_catalog.ampera_bronze.ons_member_generation_solar_2025_on     COMPLETED
          ampera_catalog.ampera_bronze.ons_member_generation_wind     COMPLETED             
                  ampera_catalog.ampera_bronze.open_meteo_weather     COMPLETED             
                         ampera_catalog.ampera_bronze.siga_plants     COMPLETED             
-          ampera_catalog.ampera_gold.curtailment_features_hourly     COMPLETED     26316437
+          ampera_catalog.ampera_gold.curtailment_features_hourly                   26316437
                ampera_catalog.ampera_gold.fact_generation_hourly     COMPLETED     35094136
                      ampera_catalog.ampera_gold.generation_daily     COMPLETED      1458248
-                       ampera_catalog.ampera_gold.plant_location     COMPLETED         2292
+                       ampera_catalog.ampera_gold.plant_location                       2292
              ampera_catalog.ampera_gold.reconciliation_ai_review     COMPLETED           33
                ampera_catalog.ampera_gold.reconciliation_monthly     COMPLETED          331
+                  ampera_catalog.ampera_serving.generation_daily                    1458248
+                    ampera_catalog.ampera_serving.plant_location                       2292
                     ampera_catalog.ampera_silver.conjunto_member     COMPLETED         2143
            ampera_catalog.ampera_silver.curtailment_label_hourly     COMPLETED     26544677
                           ampera_catalog.ampera_silver.dim_plant     COMPLETED         2292

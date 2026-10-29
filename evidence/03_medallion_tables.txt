@@ -1,5 +1,5 @@
 # Unity Catalog medallion — tables, row counts and reconciliation results
-# captured 2026-10-26 21:17 UTC from workspace profile <profile>
+# captured 2026-10-28 11:49 UTC from workspace profile <profile>
 
         schema                        table               type      rows                                                                                     comment
  ampera_bronze             ccee_pld_horario    STREAMING_TABLE     96576     Bronze: raw CCEE hourly PLD (R$/MWh) per submarket, as downloaded + ingestion metadata.
@@ -10,19 +10,30 @@
  ampera_bronze   ons_member_generation_wind    STREAMING_TABLE  36391830  Bronze: raw ONS measured 30-min generation per wind complex member (coff detail) + ingesti
  ampera_bronze           open_meteo_weather    STREAMING_TABLE     11256  Bronze: raw Open-Meteo ERA5 hourly weather per plant grid cell and month (API JSON as retu
  ampera_bronze                  siga_plants    STREAMING_TABLE     25045            Bronze: raw ANEEL SIGA plant registry (all columns STRING) + ingestion metadata.
+   ampera_gold          client_plant_access            MANAGED        18  Gold (access): which plants each client principal may see; filled by notebooks/client_acce
    ampera_gold            curtailment_daily            MANAGED   1096523  Gold (ML): daily curtailment per wind/solar plant — expected vs actual MWh, curtailed hour
    ampera_gold  curtailment_features_hourly  MATERIALIZED_VIEW  26316437  Gold: wind/solar plant-hours with capacity factor, Open-Meteo weather, PLD and the ONS cur
    ampera_gold           curtailment_hourly            MANAGED  26316437  Gold (ML): hourly expected vs actual MWh per wind/solar plant; restrito_modelo = model cur
+   ampera_gold    curtailment_model_monitor            MANAGED        12  Gold (ML ops): every drift check (kind=check) and challenger comparison (kind=challenger /
+   ampera_gold        curtailment_narrative            MANAGED      1598  Gold (GenAI): one PT-BR curtailment explanation per wind/solar plant, written by databrick
+   ampera_gold    curtailment_narrative_log            MANAGED      3196  Gold (GenAI): every curtailment narrative ever generated, one per plant x facts hash x pro
    ampera_gold       fact_generation_hourly  MATERIALIZED_VIEW  35094136  Gold: hourly MWh per plant (complexes split into member plants; is_estimated marks the cap
    ampera_gold             generation_daily  MATERIALIZED_VIEW   1458248  Gold: daily MWh per plant with CEG, UF, submercado, fonte, conjunto; mwh_estimado = estima
    ampera_gold               plant_location  MATERIALIZED_VIEW      2292  Gold: one row per plant_id — name, UF, lat/lon (SIGA), capacity, fonte, conjunto, total an
    ampera_gold     reconciliation_ai_review  MATERIALIZED_VIEW        33  Gold (GenAI): ai_decide verdicts per ONS plant (candidates A/B/C, probabilities, applied o
    ampera_gold       reconciliation_monthly  MATERIALIZED_VIEW       331  Gold: monthly MWh and plant count per match_method, for grao publicado (ONS as published) 
+ampera_gold_lb          client_plant_access            FOREIGN        18                                                 Database table synced from another UC table
 ampera_gold_lb            curtailment_daily            FOREIGN   1096523                                                 Database table synced from another UC table
+ampera_gold_lb        curtailment_narrative            FOREIGN      1598                                                 Database table synced from another UC table
 ampera_gold_lb             generation_daily            FOREIGN   1458248                                                 Database table synced from another UC table
 ampera_gold_lb               plant_location            FOREIGN      2292                                                 Database table synced from another UC table
 ampera_gold_lb     reconciliation_ai_review            FOREIGN        33                                                 Database table synced from another UC table
 ampera_gold_lb       reconciliation_monthly            FOREIGN       331                                                 Database table synced from another UC table
+ampera_serving          client_plant_access            MANAGED        18  Serving: copy of ampera_gold.client_plant_access, synced to Lakebase so the app filters cl
+ampera_serving            curtailment_daily            MANAGED   1096523     Serving: unfiltered copy of ampera_gold.curtailment_daily, synced to Lakebase. Spec 17.
+ampera_serving        curtailment_narrative            MANAGED      1598  Serving: unfiltered copy of ampera_gold.curtailment_narrative, synced to Lakebase. Spec 16
+ampera_serving             generation_daily  MATERIALIZED_VIEW   1458248  Serving: unfiltered copy of ampera_gold.generation_daily. Synced to Lakebase as ampera_gol
+ampera_serving               plant_location  MATERIALIZED_VIEW      2292  Serving: unfiltered copy of ampera_gold.plant_location. Synced to Lakebase as ampera_gold_
  ampera_silver               ai_decide_eval            MANAGED       200  Silver (GenAI eval): blind ai_decide answers on CEG-matched ONS plants with the CEG hidden
  ampera_silver            ai_decide_verdict            MANAGED        33  Silver (GenAI): durable ai_decide verdicts, one per ONS plant x candidate set x prompt (no
  ampera_silver        ai_decide_verdict_new            MANAGED        33                                                                                            

@@ -1,5 +1,5 @@
-# Runnable checks — reconciliation and curtailment logic, app API, Genie benchmark SQL (live)
-# captured 2026-10-26 21:09 UTC from workspace profile <profile>
+# Runnable checks — reconciliation, curtailment, narrative and drift logic, app API, Genie benchmark SQL (live), client row-level security (live, as a client principal)
+# captured 2026-10-28 11:54 UTC from workspace profile <profile>
 
 $ python3 tests/test_reconciliation.py
 ok test_ai_accept
@@ -13,10 +13,20 @@ ALL PASS
 exit=0
 
 $ python3 tests/test_curtailment.py
+ok test_beats
 ok test_choose_y
+ok test_drift_reasons
 ok test_lost_energy_never_negative
 ok test_low_expected_output_is_never_judged
 ok test_worked_example
+ALL PASS
+exit=0
+
+$ python3 tests/test_narrative.py
+ok test_facts
+ok test_facts_hash_is_stable_and_sensitive
+ok test_grounded
+ok test_ptbr_formatting
 ALL PASS
 exit=0
 
@@ -27,11 +37,26 @@ ok test_cold_compute_drains_pool_then_503
 ok test_genie_runs_as_the_signed_in_user
 ok test_genie_errors_are_typed
 ok test_plant_loads_before_curtailment_is_synced
+ok test_client_scope
 skip live check (PGHOST unset)
 ok test_totals_tie_live
 exit=0
 
 $ python3 tests/test_genie_space.py
+ok
+exit=0
+
+$ python3 tests/test_rls_live.py
+ok fact_generation_hourly: client 18 of 18 portfolio plants; staff 2292
+ok generation_daily: client 18 of 18 portfolio plants; staff 2292
+ok plant_location: client 18 of 18 portfolio plants; staff 2292
+ok curtailment_daily: client 18 of 18 portfolio plants; staff 1598
+ok curtailment_narrative: client 18 of 18 portfolio plants; staff 1598
+ok denied ampera_gold.reconciliation_monthly
+ok denied ampera_serving.generation_daily
+ok denied ampera_silver.dim_plant
+ok denied ampera_gold.client_plant_access
+ok Genie as client: 'SELECT COUNT(DISTINCT `plant_id`) AS `n_usinas_distintas`\nFROM `ampera_catalog`.`ampera_gold`.`plant_location`' -> [['18']]
 ok
 exit=0
 

@@ -1,5 +1,5 @@
 # GenAI — ai_decide reconciliation verdicts and blind evaluation
-# captured 2026-10-26 21:05 UTC from workspace profile <profile>
+# captured 2026-10-28 11:50 UTC from workspace profile <profile>
 
 -- every ai_decide verdict in production (applied at confidence >= 0.9 unless an earlier rung placed it; else review queue)
 SELECT nom_usina, uf, tipo, ai_choice, ai_confidence, ai_accepted, a_nome, ai_prob_a, b_nome, ai_prob_b,

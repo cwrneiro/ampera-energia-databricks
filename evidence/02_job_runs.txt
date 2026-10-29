@@ -1,5 +1,31 @@
 # Lakeflow Job ampera_refresh — recent runs and task results
-# captured 2026-10-28 11:47 UTC from workspace profile <profile>
+# captured 2026-10-29 12:52 UTC from workspace profile <profile>
+
+run 100000000000092  SUCCESS  params=[{'default': 'false', 'name': 'train'}, {'default': 'false', 'name': 'force_drift', 'value': 'true'}]  start=2026-10-29 12:34 UTC
+   medallion                      SUCCESS       3.4 min
+   adjudicate_ai                  SUCCESS       0.5 min
+   client_access                  SUCCESS       0.6 min
+   train_gate                     SUCCESS       0.0 min
+   eval_ai_decide                 EXCLUDED      0.0 min
+   train_curtailment              EXCLUDED      0.0 min
+   new_verdicts_gate              SUCCESS       0.0 min
+   medallion_rerun                EXCLUDED      0.0 min
+   score_curtailment              SUCCESS       2.7 min
+   sync_generation_daily          SUCCESS       1.0 min
+   sync_plant_location            SUCCESS       0.5 min
+   sync_reconciliation_ai_review  SUCCESS       0.4 min
+   sync_reconciliation_monthly    SUCCESS       0.4 min
+   sync_client_plant_access       SUCCESS       0.5 min
+   monitor_curtailment            SUCCESS       0.2 min
+   drift_gate                     SUCCESS       0.0 min
+   retrain_challenger             SUCCESS       2.5 min
+   promote_curtailment            SUCCESS       5.2 min
+   promoted_gate                  SUCCESS       0.0 min
+   rescore_curtailment            EXCLUDED      0.0 min
+   narrate_curtailment            SUCCESS       0.7 min
+   sync_curtailment_daily         SUCCESS       0.9 min
+   governance                     SUCCESS       1.4 min
+   sync_curtailment_narrative     SUCCESS       0.5 min
 
 run 100000000000001  SUCCESS  params=[{'default': 'false', 'name': 'train'}, {'default': 'false', 'name': 'force_drift'}]  start=2026-10-28 11:38 UTC
    client_access                  DISABLED      0.0 min
@@ -104,32 +130,4 @@ run 100000000000004  SUCCESS  params=[{'default': 'false', 'name': 'train'}, {'d
    retrain_challenger             DISABLED      0.0 min
    narrate_curtailment            DISABLED      0.0 min
    sync_curtailment_narrative     DISABLED      0.0 min
-
-run 100000000000005  FAILED  params=[{'default': 'false', 'name': 'train'}, {'default': 'false', 'name': 'force_drift'}]  start=2026-10-27 21:56 UTC
-   sync_reconciliation_ai_review  DISABLED      0.0 min
-   client_access                  DISABLED      0.0 min
-   sync_client_plant_access       DISABLED      0.0 min
-   eval_ai_decide                 DISABLED      0.0 min
-   governance                     FAILED        0.5 min
-   medallion                      DISABLED      0.0 min
-   score_curtailment              DISABLED      0.0 min
-   sync_curtailment_daily         DISABLED      0.0 min
-   sync_generation_daily          DISABLED      0.0 min
-   sync_plant_location            DISABLED      0.0 min
-   sync_reconciliation_monthly    DISABLED      0.0 min
-   train_curtailment              DISABLED      0.0 min
-   train_gate                     DISABLED      0.0 min
-   drift_gate                     DISABLED      0.0 min
-   monitor_curtailment            DISABLED      0.0 min
-   promote_curtailment            DISABLED      0.0 min
-   promoted_gate                  DISABLED      0.0 min
-   rescore_curtailment            DISABLED      0.0 min
-   retrain_challenger             DISABLED      0.0 min
-   adjudicate_ai                  DISABLED      0.0 min
-   medallion_rerun                DISABLED      0.0 min
-   new_verdicts_gate              DISABLED      0.0 min
-   narrate_curtailment            DISABLED      0.0 min
-   sync_curtailment_narrative     DISABLED      0.0 min
-   governance                     FAILED        0.2 min
-   governance                     FAILED        3.3 min
 

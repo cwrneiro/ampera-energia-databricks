@@ -1,5 +1,5 @@
 # Runnable checks — reconciliation, curtailment, narrative and drift logic, app API, Genie benchmark SQL (live), client row-level security (live, as a client principal)
-# captured 2026-10-28 11:54 UTC from workspace profile <profile>
+# captured 2026-10-29 13:00 UTC from workspace profile <profile>
 
 $ python3 tests/test_reconciliation.py
 ok test_ai_accept

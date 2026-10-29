@@ -1,5 +1,5 @@
 # GenAI — grounded curtailment narratives (ai_query), logged per plant x facts x prompt
-# captured 2026-10-28 11:50 UTC from workspace profile <profile>
+# captured 2026-10-29 12:55 UTC from workspace profile <profile>
 
 -- narrative log: one row per plant x facts hash x prompt hash
 SELECT count(*) AS logged, count_if(grounded) AS grounded, count(DISTINCT plant_id) AS plants,

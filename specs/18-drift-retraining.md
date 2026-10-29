@@ -53,3 +53,7 @@ monthly ONS data the window moves past the training data and becomes a true held
   (decision 2026-10-27, logged as `kind = rollback`) and added guard (c); under it v3 would be kept.
   Headline back to 65.8 TWh / R$ 8.4 bi; v2's narratives were already logged, so the rollback asked
   `ai_query` nothing.
+- 2026-10-29, `force_drift=true` under guard (c): challenger v4 won on the window for both technologies
+  (wind MAE 0.0923 vs 0.0944) but its wind precision over all labeled months was 0.711 vs v2's 0.763 →
+  **kept v2**, re-score skipped, headline unchanged. Evidence: `evidence/notebooks/promote_curtailment.ipynb`
+  (this run) and `*_run1.ipynb` (the first forced run that promoted v3 under the old rule).

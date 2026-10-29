@@ -1,5 +1,5 @@
 # Unity Catalog medallion — tables, row counts and reconciliation results
-# captured 2026-10-28 11:49 UTC from workspace profile <profile>
+# captured 2026-10-29 12:55 UTC from workspace profile <profile>
 
         schema                        table               type      rows                                                                                     comment
  ampera_bronze             ccee_pld_horario    STREAMING_TABLE     96576     Bronze: raw CCEE hourly PLD (R$/MWh) per submarket, as downloaded + ingestion metadata.
@@ -14,7 +14,7 @@
    ampera_gold            curtailment_daily            MANAGED   1096523  Gold (ML): daily curtailment per wind/solar plant — expected vs actual MWh, curtailed hour
    ampera_gold  curtailment_features_hourly  MATERIALIZED_VIEW  26316437  Gold: wind/solar plant-hours with capacity factor, Open-Meteo weather, PLD and the ONS cur
    ampera_gold           curtailment_hourly            MANAGED  26316437  Gold (ML): hourly expected vs actual MWh per wind/solar plant; restrito_modelo = model cur
-   ampera_gold    curtailment_model_monitor            MANAGED        12  Gold (ML ops): every drift check (kind=check) and challenger comparison (kind=challenger /
+   ampera_gold    curtailment_model_monitor            MANAGED        22  Gold (ML ops): every drift check (kind=check) and challenger comparison (kind=challenger /
    ampera_gold        curtailment_narrative            MANAGED      1598  Gold (GenAI): one PT-BR curtailment explanation per wind/solar plant, written by databrick
    ampera_gold    curtailment_narrative_log            MANAGED      3196  Gold (GenAI): every curtailment narrative ever generated, one per plant x facts hash x pro
    ampera_gold       fact_generation_hourly  MATERIALIZED_VIEW  35094136  Gold: hourly MWh per plant (complexes split into member plants; is_estimated marks the cap

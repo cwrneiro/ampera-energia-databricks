@@ -2,6 +2,7 @@
 -- where the plant links to it. Synced to Lakebase. Spec: specs/03-gold-marts.md (decision #17)
 CREATE OR REFRESH MATERIALIZED VIEW ampera_gold.plant_location
   COMMENT 'Gold: one row per plant_id — name, UF, lat/lon (SIGA), capacity, fonte, conjunto, total and last-30-day MWh.'
+  WITH ROW FILTER ${catalog}.ampera_gold.client_plant_filter ON (plant_id)   -- clients see only their plants (spec 17)
 AS WITH last_day AS (SELECT max(dia) AS d FROM ampera_gold.generation_daily),
 agg AS (
   SELECT plant_id,

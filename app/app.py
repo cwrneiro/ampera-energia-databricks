@@ -88,11 +88,15 @@ def _bucket() -> int:
 # --- filters ---------------------------------------------------------------------------------
 
 FILTER_COLS = {"uf": "uf", "fonte": "fonte", "usina": "plant_id", "conjunto": "conjunto_key"}
+IN_SCOPE = "plant_id IN (SELECT plant_id FROM ampera_gold_lb.client_plant_access WHERE principal = %s)"
 
 
-def where(de: date | None, ate: date | None, eq: dict) -> tuple[str, list]:
-    """WHERE clause + params for generation_daily. `eq` maps FILTER_COLS keys to values (None = off)."""
+def where(de: date | None, ate: date | None, eq: dict, scope: str | None = None) -> tuple[str, list]:
+    """WHERE clause + params for generation_daily. `eq` maps FILTER_COLS keys to values (None = off);
+    `scope` = a client principal, limited to its plants (spec 17)."""
     parts, params = [], []
+    if scope:
+        parts.append(IN_SCOPE); params.append(scope)
     if de:
         parts.append("dia >= %s"); params.append(de)
     if ate:
@@ -108,6 +112,43 @@ def grain(de: date | None, ate: date | None) -> str:
     return "day" if de and ate and (ate - de).days <= 92 else "month"
 
 
+# --- client scope (spec 17) -------------------------------------------------------------------
+# Synced tables can't carry Unity Catalog row filters, so the app applies the same mapping as
+# ampera_gold.client_plant_filter: a signed-in principal listed in client_plant_access sees only its
+# plants; anyone else (Ampera staff) sees all. Genie needs none of this: it runs as the user, so UC
+# filters it.
+
+def scope(request: Request) -> str | None:
+    """The signed-in principal if it acts for a client, else None (all plants)."""
+    who = request.headers.get("x-forwarded-email")
+    if not who:
+        if os.environ.get("DATABRICKS_APP_NAME"):  # Apps always forwards the user; never guess
+            raise HTTPException(401, "Usuário não identificado")
+        return None  # local dev
+    return who if _cliente(who, _bucket()) else None
+
+
+@lru_cache(maxsize=256)
+def _cliente(who, _b) -> str | None:
+    try:
+        r = query("SELECT min(cliente) AS cliente FROM ampera_gold_lb.client_plant_access WHERE principal = %s", (who,))
+    except psycopg.errors.UndefinedTable:  # access model not synced yet: no client mapping exists
+        return None
+    return r[0]["cliente"]
+
+
+def staff_only(request: Request):
+    # Market-wide reconciliation is Ampera's internal view; clients aren't granted it in UC either.
+    if scope(request):
+        raise HTTPException(403, "Disponível apenas para a equipe Ampera")
+
+
+@app.get("/api/me")
+def me(request: Request):
+    who = scope(request)
+    return {"cliente": _cliente(who, _bucket()) if who else None}
+
+
 # --- API -------------------------------------------------------------------------------------
 
 @app.get("/api/meta")
@@ -121,20 +162,22 @@ def _meta(_b):
 
 
 @app.get("/api/plants")
-def plants():
-    return _plants(_bucket())
+def plants(request: Request):
+    return _plants(scope(request), _bucket())
 
 
-@lru_cache(maxsize=4)
-def _plants(_b):
-    return query("""
+@lru_cache(maxsize=64)
+def _plants(sc, _b):
+    w, params = (f"WHERE {IN_SCOPE}", (sc,)) if sc else ("", ())
+    return query(f"""
         SELECT plant_id, ceg, nome, uf, lat, lon, capacidade_mw, fonte, tipo, municipio,
                conjunto_key, nom_conjunto, match_method, mwh_total, mwh_30d, mwh_estimado_total
-        FROM ampera_gold_lb.plant_location ORDER BY mwh_total DESC NULLS LAST""")
+        FROM ampera_gold_lb.plant_location {w} ORDER BY mwh_total DESC NULLS LAST""", params)
 
 
 @app.get("/api/reconciliation")
-def reconciliation():
+def reconciliation(request: Request):
+    staff_only(request)
     return _reconciliation(_bucket())
 
 
@@ -145,14 +188,14 @@ def _reconciliation(_b):
 
 
 @app.get("/api/overview")
-def overview(de: date | None = None, ate: date | None = None, uf: str | None = None,
+def overview(request: Request, de: date | None = None, ate: date | None = None, uf: str | None = None,
              fonte: str | None = None, usina: str | None = None, conjunto: str | None = None):
-    return _overview(de, ate, uf, fonte, usina, conjunto, _bucket())
+    return _overview(de, ate, uf, fonte, usina, conjunto, scope(request), _bucket())
 
 
 @lru_cache(maxsize=256)
-def _overview(de, ate, uf, fonte, usina, conjunto, _b):
-    w, params = where(de, ate, {"uf": uf, "fonte": fonte, "usina": usina, "conjunto": conjunto})
+def _overview(de, ate, uf, fonte, usina, conjunto, sc, _b):
+    w, params = where(de, ate, {"uf": uf, "fonte": fonte, "usina": usina, "conjunto": conjunto}, sc)
     g = grain(de, ate)
     # One scan of generation_daily, four groupings (series, by fonte, by plant, by conjunto).
     rows = query(f"""
@@ -186,13 +229,14 @@ def _overview(de, ate, uf, fonte, usina, conjunto, _b):
 
 
 @app.get("/api/plant/{plant_id}")
-def plant(plant_id: str):
-    return _plant(plant_id, _bucket())
+def plant(plant_id: str, request: Request):
+    return _plant(plant_id, scope(request), _bucket())
 
 
 @lru_cache(maxsize=128)
-def _plant(plant_id, _b):
-    info = query("SELECT * FROM ampera_gold_lb.plant_location WHERE plant_id = %s", (plant_id,))
+def _plant(plant_id, sc, _b):
+    w, params = (f" AND {IN_SCOPE}", (plant_id, sc)) if sc else ("", (plant_id,))
+    info = query(f"SELECT * FROM ampera_gold_lb.plant_location WHERE plant_id = %s{w}", params)
     if not info:
         raise HTTPException(404, "Usina não encontrada")
     days = query("""
@@ -206,19 +250,25 @@ def _plant(plant_id, _b):
             FROM ampera_gold_lb.curtailment_daily WHERE plant_id = %s ORDER BY dia""", (plant_id,))
     except psycopg.errors.UndefinedTable:  # not synced yet (first refresh): empty panel, not a 500
         curt = []
-    return {"usina": info[0], "dias": days, "curtailment": curt}
+    try:  # grounded PT-BR explanation from the narrative step (spec 16); none for plants without losses
+        narr = query("""SELECT narrativa, endpoint, model_version, gerado_em
+                        FROM ampera_gold_lb.curtailment_narrative WHERE plant_id = %s""", (plant_id,))
+    except psycopg.errors.UndefinedTable:
+        narr = []
+    return {"usina": info[0], "dias": days, "curtailment": curt, "narrativa": narr[0] if narr else None}
 
 
 # --- curtailment (ML, spec 11) ----------------------------------------------------------------
 
 @app.get("/api/curtailment")
-def curtailment(de: date | None = None, ate: date | None = None, uf: str | None = None, fonte: str | None = None):
-    return _curtailment(de, ate, uf, fonte, _bucket())
+def curtailment(request: Request, de: date | None = None, ate: date | None = None, uf: str | None = None,
+                fonte: str | None = None):
+    return _curtailment(de, ate, uf, fonte, scope(request), _bucket())
 
 
 @lru_cache(maxsize=64)
-def _curtailment(de, ate, uf, fonte, _b):
-    w, params = where(de, ate, {"uf": uf, "fonte": fonte})
+def _curtailment(de, ate, uf, fonte, sc, _b):
+    w, params = where(de, ate, {"uf": uf, "fonte": fonte}, sc)
     t = "ampera_gold_lb.curtailment_daily"
     serie = query(f"""
         SELECT date_trunc('month', dia)::date AS mes, fonte, sum(mwh) AS mwh, sum(mwh_esperado) AS mwh_esperado,
@@ -235,7 +285,8 @@ def _curtailment(de, ate, uf, fonte, _b):
 # --- ai_decide review queue (GenAI, spec 12) ------------------------------------------------
 
 @app.get("/api/reconciliation/ai")
-def reconciliation_ai():
+def reconciliation_ai(request: Request):
+    staff_only(request)
     return _reconciliation_ai(_bucket())
 
 

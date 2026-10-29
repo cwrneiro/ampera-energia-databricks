@@ -69,6 +69,10 @@ multi-tenant; price/generation forecasting; history beyond the 24-month window.
 | 37 | Genie chat | Slide-out panel on every page, on-behalf-of-user, SQL shown, Recharts chart by column-type heuristic — spec 14 |
 | 40 | Evidence | Executed notebooks (`.ipynb` with outputs) + text captures from one script; README index — spec 15 |
 | 41 | Publish | New public repo `cwrneiro/ampera-energia-databricks`, single sanitized root commit, after the user's go-ahead — spec 15 |
+| 42 | Narrative | Per plant with R$ lost, PT-BR, `ai_query` Sonnet 5.5 from a pre-formatted facts JSON; numeric grounding check; logged per plant × facts × prompt hash (2026-10-27) — spec 16 |
+| 43 | Client RLS | 2 fictional clients, seed portfolios (real plant ids by SIGA owner); UC row filter on 5 gold tables + same mapping in the app; test SP (2026-10-27) — spec 17 |
+| 44 | Serving copies | Synced tables refuse row-filtered sources → unfiltered copies in `ampera_serving` are the sync sources (2026-10-27) — spec 17 |
+| 45 | Drift | Trailing 3 labeled months: precision ≥ 0.8 and MAE ≤ ONS estimate, else retrain a challenger; promote only if it beats the champion; `force_drift` param (2026-10-27); + no loss of all-months precision after v3 was promoted then rolled back — spec 18 |
 
 ## What the data showed (2026-10-01; details in specs 01, 02, 09)
 

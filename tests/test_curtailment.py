@@ -38,6 +38,24 @@ def test_choose_y():
     assert C.choose_y(low)["Y"] == 0.65
 
 
+def test_drift_reasons():
+    # Spec 18: drift = below the precision floor, or worse than ONS's own estimate.
+    assert C.drift_reasons({"precision": 0.85, "mae_model": 0.088, "mae_ons": 0.098}) == []
+    assert C.drift_reasons({"precision": 0.7, "mae_model": 0.088, "mae_ons": 0.098}) == ["precision 0.7 < 0.8"]
+    assert C.drift_reasons({"precision": 0.85, "mae_model": 0.11, "mae_ons": 0.098}) == ["MAE 0.11 > ONS estimate 0.098"]
+    assert C.drift_reasons({"precision": None, "mae_model": 0.1, "mae_ons": None}) == ["precision None < 0.8"]
+
+
+def test_beats():
+    champ = {"precision": 0.72, "mae_model": 0.10, "precision_all": 0.76}
+    assert C.beats({"precision": 0.81, "mae_model": 0.09, "precision_all": 0.77}, champ)
+    assert not C.beats({"precision": 0.79, "mae_model": 0.05, "precision_all": 0.80}, champ)  # under the floor
+    assert not C.beats({"precision": 0.90, "mae_model": 0.10, "precision_all": 0.80}, champ)  # not strictly better
+    # The real v3 vs v2 case (2026-10-27): better on the window, less precise over all 24 months -> kept v2.
+    assert not C.beats({"precision": 0.82, "mae_model": 0.0922, "precision_all": 0.712},
+                       {"precision": 0.86, "mae_model": 0.0944, "precision_all": 0.763})
+
+
 if __name__ == "__main__":
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):

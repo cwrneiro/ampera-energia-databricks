@@ -22,5 +22,12 @@ variables:
   sync_pipeline_reconciliation_monthly:
   sync_pipeline_reconciliation_ai_review:
   sync_pipeline_curtailment_daily:
+  sync_pipeline_curtailment_narrative:
+  sync_pipeline_client_plant_access:
+  client_access:
+    description: >-
+      Workspace-specific client principals, JSON {"<cliente in src/seed/client_portfolio.csv>": ["<user email or
+      service principal application id>", ...]}. Listed principals see only their client's plants (spec 17).
+    default: "{}"
   warehouse_id:
     description: SQL warehouse the Genie space queries (spec 07)

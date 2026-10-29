@@ -50,9 +50,10 @@ def test_cold_compute_drains_pool_then_503():
     assert len(connects) == 4  # first try used a pooled conn; the 4 retries each opened a fresh one
 
 
-class Req:  # the only part of a FastAPI Request the Genie handler reads
-    def __init__(self, token=None):
-        self.headers = {"x-forwarded-access-token": token} if token else {}
+class Req:  # the only parts of a FastAPI Request the handlers read
+    def __init__(self, token=None, email=None):
+        self.headers = {**({"x-forwarded-access-token": token} if token else {}),
+                        **({"x-forwarded-email": email} if email else {})}
 
 
 def _status(fn):
@@ -110,27 +111,64 @@ def test_plant_loads_before_curtailment_is_synced():
     # Spec 14: the curtailment synced table appears only after the first scored refresh; the Usina
     # sheet must still load, with an empty curtailment panel, instead of a 500.
     def fake(sql, params=()):
-        if "curtailment_daily" in sql:
-            raise A.psycopg.errors.UndefinedTable('relation "ampera_gold_lb.curtailment_daily" does not exist')
+        if "curtailment_daily" in sql or "curtailment_narrative" in sql:
+            raise A.psycopg.errors.UndefinedTable('relation "ampera_gold_lb.curtailment_*" does not exist')
         return [{"plant_id": "X.1"}] if "plant_location" in sql else [{"dia": "2026-01-01", "mwh": 1.0}]
     real, A.query = A.query, fake
     try:
-        r = A._plant.__wrapped__("X.1", 0)
+        r = A._plant.__wrapped__("X.1", None, 0)
     finally:
         A.query = real
-    assert r["curtailment"] == [] and r["usina"] == {"plant_id": "X.1"} and len(r["dias"]) == 1
+    assert r["curtailment"] == [] and r["narrativa"] is None
+    assert r["usina"] == {"plant_id": "X.1"} and len(r["dias"]) == 1
+
+
+def test_client_scope():
+    # Spec 17: a principal listed in client_plant_access sees only its plants (same rule as the UC row
+    # filter); staff see all; inside Apps an unidentified request is refused, never shown everything.
+    w, p = A.where(None, None, {"uf": "BA"}, "sp-123")
+    assert w == f"WHERE {A.IN_SCOPE} AND uf = %s" and p == ["sp-123", "BA"]
+    seen = []
+
+    def fake(sql, params=()):
+        seen.append((sql, params))
+        if "client_plant_access WHERE principal" in sql and "min(cliente)" in sql:
+            return [{"cliente": "Ventos do Nordeste Participações" if params == ("sp-123",) else None}]
+        return [{"plant_id": "X.1"}]
+    real, A.query = A.query, fake
+    A._cliente.cache_clear()
+    try:
+        assert A.scope(Req(email="sp-123")) == "sp-123"
+        assert A.scope(Req(email="staff@ampera")) is None
+        assert A.scope(Req()) is None  # local dev
+        os.environ["DATABRICKS_APP_NAME"] = "ampera-app"
+        try:
+            assert _status(lambda: A.scope(Req())) == (401, "Usuário não identificado")
+        finally:
+            del os.environ["DATABRICKS_APP_NAME"]
+        assert _status(lambda: A.staff_only(Req(email="sp-123")))[0] == 403
+        A.staff_only(Req(email="staff@ampera"))
+        A._plants.__wrapped__("sp-123", 0)
+        assert A.IN_SCOPE in seen[-1][0] and seen[-1][1] == ("sp-123",)
+        A._plant.__wrapped__("X.1", "sp-123", 0)
+        first = next(q for q in seen if q[0].startswith("SELECT * FROM ampera_gold_lb.plant_location"))
+        assert A.IN_SCOPE in first[0] and first[1] == ("X.1", "sp-123")
+        assert A.me(Req(email="sp-123")) == {"cliente": "Ventos do Nordeste Participações"}
+    finally:
+        A.query = real
+        A._cliente.cache_clear()
 
 
 def test_totals_tie_live():
     if not os.environ.get("PGHOST"):
         print("skip live check (PGHOST unset)")
         return
-    o = A.overview()
+    o = A.overview(Req())
     total = o["kpis"]["mwh"]
-    plants = sum(r["mwh_total"] or 0 for r in A.plants())
+    plants = sum(r["mwh_total"] or 0 for r in A.plants(Req()))
     serie = sum(r["mwh"] or 0 for r in o["serie"])
     assert abs(total - plants) / total < 1e-9 and abs(total - serie) / total < 1e-9, (total, plants, serie)
-    assert o["kpis"]["n_usinas"] == len(A.plants())
+    assert o["kpis"]["n_usinas"] == len(A.plants(Req()))
 
 
 if __name__ == "__main__":

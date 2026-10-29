@@ -10,3 +10,6 @@ resources:
         submercado, com PLD da CCEE e clima (Open-Meteo, ONS, INMET).
       warehouse_id: ${var.warehouse_id}
       file_path: genie/ampera.geniespace.json
+      permissions:                   # clients ask Genie as themselves; UC row filters scope the answers (spec 17)
+        - group_name: ampera_clients
+          level: CAN_RUN

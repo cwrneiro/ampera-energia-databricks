@@ -3,6 +3,7 @@
 CREATE OR REFRESH MATERIALIZED VIEW ampera_gold.generation_daily
   COMMENT 'Gold: daily MWh per plant with CEG, UF, submercado, fonte, conjunto; mwh_estimado = estimated part.'
   CLUSTER BY (dia, plant_id)
+  WITH ROW FILTER ${catalog}.ampera_gold.client_plant_filter ON (plant_id)   -- clients see only their plants (spec 17)
 AS SELECT
   gen_date                                         AS dia,
   plant_id,                                        -- (dia, plant_id) is the Lakebase primary key

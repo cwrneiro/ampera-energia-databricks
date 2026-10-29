@@ -6,7 +6,8 @@
 # MAGIC `curtailment_expected_cf@champion`, flags curtailment (`expected CF >= 10%` and `actual < Y x expected`,
 # MAGIC `Y` from the model version tags), values the lost energy at the hour's PLD and writes:
 # MAGIC - `ampera_gold.curtailment_hourly` — lakehouse, for Genie and analysis
-# MAGIC - `ampera_gold.curtailment_daily` — synced to Lakebase for the app
+# MAGIC - `ampera_gold.curtailment_daily` — row-filtered per client (spec 17), plus its unfiltered copy
+# MAGIC   `ampera_serving.curtailment_daily`, synced to Lakebase for the app
 # MAGIC
 # MAGIC Runs in the refresh job after the medallion and before the Lakebase syncs.
 
@@ -72,13 +73,20 @@ d = (h.groupBy(F.col("gen_date").alias("dia"), "plant_id")
            F.sum(F.col("restrito_modelo").cast("int")).alias("horas_restritas_modelo"),
            F.sum(F.col("restrito_ons").cast("int")).alias("horas_restritas_ons"),
            F.sum("mwh_restrito").alias("mwh_restrito"), F.sum("valor_rs_perdido").alias("valor_rs_perdido")))
+# Two copies (spec 17): the unfiltered serving copy is the Lakebase sync source (synced tables refuse a
+# row-filtered source); the gold copy carries the client row filter for Genie and SQL readers.
+SERV = f"{CAT}.ampera_serving.curtailment_daily"
 (d.write.mode("overwrite").option("overwriteSchema", "true")
   .option("delta.enableChangeDataFeed", "true")
-  .clusterBy("dia", "plant_id").saveAsTable(f"{CAT}.ampera_gold.curtailment_daily"))
-spark.sql(f"""COMMENT ON TABLE {CAT}.ampera_gold.curtailment_daily IS
-  'Gold (ML): daily curtailment per wind/solar plant — expected vs actual MWh, curtailed hours (model and ONS), MWh and R$ lost at PLD. Synced to Lakebase. Spec 11.'""")
-spark.sql(f"ALTER TABLE {CAT}.ampera_gold.curtailment_daily ALTER COLUMN dia SET NOT NULL")  # noqa: F821
-spark.sql(f"ALTER TABLE {CAT}.ampera_gold.curtailment_daily ALTER COLUMN plant_id SET NOT NULL")  # noqa: F821
+  .clusterBy("dia", "plant_id").saveAsTable(SERV))
+spark.sql(f"COMMENT ON TABLE {SERV} IS 'Serving: unfiltered copy of ampera_gold.curtailment_daily, synced to Lakebase. Spec 17.'")  # noqa: F821
+spark.sql(f"ALTER TABLE {SERV} ALTER COLUMN dia SET NOT NULL")  # noqa: F821
+spark.sql(f"ALTER TABLE {SERV} ALTER COLUMN plant_id SET NOT NULL")  # noqa: F821
+spark.sql(f"""CREATE OR REPLACE TABLE {CAT}.ampera_gold.curtailment_daily
+  CLUSTER BY (dia, plant_id)
+  COMMENT 'Gold (ML): daily curtailment per wind/solar plant — expected vs actual MWh, curtailed hours (model and ONS), MWh and R$ lost at PLD. Clients see only their plants (row filter). Spec 11, 17.'
+  WITH ROW FILTER {CAT}.ampera_gold.client_plant_filter ON (plant_id)
+  AS SELECT * FROM {SERV}""")  # noqa: F821
 
 # COMMAND ----------
 

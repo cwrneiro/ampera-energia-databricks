@@ -32,7 +32,8 @@ plants for which ONS publishes no curtailment flag. Decisions #29–#30 (00-over
 - **Runs:** `notebooks/train_curtailment` (job param `train=true`) and `score_curtailment` (every
   refresh) in `ampera_refresh`, between the medallion and the Lakebase syncs (serverless SDP can't
   run Python UDFs). Scoring writes `gold.curtailment_hourly` (lakehouse/Genie) and
-  `gold.curtailment_daily` (synced to Lakebase).
+  `gold.curtailment_daily` (row-filtered per client; its `ampera_serving` copy is synced to Lakebase,
+  spec 17). A drift check after scoring can retrain and promote a new champion (spec 18).
 
 ## Acceptance
 

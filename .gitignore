@@ -22,6 +22,8 @@ build/
 # Data (never commit raw/working data pulls)
 data/
 *.csv
+# ...except the committed seed of client portfolios (spec 17)
+!src/seed/*.csv
 *.parquet
 *.xlsx
 

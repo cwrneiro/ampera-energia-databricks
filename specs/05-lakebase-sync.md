@@ -16,9 +16,17 @@ tables**, so the app gets low-latency reads without querying the lakehouse.
 
 | Synced table | Source | Primary key | Rows |
 |---|---|---|---|
-| `ampera_gold_lb.generation_daily` | `ampera_gold.generation_daily` | (dia, plant_id) | 1,458,248 |
-| `ampera_gold_lb.plant_location` | `ampera_gold.plant_location` | (plant_id) | 2,292 |
+| `ampera_gold_lb.generation_daily` | `ampera_serving.generation_daily` | (dia, plant_id) | 1,458,248 |
+| `ampera_gold_lb.plant_location` | `ampera_serving.plant_location` | (plant_id) | 2,292 |
 | `ampera_gold_lb.reconciliation_monthly` | `ampera_gold.reconciliation_monthly` | (grao, mes, match_method) | 283 |
+| `ampera_gold_lb.reconciliation_ai_review` | `ampera_gold.reconciliation_ai_review` | (ons_key) | — |
+| `ampera_gold_lb.curtailment_daily` | `ampera_serving.curtailment_daily` | (dia, plant_id) | — |
+| `ampera_gold_lb.curtailment_narrative` | `ampera_serving.curtailment_narrative` | (plant_id) | — |
+| `ampera_gold_lb.client_plant_access` | `ampera_serving.client_plant_access` | (principal, plant_id) | — |
+
+- Plant-grain tables sync from their unfiltered `ampera_serving` copy: synced tables refuse a source
+  with a UC row filter, and the gold originals carry the client filter (spec 17). Row counts above
+  are from the 2026-10-05 sync; later tables are counted in `evidence/06`.
 
 - **SNAPSHOT** mode (gold is fully recomputed each run; no Change Data Feed needed). Refreshed by
   the job `ampera_refresh` (spec 04). Synced tables are created by CLI

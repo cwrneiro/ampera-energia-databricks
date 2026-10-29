@@ -8,6 +8,9 @@ resources:
       description: Geração reconciliada ONS + ANEEL SIGA, curtailment e chat com Genie
       source_code_path: ../app
       user_api_scopes: [dashboards.genie]   # Genie runs as the signed-in user (UC grants apply)
+      permissions:                          # clients use the same app, scoped to their plants (spec 17)
+        - group_name: ampera_clients
+          level: CAN_USE
       resources:
         - name: postgres
           postgres:

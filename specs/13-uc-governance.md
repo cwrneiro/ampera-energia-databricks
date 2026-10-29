@@ -13,7 +13,8 @@ came from. Decision #34.
   only; bronze/silver revoked. The app's Genie chat runs on behalf of the user, so these grants
   decide what each person can ask about. After applying them the task **asserts** them: `USE SCHEMA` + `SELECT`
   (and no `MODIFY`) on gold, no schema grant on bronze/silver and no table grant in either — so the
-  job fails if the access model drifts.
+  job fails if the access model drifts. Client principals (group `ampera_clients`) read five
+  row-filtered plant-grain gold tables only — see spec 17.
 - **Tags:** schema and table tags `ampera_layer`, `ampera_domain=energia`, `ampera_source` (ONS, ANEEL
   SIGA, CCEE, Open-Meteo, INMET, derived), `ampera_ai` on ML/GenAI outputs — namespaced because
   `layer`/`domain`/`source`/`project` may already be governed tag policies in a metastore; governed tag `class.geo_coordinates` on

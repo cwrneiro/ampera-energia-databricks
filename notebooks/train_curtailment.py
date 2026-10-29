@@ -14,7 +14,7 @@
 # MAGIC   against ONS's constrained-off flags: best recall with precision >= 0.8, so the R$ figure is a
 # MAGIC   conservative "at least". `Y` is stored with the model version.
 # MAGIC - One `HistGradientBoostingRegressor` per technology (EOL, SOL), wrapped in one MLflow pyfunc and
-# MAGIC   registered in Unity Catalog with alias `champion`.
+# MAGIC   registered in Unity Catalog with alias `champion` (or `challenger` when the drift check retrains, spec 18).
 
 # COMMAND ----------
 
@@ -23,10 +23,13 @@
 # COMMAND ----------
 
 dbutils.widgets.text("catalog", "ampera_catalog")  # noqa: F821
+dbutils.widgets.text("split", "2026-04-01")  # noqa: F821  train < split <= test; the drift retrain passes its window start
+dbutils.widgets.text("alias", "champion")  # noqa: F821  "challenger" from the drift retrain: promote_curtailment decides
 CAT = dbutils.widgets.get("catalog")  # noqa: F821
 FEAT = f"{CAT}.ampera_gold.curtailment_features_hourly"
 MODEL = f"{CAT}.ampera_gold.curtailment_expected_cf"
-SPLIT = "2026-04-01"        # train < SPLIT <= test (18 / 6 months)
+SPLIT = dbutils.widgets.get("split")  # noqa: F821  default 18 / 6 months
+ALIAS = dbutils.widgets.get("alias")  # noqa: F821
 SAMPLE_ROWS = 1_500_000     # per technology, training sample cap (driver memory)
 print(FEAT, MODEL)
 
@@ -186,7 +189,8 @@ c = MlflowClient()
 v = info.registered_model_version
 for k, val in {"y_eol": Y_BY_FONTE["EOL"], "y_sol": Y_BY_FONTE["SOL"], "min_expected_cf": MIN_EXPECTED_CF}.items():
     c.set_model_version_tag(MODEL, v, k, str(val))
-c.set_registered_model_alias(MODEL, "champion", v)
+c.set_model_version_tag(MODEL, v, "split", SPLIT)
+c.set_registered_model_alias(MODEL, ALIAS, v)
 c.update_registered_model(MODEL, description="Expected unconstrained capacity factor (wind/solar) from Open-Meteo weather; "
-                          "flags curtailment where actual < Y x expected. Spec 11. Trained by notebooks/train_curtailment.")
-print(f"registered {MODEL} v{v} as champion; run {run.info.run_id}; Y={Y_BY_FONTE}")
+                          "flags curtailment where actual < Y x expected. Spec 11, 18. Trained by notebooks/train_curtailment.")
+print(f"registered {MODEL} v{v} as {ALIAS}; run {run.info.run_id}; split {SPLIT}; Y={Y_BY_FONTE}")

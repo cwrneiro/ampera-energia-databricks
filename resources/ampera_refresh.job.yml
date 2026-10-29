@@ -1,7 +1,8 @@
 # Refresh the whole demo: medallion pipeline (bronze -> silver -> gold), then ai_decide adjudication of
 # plants with no stored verdict (and a second pipeline pass only when it wrote new verdicts), then the ML
-# step (optional retrain + ai_decide blind eval, always score), then re-snapshot the Lakebase synced
-# tables the app reads, then re-apply UC governance. Spec: specs/04, 05, 11, 12, 13
+# step (optional retrain + ai_decide blind eval, always score, drift check with a gated challenger retrain
+# and promotion), the curtailment narrative and the client access model, then re-snapshot the Lakebase
+# synced tables the app reads, then re-apply UC governance. Spec: specs/04, 05, 11, 12, 13, 16, 17, 18
 resources:
   jobs:
     ampera_refresh:
@@ -14,10 +15,21 @@ resources:
       parameters:
         - name: train                 # "true" = retrain the curtailment model + rerun the ai_decide eval
           default: "false"
+        - name: force_drift           # "true" = run the drift retrain + promotion path even without drift (spec 18)
+          default: "false"
       tasks:
         - task_key: medallion
           pipeline_task:
             pipeline_id: ${resources.pipelines.ampera_medallion.id}
+        - task_key: client_access       # which plants each client principal may see (row filter + app; spec 17)
+          depends_on: [{task_key: medallion}]
+          notebook_task:
+            notebook_path: ../notebooks/client_access.py
+            base_parameters: {catalog: "${var.catalog}", client_access: "${var.client_access}"}
+        - task_key: sync_client_plant_access
+          depends_on: [{task_key: client_access}]
+          pipeline_task:
+            pipeline_id: ${var.sync_pipeline_client_plant_access}
         - task_key: adjudicate_ai       # ai_decide only for (plant, candidates, prompt) keys not on file
           depends_on: [{task_key: medallion}]
           notebook_task:
@@ -69,12 +81,50 @@ resources:
           run_if: NONE_FAILED         # the re-run may be skipped
           pipeline_task:
             pipeline_id: ${var.sync_pipeline_reconciliation_ai_review}
-        - task_key: sync_curtailment_daily
+        - task_key: monitor_curtailment   # champion vs ONS flags on the trailing 3 labeled months (spec 18)
           depends_on: [{task_key: score_curtailment}]
+          notebook_task:
+            notebook_path: ../notebooks/monitor_curtailment.py
+            base_parameters: {catalog: "${var.catalog}", force_drift: "{{job.parameters.force_drift}}"}
+        - task_key: drift_gate
+          depends_on: [{task_key: monitor_curtailment}]
+          condition_task: {op: EQUAL_TO, left: "{{tasks.monitor_curtailment.values.drift}}", right: "true"}
+        - task_key: retrain_challenger    # trained on everything before the window; registered as @challenger
+          depends_on: [{task_key: drift_gate, outcome: "true"}]
+          notebook_task:
+            notebook_path: ../notebooks/train_curtailment.py
+            base_parameters: {catalog: "${var.catalog}", alias: challenger,
+                              split: "{{tasks.monitor_curtailment.values.window_from}}"}
+        - task_key: promote_curtailment   # challenger -> champion only if it beats it on the window
+          depends_on: [{task_key: retrain_challenger}]
+          notebook_task:
+            notebook_path: ../notebooks/promote_curtailment.py
+            base_parameters: {catalog: "${var.catalog}", window_from: "{{tasks.monitor_curtailment.values.window_from}}"}
+        - task_key: promoted_gate
+          depends_on: [{task_key: promote_curtailment}]
+          condition_task: {op: EQUAL_TO, left: "{{tasks.promote_curtailment.values.promoted}}", right: "true"}
+        - task_key: rescore_curtailment   # the new champion's numbers reach gold, Lakebase and the narrative
+          depends_on: [{task_key: promoted_gate, outcome: "true"}]
+          notebook_task:
+            notebook_path: ../notebooks/score_curtailment.py
+            base_parameters: {catalog: "${var.catalog}"}
+        - task_key: sync_curtailment_daily
+          depends_on: [{task_key: score_curtailment}, {task_key: rescore_curtailment}]
+          run_if: NONE_FAILED         # the re-score runs only after a promotion
           pipeline_task:
             pipeline_id: ${var.sync_pipeline_curtailment_daily}
+        - task_key: narrate_curtailment   # PT-BR loss explanation per plant; ai_query only for new facts (spec 16)
+          depends_on: [{task_key: score_curtailment}, {task_key: rescore_curtailment}]
+          run_if: NONE_FAILED
+          notebook_task:
+            notebook_path: ../notebooks/narrate_curtailment.py
+            base_parameters: {catalog: "${var.catalog}"}
+        - task_key: sync_curtailment_narrative
+          depends_on: [{task_key: narrate_curtailment}]
+          pipeline_task:
+            pipeline_id: ${var.sync_pipeline_curtailment_narrative}
         - task_key: governance
-          depends_on: [{task_key: score_curtailment}, {task_key: eval_ai_decide}]
+          depends_on: [{task_key: narrate_curtailment}, {task_key: eval_ai_decide}, {task_key: client_access}]
           run_if: NONE_FAILED
           notebook_task:
             notebook_path: ../notebooks/governance.py

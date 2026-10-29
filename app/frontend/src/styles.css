@@ -52,6 +52,8 @@ h1, h2, h3 { margin: 0; text-wrap: balance; }
 .brand { display: flex; align-items: center; text-decoration: none; min-height: 40px; }
 .wordmark { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.01em; color: var(--ink); }
 .wordmark b { margin-left: 0.25em; font-weight: 800; color: var(--primary); }
+.client-scope { margin: 0 auto 0 0; padding: 4px 10px; border-radius: 3px; background: var(--tint); color: var(--ink-2); font-size: 0.8125rem; }
+.client-scope b { color: var(--primary); font-weight: 800; margin-left: 4px; }
 
 .index { display: grid; grid-template-columns: repeat(5, minmax(0, 11.5rem)); }
 .index-cell {
@@ -185,6 +187,10 @@ main { max-width: 1600px; margin: 0 auto; padding: 18px 32px 56px; }
   color: var(--ink); background: repeating-linear-gradient(45deg, rgba(0, 137, 247, 0.2) 0 3px, rgba(0, 137, 247, 0.06) 3px 6px);
 }
 .notes .tag, .facts .tag { margin-left: 0; }
+.tag--ai { color: var(--primary); background: var(--tint); margin: 0 6px 0 0; }
+.narr { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--rule-2); }
+.narr p { margin: 0; font-size: 0.875rem; line-height: 1.5; max-width: 70ch; }
+.narr .narr-src { margin-top: 8px; font-size: 0.75rem; color: var(--ink-2); }
 
 /* ---------- plots ---------- */
 .plot { margin: 0; }

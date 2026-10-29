@@ -197,6 +197,90 @@
         ]
       },
       {
+        "identifier": "ampera_catalog.ampera_gold.curtailment_narrative",
+        "column_configs": [
+          {
+            "column_name": "endpoint",
+            "description": [
+              "Modelo de linguagem que escreveu o texto (Databricks Foundation Model API)."
+            ]
+          },
+          {
+            "column_name": "fatos_json",
+            "description": [
+              "Fatos (JSON, números já formatados) de onde o texto foi escrito; vêm de curtailment_daily."
+            ]
+          },
+          {
+            "column_name": "fonte",
+            "description": [
+              "EOL (eólica) ou SOL (solar)."
+            ],
+            "synonyms": [
+              "fonte",
+              "tecnologia"
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "gerado_em",
+            "description": [
+              "Quando o texto foi gerado."
+            ]
+          },
+          {
+            "column_name": "model_version",
+            "description": [
+              "Versão do modelo de curtailment cujos números o texto explica."
+            ]
+          },
+          {
+            "column_name": "narrativa",
+            "description": [
+              "Explicação curta, em português, de quanto a usina perdeu por curtailment e quando. Cada número citado está em fatos_json."
+            ],
+            "synonyms": [
+              "explicação",
+              "resumo",
+              "por que perdeu"
+            ]
+          },
+          {
+            "column_name": "nome",
+            "description": [
+              "Nome da usina."
+            ],
+            "synonyms": [
+              "usina",
+              "nome da usina"
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "plant_id",
+            "description": [
+              "Identificador da usina (mesmo de curtailment_daily)."
+            ],
+            "synonyms": [
+              "usina"
+            ]
+          },
+          {
+            "column_name": "uf",
+            "description": [
+              "UF da usina."
+            ],
+            "synonyms": [
+              "estado"
+            ],
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          }
+        ]
+      },
+      {
         "identifier": "ampera_catalog.ampera_gold.fact_generation_hourly",
         "column_configs": [
           {
@@ -803,7 +887,7 @@
       {
         "id": "20000000000000000000000000000001",
         "content": [
-          "## PURPOSE\n- Geração elétrica brasileira reconciliada (ONS + ANEEL SIGA), out/2024 a set/2026, com PLD da CCEE e clima. Usuários: analistas e executivos da Ampera.\n\n## DISAMBIGUATION\n- \"Usina\" = plant_id; \"CEG\" = coluna ceg; \"conjunto\" = complexo ONS (agrupe por conjunto_key, exiba nom_conjunto).\n- Perguntas por dia, mês ou ano usam generation_daily; fact_generation_hourly só para perfis por hora.\n- Sem período informado, use todo o histórico e diga isso.\n\n## DATA QUALITY NOTES\n- ceg é NULL em usinas substitutas (plant_id SURR-…); \"geração por CEG\" exclui essas linhas.\n- mwh_estimado já está contido em mwh.\n- Cada tabela está em um único grão (usina × dia, usina × hora): some mwh diretamente, sem deduplicar séries ONS.\n- reconciliation_monthly: nunca some grao publicado com grao usina; para totais use usina.\n- Clima *_modelo vem do Open-Meteo; *_medido/*_medida do ONS ou INMET (fonte_medicao).\n- Curtailment (energia perdida por restrição): curtailment_daily, só EOL/SOL; mwh_restrito e valor_rs_perdido são estimativas do modelo de ML; horas_restritas_ons é o registro oficial do ONS.\n\n## Instructions you must follow when providing summaries\n- Responda em português do Brasil.\n- Energia em MWh, GWh ou TWh com 1–2 casas; preços em R$/MWh com 2 casas.\n- Informe o período usado."
+          "## PURPOSE\n- Geração elétrica brasileira reconciliada (ONS + ANEEL SIGA), out/2024 a set/2026, com PLD da CCEE e clima. Usuários: analistas e executivos da Ampera.\n\n## DISAMBIGUATION\n- \"Usina\" = plant_id; \"CEG\" = coluna ceg; \"conjunto\" = complexo ONS (agrupe por conjunto_key, exiba nom_conjunto).\n- Perguntas por dia, mês ou ano usam generation_daily; fact_generation_hourly só para perfis por hora.\n- Sem período informado, use todo o histórico e diga isso.\n\n## DATA QUALITY NOTES\n- ceg é NULL em usinas substitutas (plant_id SURR-…); \"geração por CEG\" exclui essas linhas.\n- mwh_estimado já está contido em mwh.\n- Cada tabela está em um único grão (usina × dia, usina × hora): some mwh diretamente, sem deduplicar séries ONS.\n- reconciliation_monthly: nunca some grao publicado com grao usina; para totais use usina.\n- Clima *_modelo vem do Open-Meteo; *_medido/*_medida do ONS ou INMET (fonte_medicao).\n- Curtailment (energia perdida por restrição): curtailment_daily, só EOL/SOL; mwh_restrito e valor_rs_perdido são estimativas do modelo de ML; horas_restritas_ons é o registro oficial do ONS.\n- \"Explique\" ou \"por que\" uma usina perdeu por curtailment: mostre curtailment_narrative.narrativa (texto pronto, números conferidos) junto com os números de curtailment_daily.\n\n## Instructions you must follow when providing summaries\n- Responda em português do Brasil.\n- Energia em MWh, GWh ou TWh com 1–2 casas; preços em R$/MWh com 2 casas.\n- Informe o período usado."
         ]
       }
     ],
@@ -1435,6 +1519,20 @@
             "format": "SQL",
             "content": [
               "SELECT CAST(DATE_TRUNC('MONTH', c.dia) AS DATE) AS mes, ROUND(SUM(c.mwh_restrito) / 1e3, 1) AS perdido_gwh FROM ampera_catalog.ampera_gold.curtailment_daily c WHERE c.fonte = 'EOL' AND YEAR(c.dia) = 2026 GROUP BY 1 ORDER BY 1"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "50000000000000000000000000000039",
+        "question": [
+          "Explique o curtailment da usina Canoa Quebrada"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT n.nome, n.uf, n.narrativa FROM ampera_catalog.ampera_gold.curtailment_narrative n WHERE n.nome = 'Canoa Quebrada'"
             ]
           }
         ]

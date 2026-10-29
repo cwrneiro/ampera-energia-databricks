@@ -40,10 +40,12 @@ function Brand() {
   );
 }
 
-function SheetIndex({ page, lastPlant }) {
+function SheetIndex({ page, lastPlant, cliente }) {
+  // Clients (spec 17) see their own plants; the market-wide reconciliation is Ampera's internal view.
+  const sheets = cliente ? SHEETS.filter((s) => s.page !== "reconciliacao") : SHEETS;
   return (
     <nav className="index" aria-label="Folhas">
-      {SHEETS.map((s) => {
+      {sheets.map((s) => {
         const href = s.page === "usina" ? (lastPlant ? `#/usina/${encodeURIComponent(lastPlant)}` : null) : `#/${s.page}`;
         const current = page === s.page;
         return href ? (
@@ -174,6 +176,7 @@ function App() {
   const { page, id } = useRoute();
   const meta = useApi("meta");
   const plantsQ = useApi("plants");
+  const cliente = useApi("me").data?.cliente;
   const plants = plantsQ.data || [];
   const [f, setF] = useState({});
   const [lastPlant, setLastPlant] = useState(null);
@@ -190,7 +193,8 @@ function App() {
     <>
       <header className="top">
         <Brand />
-        <SheetIndex page={page} lastPlant={lastPlant} />
+        {cliente && <p className="client-scope" title="Você vê apenas as usinas deste cliente">Carteira <b>{cliente}</b></p>}
+        <SheetIndex page={page} lastPlant={lastPlant} cliente={cliente} />
       </header>
       {show && ready && <Filters f={f} set={setF} meta={meta.data} plants={plants} show={show} />}
       <main className={page === "mapa" ? "main--fit" : undefined}>

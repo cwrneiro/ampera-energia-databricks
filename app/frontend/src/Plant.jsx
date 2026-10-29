@@ -55,6 +55,7 @@ export default function Plant({ id, plant }) {
   const u = q.data?.usina || plant;
   const dias = q.data?.dias || [];
   const curt = q.data?.curtailment || [];
+  const narr = q.data?.narrativa;
   const f = u && FONTE[u.fonte];
 
   const s = useMemo(() => {
@@ -108,6 +109,12 @@ export default function Plant({ id, plant }) {
             <dt>Horas restritas, modelo</dt><dd className="num">{fmt.int(ct.hm)}</dd>
             <dt>Horas restritas, ONS</dt><dd className="num">{ct.ho == null ? "sem registro" : fmt.int(ct.ho)}</dd>
           </dl>
+          {narr && (
+            <div className="narr">
+              <p>{narr.narrativa}</p>
+              <p className="narr-src"><em className="tag tag--ai">IA</em>Texto gerado a partir dos números do modelo curtailment v{narr.model_version}; cada número citado é conferido com os dados.</p>
+            </div>
+          )}
         </Block>
       )}
       <Block title="Ficha">

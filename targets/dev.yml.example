@@ -22,6 +22,10 @@ targets:
       sync_pipeline_reconciliation_monthly: <pipeline-id>
       sync_pipeline_reconciliation_ai_review: <pipeline-id>
       sync_pipeline_curtailment_daily: <pipeline-id>
+      sync_pipeline_curtailment_narrative: <pipeline-id>
+      sync_pipeline_client_plant_access: <pipeline-id>
+      # Who acts for each client (spec 17): user emails or service principal application ids. Optional.
+      # client_access: '{"Ventos do Nordeste Participações": ["<sp-application-id>"]}'
     resources:
       genie_spaces:
         ampera_genie:

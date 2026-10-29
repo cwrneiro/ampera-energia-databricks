@@ -4,6 +4,7 @@
 CREATE OR REFRESH MATERIALIZED VIEW ampera_gold.fact_generation_hourly
   COMMENT 'Gold: hourly MWh per plant (complexes split into member plants; is_estimated marks the capacity-weighted estimate).'
   CLUSTER BY (gen_date, plant_id)
+  WITH ROW FILTER ${catalog}.ampera_gold.client_plant_filter ON (plant_id)   -- clients see only their plants (spec 17)
 AS SELECT
   g.ts,
   g.gen_date,

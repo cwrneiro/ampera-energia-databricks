@@ -122,7 +122,11 @@ def ml_genai():
       FROM {CAT}.ampera_gold.curtailment_daily WHERE plant_id = (SELECT plant_id FROM {CAT}.ampera_gold.curtailment_daily
            GROUP BY 1 ORDER BY sum(valor_rs_perdido) DESC LIMIT 1) AND dia BETWEEN '2026-08-01' AND '2026-08-14' ORDER BY dia""",
                     "real model output: the top plant by R$ lost, two weeks")
-    write("04_ml_curtailment.txt", "ML — curtailment model in UC, scoring output and agreement with ONS", body)
+    body += section(f"""SELECT checked_at, kind, model_version, fonte, window_from, window_to, precision, recall,
+             mae_model, mae_ons, flagged, labeled_hours, drift, decision
+      FROM {CAT}.ampera_gold.curtailment_model_monitor ORDER BY checked_at DESC, kind, fonte LIMIT 24""",
+                    "drift check log (spec 18): champion vs ONS on the trailing 3 labeled months; challenger comparisons")
+    write("04_ml_curtailment.txt", "ML — curtailment model in UC, scoring output, agreement with ONS, drift checks", body)
 
     body = section(f"""SELECT nom_usina, uf, tipo, ai_choice, ai_confidence, ai_accepted, a_nome, ai_prob_a, b_nome, ai_prob_b,
              c_nome, ai_prob_c, ai_prob_nenhum, match_method, plant_id
@@ -135,13 +139,29 @@ def ml_genai():
                     "blind eval (CEG registry number hidden), confusion")
     write("05_genai_ai_decide.txt", "GenAI — ai_decide reconciliation verdicts and blind evaluation", body)
 
+    body = section(f"""SELECT count(*) AS logged, count_if(grounded) AS grounded, count(DISTINCT plant_id) AS plants,
+             count(DISTINCT prompt_hash) AS prompts, count(DISTINCT model_version) AS model_versions,
+             min(gerado_em) AS first_generated, max(gerado_em) AS last_generated
+      FROM {CAT}.ampera_gold.curtailment_narrative_log""", "narrative log: one row per plant x facts hash x prompt hash")
+    body += section(f"""SELECT count(*) AS served FROM {CAT}.ampera_gold.curtailment_narrative""",
+                    "served: one grounded narrative per plant, for the current facts")
+    body += section(f"""SELECT n.nome, n.uf, n.narrativa, n.fatos_json FROM {CAT}.ampera_gold.curtailment_narrative n
+      JOIN (SELECT plant_id, sum(valor_rs_perdido) AS rs FROM {CAT}.ampera_gold.curtailment_daily GROUP BY 1) d USING (plant_id)
+      ORDER BY d.rs DESC LIMIT 3""", "top 3 plants by R$ lost: narrative and the facts it was written from")
+    body += section(f"""SELECT plant_id, narrativa FROM {CAT}.ampera_gold.curtailment_narrative_log WHERE NOT grounded LIMIT 5""",
+                    "rejected by the grounding check (cited a number not in the facts; never served)")
+    write("10_genai_narrative.txt", "GenAI — grounded curtailment narratives (ai_query), logged per plant x facts x prompt", body)
+
 
 def lakebase_and_app():
     body = ""
-    for t in ("generation_daily", "plant_location", "reconciliation_monthly", "reconciliation_ai_review", "curtailment_daily"):
+    for t in ("generation_daily", "plant_location", "reconciliation_monthly", "reconciliation_ai_review", "curtailment_daily",
+              "curtailment_narrative", "client_plant_access"):
         s = cli("postgres", "get-synced-table", f"synced_tables/{CAT}.ampera_gold_lb.{t}")
         st = s.get("status", {})
-        body += f"{t:<26} source=ampera_gold.{t}  pipeline={st.get('pipeline_id')}  " \
+        # same sources as scripts/create_synced_tables.sh (the API doesn't return them)
+        src = ("ampera_gold" if t.startswith("reconciliation") else "ampera_serving") + f".{t}"
+        body += f"{t:<26} source={src}  pipeline={st.get('pipeline_id')}  " \
                 f"state={st.get('detailed_state')}  last_sync={json.dumps(st.get('last_sync', {}).get('delta_table_sync_info', {}))[:120]}\n"
     proj = cli("postgres", "get-project", f"projects/{LB}")
     body += f"\nLakebase project {LB}: pg_version={proj['status'].get('pg_version')}  default endpoint settings={proj['status'].get('default_endpoint_settings')}\n"
@@ -183,13 +203,24 @@ def lakebase_and_app():
     print("wrote evidence/08_genie_conversations.json")
 
 
+def dotenv():
+    """The test client principal's credentials (gitignored .env, spec 17); {} when absent."""
+    path = os.path.join(ROOT, ".env")
+    return dict(l.strip().split("=", 1) for l in open(path) if "=" in l) if os.path.exists(path) else {}
+
+
 def tests():
-    env = {**os.environ, "DATABRICKS_CONFIG_PROFILE": P, "DATABRICKS_WAREHOUSE_ID": WH, "CATALOG": CAT, "GENIE_LIVE": "1"}
+    space = cli("apps", "get", "ampera-app").get("resources", [])
+    space = next((r["genie_space"]["space_id"] for r in space if "genie_space" in r), "")
+    env = {**os.environ, **dotenv(), "DATABRICKS_CONFIG_PROFILE": P, "DATABRICKS_WAREHOUSE_ID": WH, "WAREHOUSE_ID": WH,
+           "CATALOG": CAT, "GENIE_LIVE": "1", "GENIE_SPACE_ID": space}
     body = ""
-    for t in ("tests/test_reconciliation.py", "tests/test_curtailment.py", "tests/test_app_api.py", "tests/test_genie_space.py"):
+    for t in ("tests/test_reconciliation.py", "tests/test_curtailment.py", "tests/test_narrative.py",
+              "tests/test_app_api.py", "tests/test_genie_space.py", "tests/test_rls_live.py"):
         r = subprocess.run([sys.executable, t], cwd=ROOT, capture_output=True, text=True, env=env)
         body += f"$ python3 {t}\n{r.stdout}{r.stderr}exit={r.returncode}\n\n"
-    write("09_tests.txt", "Runnable checks — reconciliation and curtailment logic, app API, Genie benchmark SQL (live)", body)
+    write("09_tests.txt", "Runnable checks — reconciliation, curtailment, narrative and drift logic, app API, "
+                          "Genie benchmark SQL (live), client row-level security (live, as a client principal)", body)
 
 
 if __name__ == "__main__":

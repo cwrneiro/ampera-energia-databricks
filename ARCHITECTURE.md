@@ -25,20 +25,21 @@ enforce both (§4.4).
 | Resource | Bundle key / file | Notes |
 |---|---|---|
 | Pipeline `ampera_medallion` | `resources/ampera_medallion.pipeline.yml` | Serverless, triggered; catalog `var.catalog`, default schema `ampera_bronze`; code = `src/transformations/**` |
-| Job `ampera_refresh` | `resources/ampera_refresh.job.yml` | medallion → `adjudicate_ai` (ai_decide, re-runs the medallion only when it wrote new verdicts) → ML scoring → the synced-table pipelines (`var.sync_pipeline_*`) → governance; daily 06:00 BRT, paused by default |
+| Job `ampera_refresh` | `resources/ampera_refresh.job.yml` | medallion → `adjudicate_ai` (ai_decide, re-runs the medallion only when it wrote new verdicts) and `client_access` → ML scoring → drift check (gated challenger retrain, promotion, re-score; spec 18) → curtailment narrative (spec 16) → the synced-table pipelines (`var.sync_pipeline_*`) → governance; daily 06:00 BRT, paused by default |
 | App `ampera-app` | `resources/ampera_app.app.yml`, `app/` | FastAPI + built React SPA; `postgres` resource on `projects/${var.lakebase_project}/branches/production`, `CAN_CONNECT_AND_CREATE`; gets its own service principal |
-| Genie space "Ampera · Geração Elétrica" | `resources/ampera_genie.genie_space.yml` + JSON body | Runs on `var.warehouse_id`; 4 gold tables, instructions, examples, 32 benchmarks |
+| Genie space "Ampera · Geração Elétrica" | `resources/ampera_genie.genie_space.yml` + JSON body | Runs on `var.warehouse_id`; 6 gold tables, instructions, examples, 39 benchmarks; `CAN_RUN` for `ampera_clients` |
 
 ### Created by scripts (CLI / SQL, outside the bundle; README "Reproduce")
 
 | Resource | Script | Points at it |
 |---|---|---|
-| Schemas `ampera_bronze` `ampera_silver` `ampera_gold` `ampera_gold_lb` (in an existing catalog) | `scripts/bootstrap_workspace.sh` | `var.catalog` |
+| Schemas `ampera_bronze` `ampera_silver` `ampera_gold` `ampera_gold_lb` `ampera_serving` (in an existing catalog) | `scripts/bootstrap_workspace.sh` | `var.catalog` |
+| Table `ampera_gold.client_plant_access` + row filter function `ampera_gold.client_plant_filter`; groups `ampera_analysts`, `ampera_clients` (warehouse `CAN_USE`) | `bootstrap_workspace.sh`; rows: job task `client_access` from `src/seed/client_portfolio.csv` + `var.client_access` | the pipeline's `WITH ROW FILTER`, scoring / narrative CTAS (spec 17) |
 | Volume `<catalog>.ampera_bronze.raw` (one folder per source) | `bootstrap_workspace.sh`; files: `scripts/land_raw_data.sh` | `${catalog}` in the bronze SQL |
 | Table `<catalog>.ampera_silver.plant_match_override` | `bootstrap_workspace.sh` | read by `silver_plant_match.py` |
 | Lakebase project (PG 17; endpoint `primary`, 0.5–4 CU, suspends after 20 min) | `bootstrap_workspace.sh` | `var.lakebase_project`, `LAKEBASE_ENDPOINT` in `app/app.yaml` |
 | Table `<catalog>.ampera_silver.ai_decide_verdict` (durable ai_decide verdicts) | `bootstrap_workspace.sh` (empty); rows: job task `adjudicate_ai` | read by the pipeline view `ai_verdict` (spec 12) |
-| 5 synced tables `<catalog>.ampera_gold_lb.*` (SNAPSHOT) and their pipelines | `scripts/create_synced_tables.sh` (from `run_first_refresh.sh`) | `var.sync_pipeline_*`; metadata in `<catalog>.default` |
+| 7 synced tables `<catalog>.ampera_gold_lb.*` (SNAPSHOT) and their pipelines; plant-grain ones read the unfiltered `ampera_serving` copies | `scripts/create_synced_tables.sh` (from `run_first_refresh.sh`) | `var.sync_pipeline_*`; metadata in `<catalog>.default` |
 | Postgres grants for the app service principal | `scripts/deploy_and_refresh.sh` | — |
 
 ### Depended on (must already exist)
@@ -61,8 +62,10 @@ enforce both (§4.4).
 | **silver** — facts | `generation` (as ONS publishes), `generation_plant` (plant grain: complexes split into measured / estimated members), `dim_plant` | **Never sum `generation` with `generation_plant`** |
 | **silver** — enrichment | `price_pld_hourly`, `weather_cell_hourly` (Open-Meteo), `weather_plant_measured` (ONS), `weather_inmet_hourly`, `plant_inmet_station` (≤ 50 km) | Joined by hour + submarket / location |
 | **silver** — checks | `plant_match_check`, `generation_plant_key_check`, `generation_balance` | Expectations (§4.4) |
-| **gold** (materialized views) | `fact_generation_hourly` (plant × hour), `generation_daily` (plant × day), `plant_location` (plant), `reconciliation_monthly` (grain × month × method) | Read by Genie; the last three are synced to Lakebase |
-| **gold_lb** (synced, Postgres schema `ampera_gold_lb`) | `generation_daily`, `plant_location`, `reconciliation_monthly` | Read by the app |
+| **gold** (materialized views) | `fact_generation_hourly` (plant × hour), `generation_daily` (plant × day), `plant_location` (plant), `reconciliation_monthly` (grain × month × method) | Read by Genie; the first three carry the client row filter (spec 17) |
+| **gold** (notebook tables) | `curtailment_hourly`, `curtailment_daily`, `curtailment_narrative` (+ `_log`), `curtailment_model_monitor`, `client_plant_access` | ML, GenAI and ops outputs (specs 11, 16–18); `curtailment_daily` and `curtailment_narrative` are row-filtered |
+| **serving** (`ampera_serving`, granted to nobody) | unfiltered copies of `generation_daily`, `plant_location`, `curtailment_daily`, `curtailment_narrative`, `client_plant_access` | Sync sources only: synced tables refuse a row-filtered source |
+| **gold_lb** (synced, Postgres schema `ampera_gold_lb`) | the serving copies + `reconciliation_monthly`, `reconciliation_ai_review` | Read by the app |
 
 ## 3. How it connects
 
@@ -102,11 +105,15 @@ enforce both (§4.4).
    `ampera_gold_lb`. It never queries the lakehouse.
 9. **Cold start.** After 20 min idle the Lakebase compute suspends. The API drops dead
    connections, retries, then returns 503 "waking", and the UI retries on its own.
-10. **Users → app.** Workspace SSO. Access is the app `CAN_USE` permission.
+10. **Users → app.** Workspace SSO. Access is the app `CAN_USE` permission. A user listed in
+    `client_plant_access` (`x-forwarded-email`) gets only their client's plants in every API read;
+    Reconciliação is staff-only (spec 17).
 11. **Map tiles.** Fetched by the viewer's browser from OpenFreeMap; nothing goes through the app.
 12. **Users → Genie.** Access is `CAN_RUN` on the space.
 13. **Genie → data.** SQL runs on the warehouse **as the asking user**, so users need UC
     `USE CATALOG`, `USE SCHEMA` and `SELECT` on `<catalog>.ampera_gold`, plus `CAN_USE` on the warehouse.
+    Client principals (`ampera_clients`) get `SELECT` on the five row-filtered tables only, so Genie
+    answers them about their plants alone.
 
 **Identities:** the pipeline and job run as the deploying user (add `run_as` in the target for a
 service principal). The app runs as its own service principal. Genie runs as the end user.
@@ -134,7 +141,9 @@ service principal). The app runs as its own service principal. Genie runs as the
    "Reconciliação" page. Plant-level unmatched should stay well under 5% of MWh.
 5. **Checks:** `python3 tests/test_reconciliation.py` (matching logic),
    `tests/test_genie_space.py` (Genie payload; `GENIE_LIVE=1` runs every curated SQL),
-   `tests/test_app_api.py` (API helpers; with `PG*` env set, checks that totals tie).
+   `tests/test_app_api.py` (API helpers and client scope; with `PG*` env set, checks that totals tie),
+   `tests/test_curtailment.py` (headline rules, drift and promotion), `tests/test_narrative.py`
+   (narrative facts and grounding), `tests/test_rls_live.py` (as a client principal, with `.env`).
 
 ## 5. Go-live and maintenance essentials
 
@@ -143,9 +152,10 @@ service principal). The app runs as its own service principal. Genie runs as the
   or ERA5 from Copernicus in production.
 - **Grants:** UC catalog/schema/`SELECT` for Genie users; Postgres `USAGE` and `SELECT` on `ampera_gold_lb`
   for the app service principal. Rerun the Postgres grant if you drop and recreate a synced table.
+  Never sync a row-filtered gold table directly: the sync is refused; sync its `ampera_serving` copy.
 - **Cadence:** the job is paused by default. Unpause it only after raw landing is automated.
 - **Caveats:** synced tables are read-only in Postgres. Before a manual `start-update`, stop the
   pipeline (failed-update retries can race a deploy). Python UDFs that import local modules don't
   run on serverless; keep matching logic in `reco_sql.py`.
-- **Deeper docs:** `specs/00-overview.md` (decision log), `specs/01`–`15` (one per component),
+- **Deeper docs:** `specs/00-overview.md` (decision log), `specs/01`–`18` (one per component),
   `SUCCESS_CRITERIA.md`, `DESIGN.md` / `PRODUCT.md` / `.impeccable/` (frontend design system).

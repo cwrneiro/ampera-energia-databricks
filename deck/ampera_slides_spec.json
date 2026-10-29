@@ -1,0 +1,509 @@
+{
+  "title": "Ampera Energia Analytics — Curtailment losses in R$, per plant",
+  "template_id": "12HWqnLB_0X49H9GsqjvC4lwQrH9CBZK92hsf8Hj6PhU",
+  "theme": "light",
+  "slides": [
+    {
+      "id": "s01-title",
+      "layout": "title",
+      "title": "Curtailment losses in R$, per plant",
+      "subtitle": "One trusted plant ID · Ampera Energia Analytics on Databricks",
+      "notes": {
+        "purpose": "Set the frame: one business question (what did curtailment cost, per plant) answered on one platform.",
+        "talk_track": "This is a working prototype on Ampera's public data. In 24 months, R$ 8.4 bi of wind and solar output was cut by the grid operator. We can now say which plant lost how much, in R$, from data Ampera already owns.",
+        "evidence": [
+          "deck/ampera_deck.md §1",
+          "evidence/04_ml_curtailment.txt"
+        ],
+        "transition": "Let me start with the outcome, then show how we got there.",
+        "likely_question": "Is this real data? Yes: public ONS, ANEEL SIGA, CCEE, Open-Meteo and INMET data. Ampera itself is fictional."
+      }
+    },
+    {
+      "id": "s02-outcome",
+      "layout": "content_basic",
+      "title": "R$ 8.4 bi cut in 24 months, now visible per plant",
+      "table": {
+        "data": [
+          [
+            "What the business gets",
+            "Result"
+          ],
+          [
+            "One plant ID across ONS and ANEEL SIGA",
+            "99.97% of plant-level energy resolved (target: < 5% unmatched)"
+          ],
+          [
+            "Curtailment valued per plant",
+            "65.8 TWh lost, R$ 8.4 bi at hourly PLD, 1,598 plants"
+          ],
+          [
+            "An estimate better than the grid operator's",
+            "Capacity-factor error 0.088 vs 0.098 (wind), 0.013 vs 0.015 (solar), 6 held-out months"
+          ],
+          [
+            "Answers in plain Portuguese",
+            "Genie + in-app chat on the same governed numbers"
+          ]
+        ],
+        "x": 0.667,
+        "y": 1.9,
+        "width": 12.0,
+        "height": 3.6
+      },
+      "notes": {
+        "purpose": "Give the Diretor Comercial the four results before any architecture.",
+        "talk_track": "Four outcomes. One plant ID across two registries that don't join. Curtailment valued in R$ per plant. A model that beats the grid operator's own estimate on months it never saw. And answers in plain Portuguese on the same numbers. Why now: ONS has been curtailing wind and solar at scale in the Northeast in 2025–26, and owners only see it as vague lost generation.",
+        "evidence": [
+          "evidence/03_medallion_tables.txt",
+          "evidence/04_ml_curtailment.txt",
+          "evidence/notebooks/train_curtailment.ipynb",
+          "evidence/08_genie_conversations.json"
+        ],
+        "transition": "Why was this hard? Because of the people asking.",
+        "likely_question": "How sure is the R$ 8.4 bi? It is a lower bound; slide 6 explains why."
+      }
+    },
+    {
+      "id": "s03-problem",
+      "layout": "content_2col",
+      "title": "Two blockers, one root cause",
+      "columns": [
+        "Diretor Comercial · ARR, renewals",
+        "“My clients ask what curtailment cost them. I answer with a range and a caveat. I can't put a price on that, and it won't get a renewal signed.”",
+        "Head of Data & Analytics · time-to-launch, tickets",
+        "“ONS and SIGA don't join. Every new product starts with weeks of manual matching, and every client question becomes a ticket.”"
+      ],
+      "notes": {
+        "purpose": "Name both buyers, the metric each is paid on, and tie their pain to one root cause.",
+        "talk_track": "The Diretor Comercial is measured on data-product revenue and renewals, and can't put a price on curtailment. The Head of Data & Analytics is measured on time-to-launch and the ticket backlog, and can't join the sources: CEG formats differ, ONS mixes plants with wind/solar complexes and state totals, and some plants have no CEG at all. Both problems come from the same place: no trusted plant ID.",
+        "evidence": [
+          "deck/ampera_deck.md §2"
+        ],
+        "transition": "Here is each challenge and what answers it.",
+        "likely_question": "Why not just join on CEG? Formats differ, complexes aggregate several plants, and some rows have no CEG."
+      },
+      "subtitle": "Root cause: no single, trusted plant ID (illustrative stakeholder voices)"
+    },
+    {
+      "id": "s04-challenges",
+      "layout": "content_basic",
+      "title": "Challenges, and what answers each",
+      "table": {
+        "data": [
+          [
+            "Challenge today",
+            "Databricks answer",
+            "Measured result"
+          ],
+          [
+            "5 platforms stitched by hand",
+            "Lakeflow Declarative Pipeline, one medallion",
+            "8 datasets, ~79 M raw rows, one pipeline"
+          ],
+          [
+            "ONS and SIGA don't join",
+            "CEG normalization, complex splitting, fuzzy match, ai_decide",
+            "99.97% of energy resolved"
+          ],
+          [
+            "Weeks of manual matching",
+            "Matching as a pipeline, confidence scores, override table",
+            "One refresh run"
+          ],
+          [
+            "Curtailment invisible in R$",
+            "ML estimate valued at hourly PLD",
+            "65.8 TWh, R$ 8.4 bi (lower bound)"
+          ],
+          [
+            "No unconstrained-output estimate",
+            "Per-technology model in MLflow + UC",
+            "Beats ONS on held-out months"
+          ],
+          [
+            "Every question is a ticket",
+            "Genie Agent + in-app chat, PT-BR",
+            "SQL shown, UC grants per person"
+          ],
+          [
+            "Numbers differ by who ran them",
+            "Unity Catalog, one governed source",
+            "1,404.19 TWh in SQL, app and Genie"
+          ],
+          [
+            "Team stuck on plumbing",
+            "Scheduled refresh job, quality gates",
+            "Failed expectations stop the refresh"
+          ]
+        ],
+        "x": 0.667,
+        "y": 1.6,
+        "width": 12.0,
+        "height": 4.6
+      },
+      "notes": {
+        "purpose": "Map every pain point to a platform capability and a measured result.",
+        "talk_track": "Read across each row: the challenge, the Databricks answer, and the number that proves it. The five platforms are ONS, ANEEL SIGA, CCEE, Open-Meteo and INMET. Note the last-but-one row: the same total, 1,404.19 TWh, comes out of SQL, the app and Genie.",
+        "evidence": [
+          "evidence/01_pipeline_run.txt",
+          "evidence/03_medallion_tables.txt",
+          "evidence/04_ml_curtailment.txt",
+          "evidence/08_genie_conversations.json"
+        ],
+        "transition": "What does that mean for the business?",
+        "likely_question": "How long does a refresh take? One scheduled job run; see evidence/02_job_runs.txt."
+      }
+    },
+    {
+      "id": "s05-impact",
+      "layout": "content_basic",
+      "title": "Impact and value",
+      "table": {
+        "data": [
+          [
+            "KPI",
+            "Before",
+            "After (measured on 24 months)"
+          ],
+          [
+            "Plant-level generation with a unique plant ID",
+            "Partial; manual matching",
+            "99.97%; ties to the ONS total within ±2% every month"
+          ],
+          [
+            "Curtailment per plant",
+            "Not available in R$",
+            "Wind 41.6 TWh / R$ 5.7 bi (16.5%); solar 24.2 TWh / R$ 2.6 bi (28.2%)"
+          ],
+          [
+            "Trust in the AI step",
+            "n/a",
+            "91% accuracy, 100% precision on auto-applied matches (blind test)"
+          ],
+          [
+            "Time to a new answer",
+            "Analyst + SQL",
+            "Question in Portuguese, generated SQL shown"
+          ]
+        ],
+        "x": 0.667,
+        "y": 1.9,
+        "width": 12.0,
+        "height": 3.8
+      },
+      "notes": {
+        "purpose": "Quantify before vs after on the KPIs each buyer is measured on.",
+        "talk_track": "Plant-level generation now carries a unique plant ID for 99.97% of energy, and monthly totals tie to the published ONS total within 2%. Curtailment splits into wind, R$ 5.7 bi or 16.5% of expected output, and solar, R$ 2.6 bi or 28.2%. The AI step was tested blind, with the CEG hidden: 91% accuracy, and every match it auto-applied was right.",
+        "evidence": [
+          "evidence/03_medallion_tables.txt",
+          "evidence/04_ml_curtailment.txt",
+          "evidence/05_genai_ai_decide.txt",
+          "evidence/notebooks/eval_ai_decide.ipynb"
+        ],
+        "transition": "One caveat on the R$ figure, and it works in our favor.",
+        "likely_question": "What is the 'expected output' percentage relative to? The model's unconstrained estimate for the same hours."
+      }
+    },
+    {
+      "id": "s06-at-least",
+      "layout": "content_2col",
+      "title": "Read R$ 8.4 bi as “at least”",
+      "columns": [
+        "Diretor Comercial → ARR, renewals",
+        "A new sellable product, “R$ lost per plant”, with lineage end to end (bronze → model → app) for the diligence a client runs before renewing.",
+        "Head of Data & Analytics → time-to-launch, tickets",
+        "Matching is a pipeline (CEG, fuzzy, AI; overrides win): a new product starts from one refresh run, and PT-BR questions go to Genie, not the queue."
+      ],
+      "notes": {
+        "purpose": "Pre-empt the 'can I trust the number' objection and show what each stakeholder takes away.",
+        "talk_track": "We tuned the curtailment flag for 80% precision against ONS's own flags. Recall is 41% for wind and 81% for solar, so real losses are larger than R$ 8.4 bi. We chose to under-claim rather than publish a number a client can challenge. For the Diretor Comercial, that is a sellable, defensible product that supports renewals; for the Head of Data & Analytics, a new product starts from one refresh run instead of weeks of matching, and self-service questions leave the ticket queue.",
+        "evidence": [
+          "evidence/04_ml_curtailment.txt",
+          "evidence/notebooks/train_curtailment.ipynb"
+        ],
+        "transition": "How is this built? One platform, six stages.",
+        "likely_question": "Could you raise recall? Yes, by lowering the threshold Y, at the cost of precision; it is frozen after tuning."
+      },
+      "subtitle": "80% precision, 41–81% recall: real losses are larger"
+    },
+    {
+      "id": "s07-platform",
+      "layout": "content_basic",
+      "title": "One Databricks platform, six stages",
+      "table": {
+        "data": [
+          [
+            "Stage",
+            "Databricks capability",
+            "What it does here"
+          ],
+          [
+            "Ingest",
+            "Lakeflow Declarative Pipelines, Auto Loader",
+            "5 platforms, 8 datasets, ~79 M raw rows, bronze → silver → gold, 17 expectations"
+          ],
+          [
+            "Govern",
+            "Unity Catalog",
+            "Schemas, tags, lineage, model in UC; client row filter: own plants only"
+          ],
+          [
+            "Intelligence (ML)",
+            "MLflow + UC model registry",
+            "Gradient boosting per technology; drift check, challenger promoted only if better"
+          ],
+          [
+            "Intelligence (GenAI)",
+            "ai_decide, ai_query",
+            "Places plants the rules can't; grounded loss explanation per plant; stored once"
+          ],
+          [
+            "Serve",
+            "Lakebase (autoscaling Postgres)",
+            "7 synced tables; the app never queries the lakehouse; scale-to-zero"
+          ],
+          [
+            "Ask",
+            "Genie Agent",
+            "PT-BR instructions, 39 benchmark questions; clients get answers on their plants only"
+          ],
+          [
+            "Surface",
+            "Databricks Apps",
+            "5 sheets + map + chat as the signed-in user; client users see only their portfolio"
+          ]
+        ],
+        "x": 0.667,
+        "y": 1.6,
+        "width": 12.0,
+        "height": 4.6
+      },
+      "notes": {
+        "purpose": "Show the technical audience the end-to-end architecture on one platform.",
+        "talk_track": "Public files land through a Lakeflow Declarative Pipeline into a bronze, silver, gold medallion with 17 quality expectations. Unity Catalog governs it: grants, tags, lineage, and the model itself. MLflow trains the curtailment model; ai_decide places what the rules can't. Lakebase serves five synced tables to the app, and Genie answers questions as the signed-in user, so UC grants apply per person.",
+        "evidence": [
+          "evidence/01_pipeline_run.txt",
+          "evidence/06_lakebase_serving.txt",
+          "evidence/07_app_api.txt",
+          "evidence/08_genie_conversations.json"
+        ],
+        "transition": "The heart of it is the reconciliation. Here it is step by step.",
+        "likely_question": "Why Lakebase and not the warehouse for the app? Low latency, scale-to-zero, and the app never hits the lakehouse."
+      }
+    },
+    {
+      "id": "s08-reconciliation",
+      "layout": "content_basic",
+      "title": "The reconciliation, step by step",
+      "body": "CEG match: normalize .01 vs .1; links the bulk of energy (910 TWh)\nComplex splitting: ONS wind/solar complexes become member plants\nFuzzy name: same state and fuel; numerals must match (III never becomes II)\nai_decide: a calibrated choice among 3 candidates, or none\nHuman review: under 0.9 confidence goes to an in-app queue; overrides win",
+      "bullets": true,
+      "notes": {
+        "purpose": "Show the matching ladder: rules first, AI only on what remains, a human last.",
+        "talk_track": "CEG first, after normalizing formats; that alone links 910 TWh. Then we split ONS complexes into their member plants, measured, not guessed. Fuzzy name match next, within state and fuel, and numerals must match. What's left goes to ai_decide, which picks one of three candidates or none. Anything under 0.9 confidence lands in a review queue. Honest finding: the first AI pass said none for all 33 plants; adding name similarity, registry number and type per candidate to the prompt fixed it.",
+        "evidence": [
+          "specs/12-genai-reconciliation.md",
+          "evidence/05_genai_ai_decide.txt",
+          "evidence/notebooks/eval_ai_decide.ipynb"
+        ],
+        "transition": "How was all of this built so fast?",
+        "likely_question": "Is the AI step repeatable? Yes: verdicts are stored once per plant and prompt, so refreshes are deterministic."
+      },
+      "subtitle": "Rules first, AI only on what remains, a person last",
+      "evidence_label": "Honest finding: the first AI pass said “none” for all 33 plants; adding per-candidate evidence to the prompt fixed it (specs/12).",
+      "evidence_position": {
+        "x": 0.85,
+        "y": 6.3,
+        "width": 11.8,
+        "height": 0.4,
+        "font_size": 13
+      }
+    },
+    {
+      "id": "s09-how-built",
+      "layout": "content_3col",
+      "title": "How it was built",
+      "columns": [
+        "AI tools",
+        "Isaac (Claude Code) with Databricks skills; Impeccable for the frontend; code review + Isaac Review",
+        "Workflow",
+        "Interview first, then 14 one-page specs with success criteria; one spec at a time",
+        "Evidence over claims",
+        "Every number traces to a committed run or executed notebook; runnable checks on each transform"
+      ],
+      "notes": {
+        "purpose": "Explain the AI-assisted delivery approach and why it is trustworthy.",
+        "talk_track": "Built with Isaac, Claude Code, using the Databricks skills for pipelines, Lakebase, apps and Genie, and the Impeccable skill for the UI. Work went one small spec at a time, each with explicit success criteria, and every load-bearing decision was confirmed before implementation. Parallel read-only agents audited the git history for secrets before publishing. Every number in this deck traces to a committed run capture.",
+        "evidence": [
+          "specs/00-overview.md",
+          "SUCCESS_CRITERIA.md",
+          "evidence/09_tests.txt"
+        ],
+        "transition": "Building fast meant choosing. Here are the trade-offs.",
+        "likely_question": "How much time did AI save? Qualitatively large; we did not measure a baseline."
+      }
+    },
+    {
+      "id": "s10-tradeoffs",
+      "layout": "content_basic",
+      "title": "Trade-offs we chose",
+      "table": {
+        "data": [
+          [
+            "Decision",
+            "Cost",
+            "Why"
+          ],
+          [
+            "Curtailment flag at 80% precision",
+            "Recall 41% wind, 81% solar; R$ is a lower bound",
+            "A number a client can't challenge"
+          ],
+          [
+            "ai_decide auto-applies only at ≥ 0.9",
+            "More plants go to the human queue",
+            "100% precision in the blind test"
+          ],
+          [
+            "AI verdicts stored once per plant and prompt",
+            "Less freshness",
+            "Repeatable numbers every refresh"
+          ],
+          [
+            "Rules before AI",
+            "More pipeline stages",
+            "AI only touches what rules can't place"
+          ],
+          [
+            "Lakebase serves the app",
+            "A sync step",
+            "Low latency, scale-to-zero"
+          ],
+          [
+            "Public data only",
+            "Open-Meteo non-commercial; manual PLD refresh",
+            "Production uses ERA5 via Copernicus"
+          ],
+          [
+            "Scope cuts",
+            "No streaming ingest, 24-month window",
+            "Depth on reconciliation and curtailment"
+          ]
+        ],
+        "x": 0.667,
+        "y": 1.6,
+        "width": 12.0,
+        "height": 4.6
+      },
+      "notes": {
+        "purpose": "Show judgment: each choice has a stated cost and reason.",
+        "talk_track": "Every trade-off favors defensibility over coverage. The flag under-claims; the AI only auto-applies when it's very sure; verdicts are frozen so numbers repeat. We cut streaming and multi-tenant access control to go deep on the two hard parts: reconciliation and curtailment.",
+        "evidence": [
+          "deck/ampera_deck.md §6",
+          "specs/11-ml-curtailment.md",
+          "specs/12-genai-reconciliation.md"
+        ],
+        "transition": "And none of this is a screenshot. Here is the proof.",
+        "likely_question": "What would production change first? Commercial PLD feed and ERA5 weather in place of Open-Meteo."
+      }
+    },
+    {
+      "id": "s11-proof",
+      "layout": "content_basic",
+      "title": "Proof it ran: committed as plain text",
+      "body": "Pipeline run: expectations passed/failed per dataset (01)\nRefresh job: every task (02) · Medallion: every table, rows, comments (03)\nML curtailment: model, error vs ONS, threshold tuning (04 + notebook)\nGenAI: every ai_decide verdict, blind evaluation (05 + notebook); grounded narratives (10)\nServing: Lakebase sync state, API answers from Postgres (06, 07)\nGenie answers with generated SQL and rows (08) · Runnable checks, incl. RLS as a client (09)",
+      "bullets": true,
+      "notes": {
+        "purpose": "Give the technical reviewer a map of the evidence.",
+        "talk_track": "Everything is committed as plain text, not screenshots: the pipeline event log, the job runs, every table, the model training and evaluation notebooks, the AI verdicts, Lakebase sync state, API responses, Genie conversations with their SQL, and the tests.",
+        "evidence": [
+          "evidence/01_pipeline_run.txt … evidence/09_tests.txt",
+          "evidence/notebooks/"
+        ],
+        "transition": "We are also upfront about the risks.",
+        "likely_question": "Can I rerun it? Yes; the README's Reproduce section scripts the full path."
+      },
+      "subtitle": "All files under evidence/ in the repository."
+    },
+    {
+      "id": "s12-risks",
+      "layout": "content_basic",
+      "title": "Risks we are upfront about",
+      "table": {
+        "data": [
+          [
+            "Risk",
+            "Mitigation"
+          ],
+          [
+            "Curtailment is a model estimate",
+            "Reported as a conservative lower bound; error measured against ONS on held-out months (Apr–Sep 2026)"
+          ],
+          [
+            "AI mismatches",
+            "Only ≥ 0.9 confidence auto-applies (100% precision in the blind test); the rest is reviewed by a person"
+          ],
+          [
+            "Public-data licensing",
+            "Open-Meteo free tier is non-commercial; production swaps in ERA5 via Copernicus"
+          ],
+          [
+            "PLD download is manual",
+            "CCEE blocks scripted clients; documented one-step refresh"
+          ]
+        ],
+        "x": 0.667,
+        "y": 1.9,
+        "width": 12.0,
+        "height": 3.6
+      },
+      "notes": {
+        "purpose": "Build trust by naming risks before the audience does.",
+        "talk_track": "Four risks, each with a mitigation already in place or a clear production path. The model estimate is reported conservatively, the AI is gated and reviewed, and the data-licensing and PLD issues have known production swaps.",
+        "evidence": [
+          "evidence/notebooks/train_curtailment.ipynb",
+          "evidence/notebooks/eval_ai_decide.ipynb"
+        ],
+        "transition": "So what's next?",
+        "likely_question": "What if ONS changes its file formats? Bronze ingestion is schema-tolerant, and expectations fail the refresh loudly."
+      }
+    },
+    {
+      "id": "s13-next",
+      "layout": "content_basic",
+      "title": "Next steps",
+      "body": "30 days: Ampera supplies its commercial PLD feed; validate 20 plants against client-reported losses\n60 days: open the built client view (row-filtered app + Genie, per-plant explanation) to the pilot; add a monthly statement\n90 days: extend beyond 24 months; add price forecasting on the same governed base\nAsk: the Diretor Comercial nominates one generator client to pilot the statement; the Head of Data & Analytics owns the 20-plant validation",
+      "bullets": true,
+      "evidence_label": "Ampera Energia Analytics is fictional. Public data only (ONS, ANEEL SIGA, CCEE, Open-Meteo, INMET).",
+      "notes": {
+        "purpose": "Close with a concrete 30/60/90 plan and one clear ask.",
+        "talk_track": "Thirty days to validate against real client-reported losses with Ampera's commercial PLD feed. Sixty days to a client-facing monthly statement on the same gold tables. Ninety days to a longer window and price forecasting. The ask: the Diretor Comercial nominates one generator client to pilot the statement, and the Head of Data & Analytics owns the 20-plant validation.",
+        "evidence": [
+          "deck/ampera_deck.md §9"
+        ],
+        "transition": "Thank you; happy to take questions or jump into the live app.",
+        "likely_question": "What does Ampera need to provide? The commercial PLD feed and one pilot client's reported losses."
+      },
+      "evidence_position": {
+        "x": 0.85,
+        "y": 6.45,
+        "width": 11.8,
+        "height": 0.3,
+        "font_size": 11
+      }
+    },
+    {
+      "id": "s14-closing",
+      "layout": "closing",
+      "notes": {
+        "purpose": "Close and open for questions.",
+        "talk_track": "Thank you. I can show the live app, the Genie chat, or any evidence file.",
+        "evidence": [
+          "evidence/"
+        ],
+        "transition": "Q&A or live demo.",
+        "likely_question": "Can we see it live? Yes: the app and Genie are deployed on the workspace."
+      }
+    }
+  ]
+}
